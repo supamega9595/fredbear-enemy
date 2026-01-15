@@ -3608,9 +3608,9 @@ for _, part in ipairs(npc:GetDescendants()) do
 				return
 			end
 
-			if hum.Health > 0 then
-				lastKillTime[player] = now
-				hum.Health = 0
+				if hum.Health > 0 then
+					lastKillTime[player] = now
+					hum.Health = 0
 					local chosen = getWeightedRandomConfig()
 					remote:FireClient(player, chosen.name, npc)
 				end
@@ -3728,11 +3728,16 @@ local function playCameraJumpscare(config, target)
 		return
 	end
 
-	local camera = workspace.CurrentCamera
-	local originalType = camera.CameraType
-	local originalCFrame = camera.CFrame
+	local originalCamera = workspace.CurrentCamera
+	local originalType = originalCamera.CameraType
+	local originalCFrame = originalCamera.CFrame
 
-	camera.CameraType = Enum.CameraType.Scriptable
+	local jumpscareCamera = Instance.new("Camera")
+	jumpscareCamera.CameraType = Enum.CameraType.Scriptable
+	jumpscareCamera.CFrame = originalCFrame
+	jumpscareCamera.Parent = workspace
+	workspace.CurrentCamera = jumpscareCamera
+
 	playSound(config.soundId)
 
 	local startTime = os.clock()
@@ -3770,12 +3775,14 @@ local function playCameraJumpscare(config, target)
 			end
 		end
 
-		camera.CFrame = baseCFrame + shake
+		jumpscareCamera.CFrame = baseCFrame + shake
 		task.wait()
 	end
 
-	camera.CameraType = originalType
-	camera.CFrame = originalCFrame
+	workspace.CurrentCamera = originalCamera
+	originalCamera.CameraType = originalType
+	originalCamera.CFrame = originalCFrame
+	jumpscareCamera:Destroy()
 end
 
 local function runJumpscare(name, target)
