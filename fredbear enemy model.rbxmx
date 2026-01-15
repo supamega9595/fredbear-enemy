@@ -3492,20 +3492,40 @@ local function ensureRemote()
 	return remote
 end
 
-local function ensureClientScript()
-	local starterScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
-	if starterScripts:FindFirstChild(CLIENT_SCRIPT_NAME) then
-		return
-	end
-
+local function getClientTemplate()
 	local template = npc:FindFirstChild(CLIENT_SCRIPT_NAME, true)
 	if not template or not template:IsA("LocalScript") then
 		warn(("Missing %s LocalScript template under %s."):format(CLIENT_SCRIPT_NAME, npc.Name))
+		return nil
+	end
+	return template
+end
+
+local function addScriptToPlayer(player, template)
+	local playerScripts = player:WaitForChild("PlayerScripts")
+	if playerScripts:FindFirstChild(CLIENT_SCRIPT_NAME) then
 		return
 	end
 
 	local clientScript = template:Clone()
-	clientScript.Parent = starterScripts
+	clientScript.Parent = playerScripts
+end
+
+local function ensureClientScript()
+	local starterScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
+	local template = getClientTemplate()
+	if not template then
+		return
+	end
+
+	if not starterScripts:FindFirstChild(CLIENT_SCRIPT_NAME) then
+		local clientScript = template:Clone()
+		clientScript.Parent = starterScripts
+	end
+
+	for _, player in ipairs(Players:GetPlayers()) do
+		addScriptToPlayer(player, template)
+	end
 end
 
 local function getWeightedRandomConfig()
@@ -3538,6 +3558,12 @@ end
 
 local remote = ensureRemote()
 ensureClientScript()
+Players.PlayerAdded:Connect(function(player)
+	local template = getClientTemplate()
+	if template then
+		addScriptToPlayer(player, template)
+	end
+end)
 
 local lastKillTime = {}
 
