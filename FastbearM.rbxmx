@@ -1572,7 +1572,7 @@ humanoid.Running:Connect(onRunning)]]></ProtectedString>
 		<Item class="ModuleScript" referent="RBX9C45D3E0B4E24B41BDFB78C1642F729D">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[return {
-	RoamMode = "RandomRoam", -- "RandomRoam" or "PointRoam"
+	RoamMode = "RandomRoam", -- "RandomRoam", "PointRoam", or "MapPointsRoam"
 	PointsFolderName = "fredbearwanderpoints",
 	RoamWalkSpeed = 22,
 	RandomRoamRadius = 70,
@@ -1716,6 +1716,10 @@ local function followPath(destination)
 		local moveDone = false
 		local moveConnection
 
+		if waypoint.Action == Enum.PathWaypointAction.Jump then
+			humanoid.Jump = true
+		end
+
 		moveConnection = humanoid.MoveToFinished:Connect(function(success)
 			moveDone = true
 			reached = success
@@ -1763,8 +1767,16 @@ local function followPath(destination)
 	return true
 end
 
+local function getRoamMode()
+	if type(config.RoamMode) ~= "string" then
+		return "randomroam"
+	end
+	return string.lower(config.RoamMode)
+end
+
 local function getNextDestination()
-	if config.RoamMode == "PointRoam" then
+	local mode = getRoamMode()
+	if mode == "pointroam" or mode == "mappointsroam" then
 		local points = getPatrolPoints()
 		local chosen = chooseRandomPoint(points)
 		if chosen then
