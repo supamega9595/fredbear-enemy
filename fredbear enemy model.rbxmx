@@ -2979,312 +2979,453 @@ end
 				</Properties>
 			</Item>
 		</Item>
+		<Item class="Script" referent="RBXBA61D0795D544847AF033EE2980CDDCC">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[--[[
+	OUTLINE: 
+		Abilities Needed:
+			- Pathfinding
+			- Picking up Tools
+			- Straffing*
+--]]
+
+----------------------
+---define variables---
+----------------------
+local pathfinding=game:GetService("PathfindingService");--the service used to compute paths
+local AI=script.Parent;--the AI
+local humanoid=AI:WaitForChild("Humanoid");--the Humanoid object
+local Uppertorso=AI:WaitForChild("UpperTorso");--the Torso object
+---- user inputs ----
+local maxWalkDistance=500;--the maximum walking distance
+local pickUpTools=true;--will pick up and equip tools that are touched
+local Messages = 
+{
+	"I found something.",
+	"Does anybody need a tool? I found it off of the ground.",
+	"I found a tool.",
+	"I'm keeping this.",
+	"This seems like this would be handy.",
+	
+}
+----------------------
+---define functions---
+----------------------
+
+--Moves to specific point 'finish' if a path is possible to follow
+function MoveTo(finish,TD)
+	local path=pathfinding:ComputeRawPathAsync(Uppertorso.Position,finish,maxWalkDistance);
+--if the path is followable/reachable
+	if path.Status.Value<3 then
+		for _,v in ipairs(path:GetPointCoordinates()) do
+			humanoid:MoveTo(v);
+			local distance=0;
+			repeat
+				distance=TD and (Vector2.new(v.x,v.z)-Vector2.new(Uppertorso.Position.x,Uppertorso.Position.z)).magnitude or (v-Uppertorso.Position).magnitude;
+				Wait();
+			until distance<2
+		end
+	end
+end
+
+--returns all of the instances of a specific instance in a model
+function GetSpecificInstances(model,type)
+	local tab={};
+	for _,v in pairs(model:GetChildren()) do
+		if v:IsA(type) then
+			table.insert(tab,v);
+		end
+	end
+	return tab;
+end
+
+--------------
+---run code---
+--------------
+
+--equip tools
+if pickUpTools then
+	for _,v in pairs(GetSpecificInstances(AI,"Part")) do
+		v.Touched:connect(function(part)
+			if part.Name=="Handle" and part.Parent:IsA("Tool") then
+				if (#GetSpecificInstances(part.Parent.Parent,"Humanoid")==0 or part.Parent.Parent==workspace) and #GetSpecificInstances(AI,"Tool")==0 then
+					part.Parent.Parent=AI;
+					game:GetService("Chat"):Chat(script.Parent.Head, Messages[math.random(#Messages)], Enum.ChatColor.White)
+			end end
+		end
+		);
+	end
+end
+
+while true do
+	local point=Vector3.new(math.random(-256,256),torso.Position.y,math.random(-256,256));
+	MoveTo(point,true);
+	wait(math.random(3,5))
+end
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{150BEB41-FAC4-4813-B862-5E674A62A554}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">AICode</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Script" referent="RBXE9CC1DBDF13D4199913F417406FE571F">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local larm = script.Parent:FindFirstChild("Head")
+local rarm = script.Parent:FindFirstChild("UpperTorso")
+local Messages = 
+{
+	"oof, I didn't see you there.",
+	"Sorry for running into you.",
+	"Sorry about that.",
+	"Sorry, I wasn't paying attention to where I was going.",
+	"Ow, I should be more aware of where i'm going.",
+	"Watch where you're going!",
+	"Oh sorry."
+	
+}
+debounce =false
+function findNearestTorso(pos)
+	local list = game.Workspace:children()
+	local torso = nil
+	local dist = 10
+	local temp = nil
+	local human = nil
+	local temp2 = nil
+	for x = 1, #list do
+		temp2 = list[x]
+		if (temp2.className == "Model") and (temp2 ~= script.Parent) then
+			temp = temp2:findFirstChild("Torso")
+			human = temp2:findFirstChild("Humanoid")
+			human2 = temp2:findFirstChild("HumanoidRootPart")
+			if (temp ~= nil) and (human ~= nil) and (human.Health > 0) and(human2 ~= nil) then
+				if (temp.Position - pos).magnitude < dist then
+					torso = temp
+					dist = (temp.Position - pos).magnitude
+				end
+			end
+		end
+	end
+	return torso
+end
+
+function Hit(hit)
+	
+	
+	
+	
+	
+	local human = hit.Parent:FindFirstChild("Humanoid")
+	if human ~= nil then
+		if debounce== false
+			then debounce=true
+		
+		game:GetService("Chat"):Chat(script.Parent.Head, Messages[math.random(#Messages)], Enum.ChatColor.White)
+wait(2)
+debounce=false
+
+
+end
+		--human.Health =  human.Health - 3
+		--script.Parent.Torso.HitSound:play()
+	end
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+end
+
+larm.Touched:connect(Hit)
+rarm.Touched:connect(Hit)
+
+while true do
+	wait(0.1)
+	local target = findNearestTorso(script.Parent.Torso.Position)
+	if target ~= nil then
+		script.Parent.Humanoid.WalkSpeed=0
+	else
+		script.Parent.Humanoid.WalkSpeed=16
+end
+end]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{A73A8E81-C33D-4A3F-8E6B-EF34C969266C}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">nottooclose</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Script" referent="RBXA732DF23B2B44D46AA4E9109044DA6F3">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[--[[
+	Script made in Feb 2019 by METTEWBA2BA.
+	This script is the brain of the NPC. It will wander around peacefully when undisturbed,
+	but when it is hurt it will enter a state of panic, and will run away from the source
+	that damaged it, or it will run around randomly if it can't detect what damaged it, for
+	example if it was shot by a gun.
+	You can put this script in any NPC, whether it be R6 or R15, even in most custom rigs.
+	Only edit parts of the script if you know what you are doing very well! There are many
+	comments throughout the code but it's still slightly confusing.
+	]]
+
+
+local rig = script.Parent
+local human = rig:FindFirstChildOfClass("Humanoid") -- instead of "rig.Humanoid" in case the NPC's humanoid isn't called "Humanoid"
+local walkSpeed = human.WalkSpeed -- get the walkspeed for later use
+local lastHP = human.Health
+local attacked = false
+local threat = nil -- the part that dealt damage to this NPC's humanoid.
+
+local panicking = false -- so that the event doesnt trigger code multiple times
+
+local EventRunning = false -- variable needed for same reason as one right above
+
+human.Changed:Connect(function() -- This function controls the NPC's behaviour in its panic state.
+	
+	if not EventRunning then
+	EventRunning = true
+	
+	
+	if human.Health < lastHP then -- NPC has taken damage -----
+		print(rig.Name .. " is entering panic mode!")
+		
+		
+		lastHP = human.Health
+		wait(0.1) -- delay
+		local possibles = rig.HumanoidRootPart:GetTouchingParts()  -- change HumanoidRootPart to Torso or inverse depending on how big the root part is
+		
+		for a=1, #possibles do -- checks through each touching part to see if that part's parent is a model and contains a humanoid
+			print(possibles[a]:GetFullName())
+			if possibles[a].Parent ~= rig then -- make sure we're not checking our own NPC's body parts
+				if possibles[a]:IsA("BasePart") and ((possibles[a].Parent.ClassName == "Model" and possibles[a].Parent:FindFirstChildOfClass("Humanoid")) or possibles[a].Parent.ClassName == "Tool" ) then
+					
+					threat = possibles[a] -- Another NPC / player is attacking us! Reference them so we can run away from their position!
+					print(threat:GetFullName() .. " is a threat!")
+				end
+			end
+			
+		end
+		
+		attacked = true 
+		
+	end -- End of giant condition -----
+	--------
+	if attacked and not panicking then -- two blocks of code in seperate If's just to make it easier to read
+		panicking = true
+		print(threat)
+		human.WalkSpeed = walkSpeed * 4 -- We're RUNNING, not walking!
+		
+		if math.random(1,10) == 3 then human.Jump = true end -- chance of NPC jumping
+		if threat then
+			--we think we know where the damage is coming from, running away from that direction
+			
+			
+			local xAway = (threat.Position - rig.HumanoidRootPart.Position).Unit.X * 1000 -- how far in X and Z the NPC has to run away from threat (which direction)
+			local zAway = (threat.Position - rig.HumanoidRootPart.Position).Unit.Z * 1000
+			print("running in direction: " .. xAway/1000 .. ", " .. zAway/1000)
+			
+			local selfPos = rig.HumanoidRootPart.Position -- get our current position
+			human.WalkToPoint = Vector3.new(selfPos.X + xAway, selfPos.Y, selfPos.Z + zAway)
+			
+			wait(math.random(3,5))
+			human.WalkToPoint = rig.HumanoidRootPart.Position -- stop th NPC from running once done panicking.
+		else
+			for x=1, math.random(2,4) do -- repeat 2 - 4 times 
+				--we don't know where the damage is coming from, running randomly
+				local rand1 = math.random(-1000, 1000)
+				local rand2 = math.random(-1000, 1000) -- large values so the npc doesnt stop running
+				human.WalkToPoint = Vector3.new(rand1, rig.HumanoidRootPart.Position.Y, rand2)
+				wait(math.random(2,4))
+			end
+			human.WalkToPoint = rig.HumanoidRootPart.Position -- stop th NPC from running once done panicking.
+		end
+		
+		human.WalkSpeed = walkSpeed -- we are done panicking and are walking again
+		panicking = false
+	end--
+	
+	
+	attacked = false -- reset
+	threat = nil
+	
+	lastHP = human.Health
+	
+	EventRunning = false
+	end--end of EventRunning condition (which contains all the code in this function)
+end)
+
+
+while wait(3,6) do -- This loop controls the NPC's random wandering when it is not panicking.
+	
+	if not panicking then -- the loop gives priority over the panick script to function
+		
+		local rand1 = math.random(-40, 40)
+		local rand2 = math.random(-40, 40)
+		
+		local pathfindingservice = game:GetService("PathfindingService") -- path to a random location.
+		local path = pathfindingservice:CreatePath()
+		path:ComputeAsync(rig.HumanoidRootPart.Position, Vector3.new(rig.HumanoidRootPart.Position.X + rand1, rig.HumanoidRootPart.Position.Y, rig.HumanoidRootPart.Position.Z + rand2))
+		
+		local waypoints = path:GetWaypoints()
+		local panicked = false
+		
+		if math.random(1,20) == 4 then human.Jump = false end -- chance of jumping
+		
+		--for each waypoint, walk to it if not panicking
+		for i=1, #waypoints do
+			
+			if not panicking and not panicked then -- NPC might start panicking while this code is trying to path, and once again the panic has priority
+				--walk to the next waypoint
+				human.WalkToPoint = waypoints[i].Position
+				
+				human.MoveToFinished:Wait()
+					
+			else
+				panicked = true
+			end
+			
+		end
+		
+		--human.WalkToPoint = Vector3.new(rig.HumanoidRootPart.Position.X + rand1, rig.HumanoidRootPart.Position.Y, rig.HumanoidRootPart.Position.Z + rand2) -- wander randomly
+		
+	end
+	
+end
+
+
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{FDD879A7-453E-4C5B-84E2-969D23BA8872}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">passive AI</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
 		<Item class="Script" referent="RBX64A6D7EE75DC4FD3BE772CF969C33D60">
 			<Properties>
-					<ProtectedString name="Source"><![CDATA[--// NPC FRONT LOS CHASE WITH MEMORY + OPTIMIZED PATHFINDING
-	local npc = script.Parent
-	local humanoid = npc:WaitForChild("Humanoid")
-	local root = npc:WaitForChild("HumanoidRootPart")
-	
-	local PathfindingService = game:GetService("PathfindingService")
-	local Players = game:GetService("Players")
-	local RunService = game:GetService("RunService")
-	
-	-- ===== SETTINGS =====
-	local CHASE_SPEED = 100
-	local DETECTION_RANGE = 200
-	local FOV_ANGLE = 70 -- degrees (front vision cone)
-	local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
-	local STOP_DISTANCE = 5
-	local PATH_RECOMPUTE_INTERVAL = 0.4
-	local DIRECT_PATH_CHECK_INTERVAL = 0.05
-	local WAYPOINT_SPACING = 8
-	local TARGET_REPATH_DISTANCE = 10
-	local DIRECT_MOVE_INTERVAL = 0.05
-	local PATH_MODE_DURATION = 1.2
-	
-	-- ===== INTERNAL =====
-	local lastSeenTime = 0
-	local targetPlayer = nil
-	local currentPath = nil
-	local currentWaypoints = nil
-	local waypointIndex = 1
-	local pathBlockedConnection = nil
-	local pathComputeTime = 0
-	local directCheckTime = 0
-	local lastTargetPosition = nil
-	local lastDirectMove = 0
-	local nextWaypointMove = 0
-	local WAYPOINT_REACHED_DISTANCE = 4
-	local WAYPOINT_MOVE_INTERVAL = 0.08
-	local lastPosition = root.Position
-	local lastStuckCheck = 0
-	local stuckTime = 0
-	local STUCK_CHECK_INTERVAL = 0.1
-	local STUCK_DISTANCE = 1.5
-	local STUCK_TIME_LIMIT = 0.3
-	local pathModeUntil = 0
-	
-	-- Raycast params
-	local rayParams = RaycastParams.new()
-	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
-	rayParams.FilterDescendantsInstances = {npc}
-	rayParams.IgnoreWater = true
+				<ProtectedString name="Source"><![CDATA[--// NPC FRONT LOS CHASE WITH MEMORY
+local npc = script.Parent
+local humanoid = npc:WaitForChild("Humanoid")
+local root = npc:WaitForChild("HumanoidRootPart")
 
-	-- Kill sound setup
-	local KILL_SOUND_ID = "rbxassetid://94716076803400"
-	local killSound = Instance.new("Sound")
-	killSound.Name = "KillSound"
-	killSound.SoundId = KILL_SOUND_ID
-	killSound.Volume = 1
-	killSound.Parent = root
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
 
-	local function isPlayerHit(hit)
-		local char = hit:FindFirstAncestorOfClass("Model")
-		if not char then
-			return false
-		end
+-- ===== SETTINGS =====
+local CHASE_SPEED = 100
+local DETECTION_RANGE = 200
+local FOV_ANGLE = 70 -- degrees (front vision cone)
+local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
+local STOP_DISTANCE = 5
 
-		local hum = char:FindFirstChild("Humanoid")
-		local plr = game:GetService("Players"):GetPlayerFromCharacter(char)
-		return hum and plr
+-- ===== INTERNAL =====
+local lastSeenTime = 0
+local targetPlayer = nil
+
+-- Raycast params
+local rayParams = RaycastParams.new()
+rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+rayParams.FilterDescendantsInstances = {npc}
+rayParams.IgnoreWater = true
+
+-- ===== FUNCTIONS =====
+local function isPlayerVisible(player)
+	local char = player.Character
+	if not char then return false end
+
+	local hrp = char:FindFirstChild("HumanoidRootPart")
+	local hum = char:FindFirstChild("Humanoid")
+	if not hrp or not hum or hum.Health <= 0 then return false end
+
+	local distance = (hrp.Position - root.Position).Magnitude
+	if distance > DETECTION_RANGE then return false end
+
+	-- FOV check
+	local directionToPlayer = (hrp.Position - root.Position).Unit
+	local npcForward = root.CFrame.LookVector
+	local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
+
+	if angle > FOV_ANGLE then
+		return false
 	end
 
-	for _, part in ipairs(npc:GetDescendants()) do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			part.Touched:Connect(function(hit)
-				if isPlayerHit(hit) then
-					local char = hit:FindFirstAncestorOfClass("Model")
-					local hum = char and char:FindFirstChild("Humanoid")
-					if hum and hum.Health > 0 then
-						hum.Health = 0
-						if not killSound.IsPlaying then
-							killSound:Play()
-						end
-					end
-				end
-			end)
-		end
+	-- Raycast LOS
+	local result = workspace:Raycast(
+		root.Position,
+		directionToPlayer * distance,
+		rayParams
+	)
+
+	if result and not result.Instance:IsDescendantOf(char) then
+		return false
 	end
 
-	humanoid:GetPropertyChangedSignal("SeatPart"):Connect(function()
-		if humanoid.SeatPart then
-			task.wait(0.1)
-			humanoid.Jump = true
-		end
-	end)
-	
-	local function isPlayerVisible(player)
-		local char = player.Character
-		if not char then return false end
-	
-		local hrp = char:FindFirstChild("HumanoidRootPart")
-		local hum = char:FindFirstChild("Humanoid")
-		if not hrp or not hum or hum.Health <= 0 then return false end
-	
-		local distance = (hrp.Position - root.Position).Magnitude
-		if distance > DETECTION_RANGE then return false end
-	
-		-- FOV check
-		local directionToPlayer = (hrp.Position - root.Position).Unit
-		local npcForward = root.CFrame.LookVector
-		local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
-	
-		if angle > FOV_ANGLE then
-			return false
-		end
-	
-		-- Raycast LOS
-		local result = workspace:Raycast(
-			root.Position,
-			directionToPlayer * distance,
-			rayParams
-		)
-	
-		if result and not result.Instance:IsDescendantOf(char) then
-			return false
-		end
-	
-		return true
-	end
-	
-	local function getVisiblePlayer()
-		for _, player in ipairs(Players:GetPlayers()) do
-			if isPlayerVisible(player) then
-				return player
-			end
-		end
-		return nil
-	end
-	
-	local function clearPath()
-		if pathBlockedConnection then
-			pathBlockedConnection:Disconnect()
-			pathBlockedConnection = nil
-		end
-		currentPath = nil
-		currentWaypoints = nil
-		waypointIndex = 1
-	end
-	
-	local function computePath(targetPosition)
-		clearPath()
-		local path = PathfindingService:CreatePath({
-			AgentRadius = 2,
-			AgentHeight = 5,
-			AgentCanJump = true,
-			WaypointSpacing = WAYPOINT_SPACING
-		})
-	
-		path:ComputeAsync(root.Position, targetPosition)
-		if path.Status ~= Enum.PathStatus.Success then
-			return false
-		end
-	
-		currentPath = path
-		currentWaypoints = path:GetWaypoints()
-		waypointIndex = 2
-	
-		pathBlockedConnection = path.Blocked:Connect(function(blockedIndex)
-			if blockedIndex >= waypointIndex then
-				pathComputeTime = 0
-			end
-		end)
-	
-		return true
-	end
-	
-	local function followPath(targetPosition)
-		if not currentWaypoints then
-			return
-		end
-	
-		if waypointIndex > #currentWaypoints then
-			return
-		end
-	
-		local waypoint = currentWaypoints[waypointIndex]
-		if waypoint.Action == Enum.PathWaypointAction.Jump then
-			humanoid.Jump = true
-		end
-	
-		local now = tick()
-		if now - nextWaypointMove >= WAYPOINT_MOVE_INTERVAL then
-			nextWaypointMove = now
-			humanoid:MoveTo(waypoint.Position)
+	return true
+end
+
+local function getVisiblePlayer()
+	for _, player in ipairs(Players:GetPlayers()) do
+		if isPlayerVisible(player) then
+			return player
 		end
 	end
-	
-	local function hasDirectPath(targetPosition)
-		local direction = targetPosition - root.Position
-		local distance = direction.Magnitude
-		if distance == 0 then
-			return true
-		end
-		local result = workspace:Raycast(root.Position, direction, rayParams)
-		return not result
+	return nil
+end
+
+-- ===== MAIN LOOP =====
+RunService.Heartbeat:Connect(function()
+	local visiblePlayer = getVisiblePlayer()
+
+	if visiblePlayer then
+		targetPlayer = visiblePlayer
+		lastSeenTime = tick()
 	end
-	
-	RunService.Heartbeat:Connect(function()
-		local visiblePlayer = getVisiblePlayer()
-	
-		if visiblePlayer then
-			targetPlayer = visiblePlayer
-			lastSeenTime = tick()
-		end
-	
-		if not targetPlayer then
-			clearPath()
-			return
-		end
-	
+
+	if targetPlayer then
 		local char = targetPlayer.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-		if not hrp then
-			clearPath()
-			return
-		end
-	
-		if tick() - lastSeenTime > MEMORY_TIME then
-			targetPlayer = nil
-			clearPath()
-			humanoid:Move(Vector3.zero)
-			return
-		end
-	
-		humanoid.WalkSpeed = CHASE_SPEED
-		local distance = (hrp.Position - root.Position).Magnitude
-		if distance <= STOP_DISTANCE then
-			clearPath()
-			humanoid:Move(Vector3.zero)
-			return
-		end
-	
-		local now = tick()
-			if now - lastStuckCheck >= STUCK_CHECK_INTERVAL then
-				local moved = (root.Position - lastPosition).Magnitude
-				if moved < STUCK_DISTANCE then
-					stuckTime += (now - lastStuckCheck)
-				else
-					stuckTime = 0
-				end
-				lastPosition = root.Position
-				lastStuckCheck = now
-			end
 
-		if stuckTime >= STUCK_TIME_LIMIT then
-			pathModeUntil = math.max(pathModeUntil, now + PATH_MODE_DURATION)
-		end
+		if hrp and tick() - lastSeenTime <= MEMORY_TIME then
+			humanoid.WalkSpeed = CHASE_SPEED
 
-		local shouldUsePath = now < pathModeUntil
-		if now - directCheckTime >= DIRECT_PATH_CHECK_INTERVAL then
-			directCheckTime = now
-			if hasDirectPath(hrp.Position) and not shouldUsePath then
-				clearPath()
-				stuckTime = 0
-				pathModeUntil = 0
-				if now - lastDirectMove >= DIRECT_MOVE_INTERVAL then
-					lastDirectMove = now
-					local direction = hrp.Position - root.Position
-					if direction.Magnitude > 0 then
-						humanoid:Move(direction.Unit, true)
-						end
-					end
-					return
-				end
-			end
-	
-		if shouldUsePath then
-			local shouldRepath = false
-			if not currentWaypoints then
-				shouldRepath = true
-			elseif lastTargetPosition and (hrp.Position - lastTargetPosition).Magnitude >= TARGET_REPATH_DISTANCE then
-				shouldRepath = true
-			elseif now - pathComputeTime >= PATH_RECOMPUTE_INTERVAL then
-				shouldRepath = true
-			end
-		
-			if shouldRepath then
-				pathComputeTime = now
-				lastTargetPosition = hrp.Position
-				if computePath(hrp.Position) then
-					followPath(hrp.Position)
-				end
-			end
-		
-			if currentWaypoints and waypointIndex <= #currentWaypoints then
-				local waypoint = currentWaypoints[waypointIndex]
-				local distanceToWaypoint = (waypoint.Position - root.Position).Magnitude
-				if distanceToWaypoint <= WAYPOINT_REACHED_DISTANCE then
-					waypointIndex += 1
-				end
-				followPath(hrp.Position)
+			local distance = (hrp.Position - root.Position).Magnitude
+			if distance > STOP_DISTANCE then
+				humanoid:MoveTo(hrp.Position)
 			else
-				clearPath()
+				humanoid:Move(Vector3.zero)
 			end
+		else
+			-- Memory expired
+			targetPlayer = nil
+			humanoid:Move(Vector3.zero)
 		end
-	end)
-	]]></ProtectedString>
+	end
+end)
+]]></ProtectedString>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
@@ -3294,6 +3435,86 @@ end
 				<bool name="DefinesCapabilities">false</bool>
 				<string name="Name">MainScript</string>
 				<int64 name="SourceAssetId">15977014578</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Script" referent="RBXE2CA0FDB63124C85BC70D826B6B02D56">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
+
+-- Kill sound setup
+local KILL_SOUND_ID = "rbxassetid://94716076803400" -- 🔊 Replace with your sound ID
+local killSound = Instance.new("Sound")
+killSound.Name = "KillSound"
+killSound.SoundId = KILL_SOUND_ID
+killSound.Volume = 1
+killSound.Parent = npc:FindFirstChild("HumanoidRootPart") or npc
+
+-- Safety: ignore touches from itself
+local function isPlayer(hit)
+	local char = hit:FindFirstAncestorOfClass("Model")
+	if not char then return false end
+
+	local hum = char:FindFirstChild("Humanoid")
+	local plr = game:GetService("Players"):GetPlayerFromCharacter(char)
+	return hum and plr
+end
+
+-- Connect to all BaseParts of the NPC
+for _, part in ipairs(npc:GetDescendants()) do
+	if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+		part.Touched:Connect(function(hit)
+			if isPlayer(hit) then
+				local char = hit:FindFirstAncestorOfClass("Model")
+				local hum = char:FindFirstChild("Humanoid")
+				if hum and hum.Health > 0 then
+					hum.Health = 0 -- kill player
+
+					-- 🔊 Play kill sound
+					if not killSound.IsPlaying then
+						killSound:Play()
+					end
+				end
+			end
+		end)
+	end
+end
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{2F4906DA-9C66-4C0A-8022-FCA0D9F4D37B}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Script</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Script" referent="RBX784AE2A0A49B45EE9E5D077B2FEC671C">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
+local humanoid = npc:FindFirstChildOfClass("Humanoid")
+
+if humanoid then
+	humanoid:GetPropertyChangedSignal("SeatPart"):Connect(function()
+		if humanoid.SeatPart then
+			wait(0.1) -- slight delay to allow seat animation
+			humanoid.Jump = true
+		end
+	end)
+end
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{1B9BF803-8DB1-40AA-98EB-51A4E50072CD}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Script JUMP</string>
+				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
