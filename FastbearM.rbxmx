@@ -1621,11 +1621,26 @@ if npc:GetAttribute("RoamControllerRunning") then
 end
 npc:SetAttribute("RoamControllerRunning", true)
 
-local lastPoint = nil
-local randomRoamRadius = config.RandomRoamRadius or 40
-
 if config.RoamWalkSpeed then
 	npc:SetAttribute("RoamWalkSpeed", config.RoamWalkSpeed)
+end
+
+local lastPoint = nil
+local patrolPoints = {}
+local patrolIndex = 0
+local lastRefresh = 0
+local randomRoamRadius = config.RandomRoamRadius or 40
+local refreshInterval = 10
+
+local function getRoamMode()
+	if type(config.RoamMode) ~= "string" then
+		return "randomroam"
+	end
+	return string.lower(config.RoamMode)
+end
+
+local function shouldPause()
+	return npc:GetAttribute("IsChasing") == true or humanoid.Health <= 0
 end
 
 local function getPointsFolder()
@@ -1636,56 +1651,53 @@ local function getPointsFolder()
 	return nil
 end
 
-local function getPatrolPoints()
+local function refreshPatrolPoints()
 	local folder = getPointsFolder()
+	patrolPoints = {}
+	patrolIndex = 0
+	lastRefresh = os.clock()
 	if not folder then
-		return {}
+		return
 	end
 
-	local points = {}
 	for _, child in ipairs(folder:GetDescendants()) do
 		if child:IsA("BasePart") then
-			table.insert(points, child)
+			table.insert(patrolPoints, child)
 		end
 	end
-	return points
 end
 
-local function chooseRandomPoint(points)
-	if #points == 0 then
+local function shufflePoints(points)
+	for i = #points, 2, -1 do
+		local j = math.random(i)
+		points[i], points[j] = points[j], points[i]
+	end
+end
+
+local function getNextPatrolPoint()
+	if #patrolPoints == 0 or os.clock() - lastRefresh > refreshInterval then
+		refreshPatrolPoints()
+		shufflePoints(patrolPoints)
+	end
+
+	if #patrolPoints == 0 then
 		return nil
 	end
 
-	local candidates = {}
-	for _, point in ipairs(points) do
-		if point ~= lastPoint then
-			table.insert(candidates, point)
-		end
+	patrolIndex += 1
+	if patrolIndex > #patrolPoints then
+		shufflePoints(patrolPoints)
+		patrolIndex = 1
 	end
 
-	if #candidates == 0 then
-		candidates = points
+	local candidate = patrolPoints[patrolIndex]
+	if candidate == lastPoint and #patrolPoints > 1 then
+		patrolIndex = (patrolIndex % #patrolPoints) + 1
+		candidate = patrolPoints[patrolIndex]
 	end
 
-	local totalWeight = 0
-	local weights = {}
-	for _, point in ipairs(candidates) do
-		local distance = (point.Position - root.Position).Magnitude
-		local weight = math.max(distance, 1)
-		totalWeight += weight
-		table.insert(weights, weight)
-	end
-
-	local roll = math.random() * totalWeight
-	local running = 0
-	for index, point in ipairs(candidates) do
-		running += weights[index]
-		if roll <= running then
-			return point
-		end
-	end
-
-	return candidates[1]
+	lastPoint = candidate
+	return candidate
 end
 
 local function getRandomRoamPosition()
@@ -1695,11 +1707,58 @@ local function getRandomRoamPosition()
 	return root.Position + offset
 end
 
-local function shouldPause()
-	return npc:GetAttribute("IsChasing") == true or humanoid.Health <= 0
+local function moveToWaypoint(position, action)
+	if action == Enum.PathWaypointAction.Jump then
+		humanoid.Jump = true
+	end
+
+	local reached = false
+	local finished = false
+	local connection
+
+	connection = humanoid.MoveToFinished:Connect(function(success)
+		finished = true
+		reached = success
+	end)
+
+	humanoid:MoveTo(position)
+
+	local lastPos = root.Position
+	local lastMoveTime = os.clock()
+
+	while not finished do
+		if shouldPause() then
+			connection:Disconnect()
+			return false
+		end
+
+		local currentPos = root.Position
+		if (currentPos - lastPos).Magnitude > 0.1 then
+			lastPos = currentPos
+			lastMoveTime = os.clock()
+		end
+
+		if (currentPos - position).Magnitude <= config.ReachTolerance then
+			reached = true
+			break
+		end
+
+		if os.clock() - lastMoveTime >= config.StuckTimeout then
+			break
+		end
+
+		task.wait(0.1)
+	end
+
+	connection:Disconnect()
+	return reached
 end
 
 local function followPath(destination)
+	if (root.Position - destination).Magnitude <= config.ReachTolerance then
+		return true
+	end
+
 	local path = PathfindingService:CreatePath(config.PathParams)
 	path:ComputeAsync(root.Position, destination)
 	if path.Status ~= Enum.PathStatus.Success then
@@ -1707,59 +1766,16 @@ local function followPath(destination)
 	end
 
 	local waypoints = path:GetWaypoints()
+	if #waypoints == 0 then
+		return false
+	end
+
 	for _, waypoint in ipairs(waypoints) do
 		if shouldPause() then
 			return false
 		end
 
-		local reached = false
-		local moveDone = false
-		local moveConnection
-
-		if waypoint.Action == Enum.PathWaypointAction.Jump then
-			humanoid.Jump = true
-		end
-
-		moveConnection = humanoid.MoveToFinished:Connect(function(success)
-			moveDone = true
-			reached = success
-		end)
-
-		humanoid:MoveTo(waypoint.Position)
-
-		local startTime = os.clock()
-		local lastPos = root.Position
-		local lastMoveTime = startTime
-
-		while not moveDone do
-			if shouldPause() then
-				moveConnection:Disconnect()
-				return false
-			end
-
-			local currentPos = root.Position
-			if (currentPos - lastPos).Magnitude > 0.1 then
-				lastPos = currentPos
-				lastMoveTime = os.clock()
-			end
-
-			if (currentPos - waypoint.Position).Magnitude <= config.ReachTolerance then
-				reached = true
-				moveDone = true
-				break
-			end
-
-			if os.clock() - lastMoveTime >= config.StuckTimeout then
-				moveConnection:Disconnect()
-				return false
-			end
-
-			task.wait(0.1)
-		end
-
-		moveConnection:Disconnect()
-
-		if not reached then
+		if not moveToWaypoint(waypoint.Position, waypoint.Action) then
 			return false
 		end
 	end
@@ -1767,21 +1783,12 @@ local function followPath(destination)
 	return true
 end
 
-local function getRoamMode()
-	if type(config.RoamMode) ~= "string" then
-		return "randomroam"
-	end
-	return string.lower(config.RoamMode)
-end
-
 local function getNextDestination()
 	local mode = getRoamMode()
 	if mode == "pointroam" or mode == "mappointsroam" then
-		local points = getPatrolPoints()
-		local chosen = chooseRandomPoint(points)
-		if chosen then
-			lastPoint = chosen
-			return chosen.Position
+		local point = getNextPatrolPoint()
+		if point and point:IsDescendantOf(workspace) then
+			return point.Position
 		end
 		return nil
 	end
@@ -1791,20 +1798,21 @@ end
 
 while humanoid.Health > 0 do
 	if shouldPause() then
-		task.wait(0.5)
+		task.wait(0.25)
 	else
 		local roamSpeed = config.RoamWalkSpeed or humanoid.WalkSpeed
 		if humanoid.WalkSpeed ~= roamSpeed then
 			humanoid.WalkSpeed = roamSpeed
 		end
+
 		local destination = getNextDestination()
 		if destination then
 			local attempts = 0
 			local success = false
-			while attempts < 3 and not success and not shouldPause() do
+			while attempts < 4 and not success and not shouldPause() do
 				success = followPath(destination)
 				if not success then
-					destination = getNextDestination()
+					destination = getNextDestination() or getRandomRoamPosition()
 				end
 				attempts += 1
 			end
