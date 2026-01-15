@@ -1569,6 +1569,242 @@ humanoid.Running:Connect(onRunning)]]></ProtectedString>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
+		<Item class="ModuleScript" referent="RBX9C45D3E0B4E24B41BDFB78C1642F729D">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[return {
+	RoamMode = "RandomRoam", -- "RandomRoam" or "PointRoam"
+	PointsFolderName = "fredbearwanderpoints",
+	MinRoamDelay = 2,
+	MaxRoamDelay = 5,
+	ReachTolerance = 3,
+	StuckTimeout = 2.5,
+	PathParams = {
+		AgentRadius = 2,
+		AgentHeight = 6,
+		AgentCanJump = true,
+		AgentCanClimb = true,
+		AgentCanSwim = false,
+		AgentJumpHeight = 7,
+		AgentMaxSlope = 45,
+	},
+}]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{0D256B4D-A260-447F-A64A-5C86C5CB0E1E}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">FredbearAIConfig</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Script" referent="RBX2DE6927ED9194FA39B26631869DA01EA">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local PathfindingService = game:GetService("PathfindingService")
+
+local npc = script.Parent
+local humanoid = npc:WaitForChild("Humanoid")
+local root = npc:WaitForChild("HumanoidRootPart")
+
+local config = require(npc:WaitForChild("FredbearAIConfig"))
+
+if npc:GetAttribute("IsChasing") == nil then
+	npc:SetAttribute("IsChasing", false)
+end
+
+if npc:GetAttribute("RoamControllerRunning") then
+	return
+end
+npc:SetAttribute("RoamControllerRunning", true)
+
+local lastPoint = nil
+local randomRoamRadius = 40
+
+local function getPointsFolder()
+	local folder = workspace:FindFirstChild(config.PointsFolderName)
+	if folder and folder:IsA("Folder") then
+		return folder
+	end
+	return nil
+end
+
+local function getPatrolPoints()
+	local folder = getPointsFolder()
+	if not folder then
+		return {}
+	end
+
+	local points = {}
+	for _, child in ipairs(folder:GetChildren()) do
+		if child:IsA("BasePart") then
+			table.insert(points, child)
+		end
+	end
+	return points
+end
+
+local function chooseRandomPoint(points)
+	if #points == 0 then
+		return nil
+	end
+
+	local candidates = {}
+	for _, point in ipairs(points) do
+		if point ~= lastPoint then
+			table.insert(candidates, point)
+		end
+	end
+
+	if #candidates == 0 then
+		candidates = points
+	end
+
+	local totalWeight = 0
+	local weights = {}
+	for _, point in ipairs(candidates) do
+		local distance = (point.Position - root.Position).Magnitude
+		local weight = math.max(distance, 1)
+		totalWeight += weight
+		table.insert(weights, weight)
+	end
+
+	local roll = math.random() * totalWeight
+	local running = 0
+	for index, point in ipairs(candidates) do
+		running += weights[index]
+		if roll <= running then
+			return point
+		end
+	end
+
+	return candidates[1]
+end
+
+local function getRandomRoamPosition()
+	local angle = math.random() * math.pi * 2
+	local distance = math.random(10, randomRoamRadius)
+	local offset = Vector3.new(math.cos(angle) * distance, 0, math.sin(angle) * distance)
+	return root.Position + offset
+end
+
+local function shouldPause()
+	return npc:GetAttribute("IsChasing") == true or humanoid.Health <= 0
+end
+
+local function followPath(destination)
+	local path = PathfindingService:CreatePath(config.PathParams)
+	path:ComputeAsync(root.Position, destination)
+	if path.Status ~= Enum.PathStatus.Success then
+		return false
+	end
+
+	local waypoints = path:GetWaypoints()
+	for _, waypoint in ipairs(waypoints) do
+		if shouldPause() then
+			return false
+		end
+
+		local reached = false
+		local moveDone = false
+		local moveConnection
+
+		moveConnection = humanoid.MoveToFinished:Connect(function(success)
+			moveDone = true
+			reached = success
+		end)
+
+		humanoid:MoveTo(waypoint.Position)
+
+		local startTime = os.clock()
+		local lastPos = root.Position
+		local lastMoveTime = startTime
+
+		while not moveDone do
+			if shouldPause() then
+				moveConnection:Disconnect()
+				return false
+			end
+
+			local currentPos = root.Position
+			if (currentPos - lastPos).Magnitude > 0.1 then
+				lastPos = currentPos
+				lastMoveTime = os.clock()
+			end
+
+			if (currentPos - waypoint.Position).Magnitude <= config.ReachTolerance then
+				reached = true
+				moveDone = true
+				break
+			end
+
+			if os.clock() - lastMoveTime >= config.StuckTimeout then
+				moveConnection:Disconnect()
+				return false
+			end
+
+			task.wait(0.1)
+		end
+
+		moveConnection:Disconnect()
+
+		if not reached then
+			return false
+		end
+	end
+
+	return true
+end
+
+local function getNextDestination()
+	if config.RoamMode == "PointRoam" then
+		local points = getPatrolPoints()
+		local chosen = chooseRandomPoint(points)
+		if chosen then
+			lastPoint = chosen
+			return chosen.Position
+		end
+		return nil
+	end
+
+	return getRandomRoamPosition()
+end
+
+while humanoid.Health > 0 do
+	if shouldPause() then
+		task.wait(0.5)
+	else
+		local destination = getNextDestination()
+		if destination then
+			local attempts = 0
+			local success = false
+			while attempts < 3 and not success and not shouldPause() do
+				success = followPath(destination)
+				if not success then
+					destination = getNextDestination()
+				end
+				attempts += 1
+			end
+		end
+
+		local delayTime = math.random() * (config.MaxRoamDelay - config.MinRoamDelay) + config.MinRoamDelay
+		task.wait(delayTime)
+	end
+end
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{E89113FD-90A7-4AE4-BC1F-C763F47D6E49}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">FredbearRoamController</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
 		<Item class="Script" referent="RBX509644DF00B940D18043CCC87F5C7B12">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local Character = script.Parent
@@ -2330,7 +2566,7 @@ while Character.Parent ~= nil do
 	stepAnimate(currentGameTime)
 end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{06CB56DF-34E4-4AE7-8AF3-F57F51DB6D02}</string>
@@ -3063,7 +3299,7 @@ while true do
 	wait(math.random(3,5))
 end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{0080F933-D881-47F1-AD88-98DD4F28B385}</string>
@@ -3162,7 +3398,7 @@ while true do
 		script.Parent.Humanoid.WalkSpeed=16
 end
 end]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{409EF013-52F4-4368-B622-EA59E70477A4}</string>
@@ -3313,7 +3549,7 @@ end
 
 
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{A34E129E-8D0C-4348-8425-FC4685070D90}</string>
@@ -3351,6 +3587,16 @@ local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Blacklist
 rayParams.FilterDescendantsInstances = {npc}
 rayParams.IgnoreWater = true
+
+if npc:GetAttribute("IsChasing") == nil then
+	npc:SetAttribute("IsChasing", false)
+end
+
+local function setChasingState(isChasing)
+	if npc:GetAttribute("IsChasing") ~= isChasing then
+		npc:SetAttribute("IsChasing", isChasing)
+	end
+end
 
 -- ===== FUNCTIONS =====
 local function isPlayerVisible(player)
@@ -3410,6 +3656,7 @@ RunService.Heartbeat:Connect(function()
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
 		if hrp and tick() - lastSeenTime <= MEMORY_TIME then
+			setChasingState(true)
 			humanoid.WalkSpeed = CHASE_SPEED
 
 			local distance = (hrp.Position - root.Position).Magnitude
@@ -3421,8 +3668,11 @@ RunService.Heartbeat:Connect(function()
 		else
 			-- Memory expired
 			targetPlayer = nil
+			setChasingState(false)
 			humanoid:Move(Vector3.zero)
 		end
+	else
+		setChasingState(false)
 	end
 end)
 ]]></ProtectedString>
