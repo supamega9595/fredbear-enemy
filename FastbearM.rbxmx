@@ -1574,8 +1574,10 @@ humanoid.Running:Connect(onRunning)]]></ProtectedString>
 				<ProtectedString name="Source"><![CDATA[return {
 	RoamMode = "RandomRoam", -- "RandomRoam" or "PointRoam"
 	PointsFolderName = "fredbearwanderpoints",
-	MinRoamDelay = 2,
-	MaxRoamDelay = 5,
+	RoamWalkSpeed = 22,
+	RandomRoamRadius = 70,
+	MinRoamDelay = 0.5,
+	MaxRoamDelay = 1.5,
 	ReachTolerance = 3,
 	StuckTimeout = 2.5,
 	PathParams = {
@@ -1620,11 +1622,15 @@ end
 npc:SetAttribute("RoamControllerRunning", true)
 
 local lastPoint = nil
-local randomRoamRadius = 40
+local randomRoamRadius = config.RandomRoamRadius or 40
+
+if config.RoamWalkSpeed then
+	npc:SetAttribute("RoamWalkSpeed", config.RoamWalkSpeed)
+end
 
 local function getPointsFolder()
 	local folder = workspace:FindFirstChild(config.PointsFolderName)
-	if folder and folder:IsA("Folder") then
+	if folder and (folder:IsA("Folder") or folder:IsA("Model")) then
 		return folder
 	end
 	return nil
@@ -1637,7 +1643,7 @@ local function getPatrolPoints()
 	end
 
 	local points = {}
-	for _, child in ipairs(folder:GetChildren()) do
+	for _, child in ipairs(folder:GetDescendants()) do
 		if child:IsA("BasePart") then
 			table.insert(points, child)
 		end
@@ -1775,6 +1781,10 @@ while humanoid.Health > 0 do
 	if shouldPause() then
 		task.wait(0.5)
 	else
+		local roamSpeed = config.RoamWalkSpeed or humanoid.WalkSpeed
+		if humanoid.WalkSpeed ~= roamSpeed then
+			humanoid.WalkSpeed = roamSpeed
+		end
 		local destination = getNextDestination()
 		if destination then
 			local attempts = 0
@@ -3601,7 +3611,8 @@ local function setChasingState(isChasing)
 	if isChasing then
 		humanoid.WalkSpeed = CHASE_SPEED
 	else
-		humanoid.WalkSpeed = baseWalkSpeed
+		local roamSpeed = npc:GetAttribute("RoamWalkSpeed") or baseWalkSpeed
+		humanoid.WalkSpeed = roamSpeed
 	end
 end
 
