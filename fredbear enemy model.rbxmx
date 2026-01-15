@@ -2996,11 +2996,12 @@ end
 	local FOV_ANGLE = 70 -- degrees (front vision cone)
 	local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
 	local STOP_DISTANCE = 5
-	local PATH_RECOMPUTE_INTERVAL = 0.2
+	local PATH_RECOMPUTE_INTERVAL = 0.4
 	local DIRECT_PATH_CHECK_INTERVAL = 0.05
 	local WAYPOINT_SPACING = 8
-	local TARGET_REPATH_DISTANCE = 6
+	local TARGET_REPATH_DISTANCE = 10
 	local DIRECT_MOVE_INTERVAL = 0.05
+	local PATH_MODE_DURATION = 1.2
 	
 	-- ===== INTERNAL =====
 	local lastSeenTime = 0
@@ -3022,6 +3023,7 @@ end
 	local STUCK_CHECK_INTERVAL = 0.1
 	local STUCK_DISTANCE = 1.5
 	local STUCK_TIME_LIMIT = 0.3
+	local pathModeUntil = 0
 	
 	-- Raycast params
 	local rayParams = RaycastParams.new()
@@ -3230,47 +3232,56 @@ end
 				lastStuckCheck = now
 			end
 
-			local shouldUsePath = stuckTime >= STUCK_TIME_LIMIT
-			if now - directCheckTime >= DIRECT_PATH_CHECK_INTERVAL then
-				directCheckTime = now
-				if hasDirectPath(hrp.Position) and not shouldUsePath then
-					clearPath()
-					stuckTime = 0
-					if now - lastDirectMove >= DIRECT_MOVE_INTERVAL then
-						lastDirectMove = now
-						local direction = hrp.Position - root.Position
-						if direction.Magnitude > 0 then
-							humanoid:Move(direction.Unit, true)
+		if stuckTime >= STUCK_TIME_LIMIT then
+			pathModeUntil = math.max(pathModeUntil, now + PATH_MODE_DURATION)
+		end
+
+		local shouldUsePath = now < pathModeUntil
+		if now - directCheckTime >= DIRECT_PATH_CHECK_INTERVAL then
+			directCheckTime = now
+			if hasDirectPath(hrp.Position) and not shouldUsePath then
+				clearPath()
+				stuckTime = 0
+				pathModeUntil = 0
+				if now - lastDirectMove >= DIRECT_MOVE_INTERVAL then
+					lastDirectMove = now
+					local direction = hrp.Position - root.Position
+					if direction.Magnitude > 0 then
+						humanoid:Move(direction.Unit, true)
 						end
 					end
 					return
 				end
 			end
 	
-		local shouldRepath = false
-		if not currentWaypoints then
-			shouldRepath = true
-		elseif lastTargetPosition and (hrp.Position - lastTargetPosition).Magnitude >= TARGET_REPATH_DISTANCE then
-			shouldRepath = true
-		elseif now - pathComputeTime >= PATH_RECOMPUTE_INTERVAL then
-			shouldRepath = true
-		end
-	
-		if shouldRepath then
-			pathComputeTime = now
-			lastTargetPosition = hrp.Position
-			if computePath(hrp.Position) then
+		if shouldUsePath then
+			local shouldRepath = false
+			if not currentWaypoints then
+				shouldRepath = true
+			elseif lastTargetPosition and (hrp.Position - lastTargetPosition).Magnitude >= TARGET_REPATH_DISTANCE then
+				shouldRepath = true
+			elseif now - pathComputeTime >= PATH_RECOMPUTE_INTERVAL then
+				shouldRepath = true
+			end
+		
+			if shouldRepath then
+				pathComputeTime = now
+				lastTargetPosition = hrp.Position
+				if computePath(hrp.Position) then
+					followPath(hrp.Position)
+				end
+			end
+		
+			if currentWaypoints and waypointIndex <= #currentWaypoints then
+				local waypoint = currentWaypoints[waypointIndex]
+				local distanceToWaypoint = (waypoint.Position - root.Position).Magnitude
+				if distanceToWaypoint <= WAYPOINT_REACHED_DISTANCE then
+					waypointIndex += 1
+				end
 				followPath(hrp.Position)
+			else
+				clearPath()
 			end
-		end
-	
-		if currentWaypoints and waypointIndex <= #currentWaypoints then
-			local waypoint = currentWaypoints[waypointIndex]
-			local distanceToWaypoint = (waypoint.Position - root.Position).Magnitude
-			if distanceToWaypoint <= WAYPOINT_REACHED_DISTANCE then
-				waypointIndex += 1
-			end
-			followPath(hrp.Position)
 		end
 	end)
 	]]></ProtectedString>
