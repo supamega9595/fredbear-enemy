@@ -3451,34 +3451,56 @@ local COOLDOWN_SECONDS = 2
 
 local jumpscareConfigs = {
 	{
-		name = "InstantFaceSlam",
-		weight = 5,
-		soundId = "rbxassetid://1234567890",
-		imageId = "rbxassetid://1234567891",
-	},
-	{
-		name = "SilenceSpike",
+		name = "HardLockLunge",
 		weight = 4,
-		soundId = "rbxassetid://1234567892",
-		imageId = "rbxassetid://1234567893",
+		soundId = "rbxassetid://1234567890",
+		duration = 0.6,
+		distance = 2.2,
+		shakePower = 0.35,
+		shakeFrequency = 22,
+		pullInSpeed = 12,
 	},
 	{
-		name = "OffAxisSnap",
+		name = "SnapZoom",
 		weight = 3,
+		soundId = "rbxassetid://1234567891",
+		duration = 0.45,
+		distance = 1.6,
+		shakePower = 0.45,
+		shakeFrequency = 28,
+		pullInSpeed = 22,
+	},
+	{
+		name = "WhiplashTilt",
+		weight = 3,
+		soundId = "rbxassetid://1234567892",
+		duration = 0.55,
+		distance = 2,
+		shakePower = 0.3,
+		shakeFrequency = 18,
+		pullInSpeed = 14,
+		tiltDegrees = 20,
+	},
+	{
+		name = "GlitchLock",
+		weight = 2,
+		soundId = "rbxassetid://1234567893",
+		duration = 0.5,
+		distance = 1.8,
+		shakePower = 0.4,
+		shakeFrequency = 30,
+		pullInSpeed = 16,
+		glitchFrames = 3,
+	},
+	{
+		name = "BassDropStare",
+		weight = 2,
 		soundId = "rbxassetid://1234567894",
-		imageId = "rbxassetid://1234567895",
-	},
-	{
-		name = "SingleFrameGlitch",
-		weight = 2,
-		soundId = "rbxassetid://1234567896",
-		imageId = "rbxassetid://1234567897",
-	},
-	{
-		name = "FreezeSnap",
-		weight = 2,
-		soundId = "rbxassetid://1234567898",
-		imageId = "rbxassetid://1234567899",
+		duration = 0.7,
+		distance = 2.6,
+		shakePower = 0.25,
+		shakeFrequency = 16,
+		pullInSpeed = 10,
 	},
 }
 
@@ -3589,12 +3611,12 @@ for _, part in ipairs(npc:GetDescendants()) do
 			if hum.Health > 0 then
 				lastKillTime[player] = now
 				hum.Health = 0
-				local chosen = getWeightedRandomConfig()
-				remote:FireClient(player, chosen.name)
-			end
-		end)
+					local chosen = getWeightedRandomConfig()
+					remote:FireClient(player, chosen.name, npc)
+				end
+			end)
+		end
 	end
-end
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
@@ -3618,62 +3640,49 @@ local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 
 local scares = {
-	InstantFaceSlam = {
-		imageId = "rbxassetid://1234567891",
+	HardLockLunge = {
 		soundId = "rbxassetid://1234567890",
-		flashDuration = 0.25,
+		duration = 0.6,
+		distance = 2.2,
+		shakePower = 0.35,
+		shakeFrequency = 22,
+		pullInSpeed = 12,
 	},
-	SilenceSpike = {
-		imageId = "rbxassetid://1234567893",
+	SnapZoom = {
+		soundId = "rbxassetid://1234567891",
+		duration = 0.45,
+		distance = 1.6,
+		shakePower = 0.45,
+		shakeFrequency = 28,
+		pullInSpeed = 22,
+	},
+	WhiplashTilt = {
 		soundId = "rbxassetid://1234567892",
-		silenceDuration = 0.25,
-		flashDuration = 0.3,
+		duration = 0.55,
+		distance = 2,
+		shakePower = 0.3,
+		shakeFrequency = 18,
+		pullInSpeed = 14,
+		tiltDegrees = 20,
 	},
-	OffAxisSnap = {
-		imageId = "rbxassetid://1234567895",
+	GlitchLock = {
+		soundId = "rbxassetid://1234567893",
+		duration = 0.5,
+		distance = 1.8,
+		shakePower = 0.4,
+		shakeFrequency = 30,
+		pullInSpeed = 16,
+		glitchFrames = 3,
+	},
+	BassDropStare = {
 		soundId = "rbxassetid://1234567894",
-		flashDuration = 0.25,
-		xOffset = 0.18,
-	},
-	SingleFrameGlitch = {
-		imageId = "rbxassetid://1234567897",
-		glitchImageId = "rbxassetid://1234567900",
-		soundId = "rbxassetid://1234567896",
-		glitchDuration = 0.04,
-		flashDuration = 0.25,
-	},
-	FreezeSnap = {
-		imageId = "rbxassetid://1234567899",
-		soundId = "rbxassetid://1234567898",
-		freezeDuration = 0.08,
-		flashDuration = 0.25,
+		duration = 0.7,
+		distance = 2.6,
+		shakePower = 0.25,
+		shakeFrequency = 16,
+		pullInSpeed = 10,
 	},
 }
-
-local function getGui()
-	local playerGui = player:WaitForChild("PlayerGui")
-	local gui = playerGui:FindFirstChild("FredbearJumpscareGui")
-	if gui then
-		return gui, gui:FindFirstChild("JumpscareImage")
-	end
-
-	gui = Instance.new("ScreenGui")
-	gui.Name = "FredbearJumpscareGui"
-	gui.IgnoreGuiInset = true
-	gui.ResetOnSpawn = false
-
-	local image = Instance.new("ImageLabel")
-	image.Name = "JumpscareImage"
-	image.BackgroundTransparency = 1
-	image.AnchorPoint = Vector2.new(0.5, 0.5)
-	image.Position = UDim2.fromScale(0.5, 0.5)
-	image.Size = UDim2.fromScale(1, 1)
-	image.ImageTransparency = 1
-	image.Parent = gui
-
-	gui.Parent = playerGui
-	return gui, image
-end
 
 local function playSound(soundId)
 	if not soundId or soundId == "" then
@@ -3689,98 +3698,92 @@ local function playSound(soundId)
 	end)
 end
 
-local function showImage(image, imageId, position)
-	image.Image = imageId
-	image.Position = position or UDim2.fromScale(0.5, 0.5)
-	image.ImageTransparency = 0
+local function getHead(target)
+	if not target or not target:IsA("Model") then
+		return nil
+	end
+	return target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
 end
 
-local function hideImage(image)
-	image.ImageTransparency = 1
+local function getShakeOffset(power)
+	local x = (math.random() - 0.5) * 2 * power
+	local y = (math.random() - 0.5) * 2 * power
+	return Vector3.new(x, y, 0)
 end
 
-local function runInstantFaceSlam(config, image)
-	showImage(image, config.imageId)
-	playSound(config.soundId)
-	task.delay(config.flashDuration or 0.25, function()
-		hideImage(image)
-	end)
+local function getLookCFrame(head, distance, tiltDegrees)
+	local targetPos = head.Position
+	local forward = head.CFrame.LookVector
+	local focusPos = targetPos + forward * distance
+	local base = CFrame.new(focusPos, targetPos)
+	if tiltDegrees and tiltDegrees ~= 0 then
+		base *= CFrame.Angles(0, 0, math.rad(tiltDegrees))
+	end
+	return base
 end
 
-local function runSilenceSpike(config, image)
-	local originalVolume = SoundService.Volume
-	SoundService.Volume = 0
-	task.wait(config.silenceDuration or 0.25)
-	SoundService.Volume = originalVolume
-	showImage(image, config.imageId)
-	playSound(config.soundId)
-	task.delay(config.flashDuration or 0.3, function()
-		hideImage(image)
-	end)
-end
+local function playCameraJumpscare(config, target)
+	local head = getHead(target)
+	if not head then
+		return
+	end
 
-local function runOffAxisSnap(config, image)
-	local offset = config.xOffset or 0.18
-	local position = UDim2.fromScale(0.5 + offset, 0.5)
-	showImage(image, config.imageId, position)
-	playSound(config.soundId)
-	task.delay(config.flashDuration or 0.25, function()
-		hideImage(image)
-		image.Position = UDim2.fromScale(0.5, 0.5)
-	end)
-end
-
-local function runSingleFrameGlitch(config, image)
-	showImage(image, config.glitchImageId or config.imageId)
-	task.wait(config.glitchDuration or 0.04)
-	showImage(image, config.imageId)
-	playSound(config.soundId)
-	task.delay(config.flashDuration or 0.25, function()
-		hideImage(image)
-	end)
-end
-
-local function runFreezeSnap(config, image)
 	local camera = workspace.CurrentCamera
 	local originalType = camera.CameraType
 	local originalCFrame = camera.CFrame
 
 	camera.CameraType = Enum.CameraType.Scriptable
-	camera.CFrame = originalCFrame
-
-	task.wait(config.freezeDuration or 0.08)
-
-	showImage(image, config.imageId)
 	playSound(config.soundId)
 
-	task.delay(config.flashDuration or 0.25, function()
-		hideImage(image)
-		camera.CameraType = originalType
-	end)
+	local startTime = os.clock()
+	local duration = config.duration or 0.6
+	local distance = config.distance or 2
+	local pullInSpeed = config.pullInSpeed or 10
+	local shakePower = config.shakePower or 0.2
+	local shakeFrequency = config.shakeFrequency or 18
+	local tiltDegrees = config.tiltDegrees or 0
+	local glitchFrames = config.glitchFrames or 0
+	local glitchToggle = false
+	local glitchCounter = 0
+
+	while os.clock() - startTime < duration do
+		local elapsed = os.clock() - startTime
+		local progress = math.clamp(elapsed * pullInSpeed / duration, 0, 1)
+		local currentDistance = distance * (1 - progress * 0.6)
+		local baseCFrame = getLookCFrame(head, currentDistance, tiltDegrees)
+
+		local shake = Vector3.zero
+		if shakePower > 0 then
+			local shakeTime = elapsed * shakeFrequency
+			if shakeTime - math.floor(shakeTime) < 0.5 then
+				shake = getShakeOffset(shakePower)
+			end
+		end
+
+		if glitchFrames > 0 then
+			glitchCounter += 1
+			if glitchCounter % glitchFrames == 0 then
+				glitchToggle = not glitchToggle
+			end
+			if glitchToggle then
+				shake += Vector3.new(shakePower * 2, -shakePower * 2, 0)
+			end
+		end
+
+		camera.CFrame = baseCFrame + shake
+		task.wait()
+	end
+
+	camera.CameraType = originalType
+	camera.CFrame = originalCFrame
 end
 
-local function runJumpscare(name)
+local function runJumpscare(name, target)
 	local config = scares[name]
 	if not config then
 		return
 	end
-
-	local _, image = getGui()
-	if not image then
-		return
-	end
-
-	if name == "InstantFaceSlam" then
-		runInstantFaceSlam(config, image)
-	elseif name == "SilenceSpike" then
-		runSilenceSpike(config, image)
-	elseif name == "OffAxisSnap" then
-		runOffAxisSnap(config, image)
-	elseif name == "SingleFrameGlitch" then
-		runSingleFrameGlitch(config, image)
-	elseif name == "FreezeSnap" then
-		runFreezeSnap(config, image)
-	end
+	playCameraJumpscare(config, target)
 end
 
 remote.OnClientEvent:Connect(runJumpscare)
