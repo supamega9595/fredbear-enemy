@@ -3327,105 +3327,231 @@ end
 		</Item>
 		<Item class="Script" referent="RBX64A6D7EE75DC4FD3BE772CF969C33D60">
 			<Properties>
-				<ProtectedString name="Source"><![CDATA[--// NPC FRONT LOS CHASE WITH MEMORY
-local npc = script.Parent
-local humanoid = npc:WaitForChild("Humanoid")
-local root = npc:WaitForChild("HumanoidRootPart")
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-
--- ===== SETTINGS =====
-local CHASE_SPEED = 100
-local DETECTION_RANGE = 200
-local FOV_ANGLE = 70 -- degrees (front vision cone)
-local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
-local STOP_DISTANCE = 5
-
--- ===== INTERNAL =====
-local lastSeenTime = 0
-local targetPlayer = nil
-
--- Raycast params
-local rayParams = RaycastParams.new()
-rayParams.FilterType = Enum.RaycastFilterType.Blacklist
-rayParams.FilterDescendantsInstances = {npc}
-rayParams.IgnoreWater = true
-
--- ===== FUNCTIONS =====
-local function isPlayerVisible(player)
-	local char = player.Character
-	if not char then return false end
-
-	local hrp = char:FindFirstChild("HumanoidRootPart")
-	local hum = char:FindFirstChild("Humanoid")
-	if not hrp or not hum or hum.Health <= 0 then return false end
-
-	local distance = (hrp.Position - root.Position).Magnitude
-	if distance > DETECTION_RANGE then return false end
-
-	-- FOV check
-	local directionToPlayer = (hrp.Position - root.Position).Unit
-	local npcForward = root.CFrame.LookVector
-	local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
-
-	if angle > FOV_ANGLE then
-		return false
-	end
-
-	-- Raycast LOS
-	local result = workspace:Raycast(
-		root.Position,
-		directionToPlayer * distance,
-		rayParams
-	)
-
-	if result and not result.Instance:IsDescendantOf(char) then
-		return false
-	end
-
-	return true
-end
-
-local function getVisiblePlayer()
-	for _, player in ipairs(Players:GetPlayers()) do
-		if isPlayerVisible(player) then
-			return player
+					<ProtectedString name="Source"><![CDATA[--// NPC FRONT LOS CHASE WITH MEMORY + OPTIMIZED PATHFINDING
+	local npc = script.Parent
+	local humanoid = npc:WaitForChild("Humanoid")
+	local root = npc:WaitForChild("HumanoidRootPart")
+	
+	local PathfindingService = game:GetService("PathfindingService")
+	local Players = game:GetService("Players")
+	local RunService = game:GetService("RunService")
+	
+	-- ===== SETTINGS =====
+	local CHASE_SPEED = 100
+	local DETECTION_RANGE = 200
+	local FOV_ANGLE = 70 -- degrees (front vision cone)
+	local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
+	local STOP_DISTANCE = 5
+	local PATH_RECOMPUTE_INTERVAL = 0.25
+	local DIRECT_PATH_CHECK_INTERVAL = 0.2
+	local WAYPOINT_SPACING = 4
+	local TARGET_REPATH_DISTANCE = 6
+	
+	-- ===== INTERNAL =====
+	local lastSeenTime = 0
+	local targetPlayer = nil
+	local currentPath = nil
+	local currentWaypoints = nil
+	local waypointIndex = 1
+	local pathBlockedConnection = nil
+	local pathComputeTime = 0
+	local directCheckTime = 0
+	local lastTargetPosition = nil
+	local followToken = 0
+	local lastDirectMove = 0
+	
+	-- Raycast params
+	local rayParams = RaycastParams.new()
+	rayParams.FilterType = Enum.RaycastFilterType.Blacklist
+	rayParams.FilterDescendantsInstances = {npc}
+	rayParams.IgnoreWater = true
+	
+	local function isPlayerVisible(player)
+		local char = player.Character
+		if not char then return false end
+	
+		local hrp = char:FindFirstChild("HumanoidRootPart")
+		local hum = char:FindFirstChild("Humanoid")
+		if not hrp or not hum or hum.Health <= 0 then return false end
+	
+		local distance = (hrp.Position - root.Position).Magnitude
+		if distance > DETECTION_RANGE then return false end
+	
+		-- FOV check
+		local directionToPlayer = (hrp.Position - root.Position).Unit
+		local npcForward = root.CFrame.LookVector
+		local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
+	
+		if angle > FOV_ANGLE then
+			return false
 		end
+	
+		-- Raycast LOS
+		local result = workspace:Raycast(
+			root.Position,
+			directionToPlayer * distance,
+			rayParams
+		)
+	
+		if result and not result.Instance:IsDescendantOf(char) then
+			return false
+		end
+	
+		return true
 	end
-	return nil
-end
-
--- ===== MAIN LOOP =====
-RunService.Heartbeat:Connect(function()
-	local visiblePlayer = getVisiblePlayer()
-
-	if visiblePlayer then
-		targetPlayer = visiblePlayer
-		lastSeenTime = tick()
+	
+	local function getVisiblePlayer()
+		for _, player in ipairs(Players:GetPlayers()) do
+			if isPlayerVisible(player) then
+				return player
+			end
+		end
+		return nil
 	end
-
-	if targetPlayer then
+	
+	local function clearPath()
+		if pathBlockedConnection then
+			pathBlockedConnection:Disconnect()
+			pathBlockedConnection = nil
+		end
+		currentPath = nil
+		currentWaypoints = nil
+		waypointIndex = 1
+	end
+	
+	local function computePath(targetPosition)
+		clearPath()
+		local path = PathfindingService:CreatePath({
+			AgentRadius = 2,
+			AgentHeight = 5,
+			AgentCanJump = true,
+			WaypointSpacing = WAYPOINT_SPACING
+		})
+	
+		path:ComputeAsync(root.Position, targetPosition)
+		if path.Status ~= Enum.PathStatus.Success then
+			return false
+		end
+	
+		currentPath = path
+		currentWaypoints = path:GetWaypoints()
+		waypointIndex = 2
+	
+		pathBlockedConnection = path.Blocked:Connect(function(blockedIndex)
+			if blockedIndex >= waypointIndex then
+				pathComputeTime = 0
+			end
+		end)
+	
+		return true
+	end
+	
+	local function followPath(targetPosition)
+		if not currentWaypoints then
+			return
+		end
+	
+		followToken += 1
+		local localToken = followToken
+	
+		task.spawn(function()
+			while currentWaypoints and waypointIndex <= #currentWaypoints do
+				if followToken ~= localToken then
+					return
+				end
+	
+				local waypoint = currentWaypoints[waypointIndex]
+				if waypoint.Action == Enum.PathWaypointAction.Jump then
+					humanoid.Jump = true
+				end
+	
+				humanoid:MoveTo(waypoint.Position)
+				local reached = humanoid.MoveToFinished:Wait()
+				if not reached then
+					pathComputeTime = 0
+					return
+				end
+				waypointIndex += 1
+			end
+		end)
+	end
+	
+	local function hasDirectPath(targetPosition)
+		local direction = targetPosition - root.Position
+		local distance = direction.Magnitude
+		if distance == 0 then
+			return true
+		end
+		local result = workspace:Raycast(root.Position, direction, rayParams)
+		return not result
+	end
+	
+	RunService.Heartbeat:Connect(function()
+		local visiblePlayer = getVisiblePlayer()
+	
+		if visiblePlayer then
+			targetPlayer = visiblePlayer
+			lastSeenTime = tick()
+		end
+	
+		if not targetPlayer then
+			clearPath()
+			return
+		end
+	
 		local char = targetPlayer.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
-
-		if hrp and tick() - lastSeenTime <= MEMORY_TIME then
-			humanoid.WalkSpeed = CHASE_SPEED
-
-			local distance = (hrp.Position - root.Position).Magnitude
-			if distance > STOP_DISTANCE then
-				humanoid:MoveTo(hrp.Position)
-			else
-				humanoid:Move(Vector3.zero)
-			end
-		else
-			-- Memory expired
-			targetPlayer = nil
-			humanoid:Move(Vector3.zero)
+		if not hrp then
+			clearPath()
+			return
 		end
-	end
-end)
-]]></ProtectedString>
+	
+		if tick() - lastSeenTime > MEMORY_TIME then
+			targetPlayer = nil
+			clearPath()
+			humanoid:Move(Vector3.zero)
+			return
+		end
+	
+		humanoid.WalkSpeed = CHASE_SPEED
+		local distance = (hrp.Position - root.Position).Magnitude
+		if distance <= STOP_DISTANCE then
+			clearPath()
+			humanoid:Move(Vector3.zero)
+			return
+		end
+	
+		local now = tick()
+		if now - directCheckTime >= DIRECT_PATH_CHECK_INTERVAL then
+			directCheckTime = now
+			if hasDirectPath(hrp.Position) then
+				clearPath()
+				if now - lastDirectMove >= 0.1 then
+					lastDirectMove = now
+					humanoid:MoveTo(hrp.Position)
+				end
+				return
+			end
+		end
+	
+		local shouldRepath = false
+		if not currentWaypoints then
+			shouldRepath = true
+		elseif lastTargetPosition and (hrp.Position - lastTargetPosition).Magnitude >= TARGET_REPATH_DISTANCE then
+			shouldRepath = true
+		elseif now - pathComputeTime >= PATH_RECOMPUTE_INTERVAL then
+			shouldRepath = true
+		end
+	
+		if shouldRepath then
+			pathComputeTime = now
+			lastTargetPosition = hrp.Position
+			if computePath(hrp.Position) then
+				followPath(hrp.Position)
+			end
+		end
+	end)
+	]]></ProtectedString>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
