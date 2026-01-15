@@ -3612,7 +3612,7 @@ for _, part in ipairs(npc:GetDescendants()) do
 				lastKillTime[player] = now
 				hum.Health = 0
 					local chosen = getWeightedRandomConfig()
-					remote:FireClient(player, chosen.name, npc)
+					remote:FireClient(player, chosen, npc)
 				end
 			end)
 		end
@@ -3638,51 +3638,6 @@ local SoundService = game:GetService("SoundService")
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
-
-local scares = {
-	HardLockLunge = {
-		soundId = "rbxassetid://6982454389",
-		duration = 0.6,
-		distance = 2.2,
-		shakePower = 0.35,
-		shakeFrequency = 22,
-		pullInSpeed = 12,
-	},
-	SnapZoom = {
-		soundId = "rbxassetid://6982454389",
-		duration = 0.45,
-		distance = 1.6,
-		shakePower = 0.45,
-		shakeFrequency = 28,
-		pullInSpeed = 22,
-	},
-	WhiplashTilt = {
-		soundId = "rbxassetid://6982454389",
-		duration = 0.55,
-		distance = 2,
-		shakePower = 0.3,
-		shakeFrequency = 18,
-		pullInSpeed = 14,
-		tiltDegrees = 20,
-	},
-	GlitchLock = {
-		soundId = "rbxassetid://6982454389",
-		duration = 0.5,
-		distance = 1.8,
-		shakePower = 0.4,
-		shakeFrequency = 30,
-		pullInSpeed = 16,
-		glitchFrames = 3,
-	},
-	BassDropStare = {
-		soundId = "rbxassetid://6982454389",
-		duration = 0.7,
-		distance = 2.6,
-		shakePower = 0.25,
-		shakeFrequency = 16,
-		pullInSpeed = 10,
-	},
-}
 
 local function playSound(soundId)
 	if not soundId or soundId == "" then
@@ -3778,9 +3733,8 @@ local function playCameraJumpscare(config, target)
 	camera.CFrame = originalCFrame
 end
 
-local function runJumpscare(name, target)
-	local config = scares[name]
-	if not config then
+local function runJumpscare(config, target)
+	if type(config) ~= "table" then
 		return
 	end
 	playCameraJumpscare(config, target)
