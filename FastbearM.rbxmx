@@ -3481,46 +3481,138 @@ end)
 		<Item class="Script" referent="RBXA411E08BA4F744778B6E2C8C0488D6BF">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
-local DEFAULT_LEVEL = 10
-local MIN_LEVEL = 0
-local MAX_LEVEL = 20
+local REMOTE_NAME = "FastbearAILevelChanged"
 
-local BASE = {
-	ChaseSpeed = 80,
-	DetectionRange = 140,
-	MemoryTime = 3.5,
-	FovAngle = 60,
-	StopDistance = 5,
+local SETTINGS = {
+	DefaultLevel = 1,
+	MinLevel = 1,
+	MaxLevel = 20,
+	RampEnabled = true,
+	RampIntervalSeconds = 20,
+	RampChance = 0.35,
+	RampStep = 1,
 }
 
-local SCALE = {
-	ChaseSpeed = 2,
-	DetectionRange = 6,
-	MemoryTime = 0.15,
-	FovAngle = 1,
-	StopDistance = 0,
+local LEVELS = {
+	[1] = { ChaseSpeed = 82, DetectionRange = 146, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
+	[2] = { ChaseSpeed = 84, DetectionRange = 152, MemoryTime = 3.8, FovAngle = 62, StopDistance = 5 },
+	[3] = { ChaseSpeed = 86, DetectionRange = 158, MemoryTime = 3.95, FovAngle = 63, StopDistance = 5 },
+	[4] = { ChaseSpeed = 88, DetectionRange = 164, MemoryTime = 4.1, FovAngle = 64, StopDistance = 5 },
+	[5] = { ChaseSpeed = 90, DetectionRange = 170, MemoryTime = 4.25, FovAngle = 65, StopDistance = 5 },
+	[6] = { ChaseSpeed = 92, DetectionRange = 176, MemoryTime = 4.4, FovAngle = 66, StopDistance = 5 },
+	[7] = { ChaseSpeed = 94, DetectionRange = 182, MemoryTime = 4.55, FovAngle = 67, StopDistance = 5 },
+	[8] = { ChaseSpeed = 96, DetectionRange = 188, MemoryTime = 4.7, FovAngle = 68, StopDistance = 5 },
+	[9] = { ChaseSpeed = 98, DetectionRange = 194, MemoryTime = 4.85, FovAngle = 69, StopDistance = 5 },
+	[10] = { ChaseSpeed = 100, DetectionRange = 200, MemoryTime = 5.0, FovAngle = 70, StopDistance = 5 },
+	[11] = { ChaseSpeed = 102, DetectionRange = 206, MemoryTime = 5.15, FovAngle = 71, StopDistance = 5 },
+	[12] = { ChaseSpeed = 104, DetectionRange = 212, MemoryTime = 5.3, FovAngle = 72, StopDistance = 5 },
+	[13] = { ChaseSpeed = 106, DetectionRange = 218, MemoryTime = 5.45, FovAngle = 73, StopDistance = 5 },
+	[14] = { ChaseSpeed = 108, DetectionRange = 224, MemoryTime = 5.6, FovAngle = 74, StopDistance = 5 },
+	[15] = { ChaseSpeed = 110, DetectionRange = 230, MemoryTime = 5.75, FovAngle = 75, StopDistance = 5 },
+	[16] = { ChaseSpeed = 112, DetectionRange = 236, MemoryTime = 5.9, FovAngle = 76, StopDistance = 5 },
+	[17] = { ChaseSpeed = 114, DetectionRange = 242, MemoryTime = 6.05, FovAngle = 77, StopDistance = 5 },
+	[18] = { ChaseSpeed = 116, DetectionRange = 248, MemoryTime = 6.2, FovAngle = 78, StopDistance = 5 },
+	[19] = { ChaseSpeed = 118, DetectionRange = 254, MemoryTime = 6.35, FovAngle = 79, StopDistance = 5 },
+	[20] = { ChaseSpeed = 120, DetectionRange = 260, MemoryTime = 6.5, FovAngle = 80, StopDistance = 5 },
 }
 
-local function applyLevel(level)
-	level = tonumber(level) or DEFAULT_LEVEL
-	level = math.clamp(level, MIN_LEVEL, MAX_LEVEL)
-
-	npc:SetAttribute("AILevel", level)
-	npc:SetAttribute("ChaseSpeed", BASE.ChaseSpeed + (level * SCALE.ChaseSpeed))
-	npc:SetAttribute("DetectionRange", BASE.DetectionRange + (level * SCALE.DetectionRange))
-	npc:SetAttribute("MemoryTime", BASE.MemoryTime + (level * SCALE.MemoryTime))
-	npc:SetAttribute("FovAngle", BASE.FovAngle + (level * SCALE.FovAngle))
-	npc:SetAttribute("StopDistance", BASE.StopDistance + (level * SCALE.StopDistance))
+local function ensureRemote()
+	local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
+	if not remote then
+		remote = Instance.new("RemoteEvent")
+		remote.Name = REMOTE_NAME
+		remote.Parent = ReplicatedStorage
+	end
+	return remote
 end
 
-if npc:GetAttribute("AILevel") == nil then
-	npc:SetAttribute("AILevel", DEFAULT_LEVEL)
+local function ensureAttribute(name, value)
+	if npc:GetAttribute(name) == nil then
+		npc:SetAttribute(name, value)
+	end
+end
+
+local function getNumberAttribute(name, fallback, minValue, maxValue)
+	local value = npc:GetAttribute(name)
+	if type(value) ~= "number" then
+		return fallback
+	end
+	if minValue ~= nil then
+		value = math.max(minValue, value)
+	end
+	if maxValue ~= nil then
+		value = math.min(maxValue, value)
+	end
+	return value
+end
+
+local function getBooleanAttribute(name, fallback)
+	local value = npc:GetAttribute(name)
+	if type(value) ~= "boolean" then
+		return fallback
+	end
+	return value
+end
+
+ensureAttribute("AILevel", SETTINGS.DefaultLevel)
+ensureAttribute("RampEnabled", SETTINGS.RampEnabled)
+ensureAttribute("RampIntervalSeconds", SETTINGS.RampIntervalSeconds)
+ensureAttribute("RampChance", SETTINGS.RampChance)
+ensureAttribute("RampStep", SETTINGS.RampStep)
+
+local function getLevelConfig(level)
+	return LEVELS[level] or LEVELS[SETTINGS.DefaultLevel]
+end
+
+local remote = ensureRemote()
+
+local function applyLevel(level)
+	level = tonumber(level) or SETTINGS.DefaultLevel
+	level = math.clamp(level, SETTINGS.MinLevel, SETTINGS.MaxLevel)
+
+	local config = getLevelConfig(level)
+	npc:SetAttribute("AILevel", level)
+	npc:SetAttribute("ChaseSpeed", config.ChaseSpeed)
+	npc:SetAttribute("DetectionRange", config.DetectionRange)
+	npc:SetAttribute("MemoryTime", config.MemoryTime)
+	npc:SetAttribute("FovAngle", config.FovAngle)
+	npc:SetAttribute("StopDistance", config.StopDistance)
+
+	remote:FireAllClients(level, config)
 end
 
 applyLevel(npc:GetAttribute("AILevel"))
 npc:GetAttributeChangedSignal("AILevel"):Connect(function()
 	applyLevel(npc:GetAttribute("AILevel"))
+end)
+
+Players.PlayerAdded:Connect(function(player)
+	local level = npc:GetAttribute("AILevel") or SETTINGS.DefaultLevel
+	remote:FireClient(player, level, getLevelConfig(level))
+end)
+
+task.spawn(function()
+	while true do
+		local interval = getNumberAttribute("RampIntervalSeconds", SETTINGS.RampIntervalSeconds, 1)
+		task.wait(interval)
+
+		if not getBooleanAttribute("RampEnabled", SETTINGS.RampEnabled) then
+			continue
+		end
+
+		local chance = getNumberAttribute("RampChance", SETTINGS.RampChance, 0, 1)
+		if math.random() <= chance then
+			local step = getNumberAttribute("RampStep", SETTINGS.RampStep, 1)
+			local current = getNumberAttribute("AILevel", SETTINGS.DefaultLevel, SETTINGS.MinLevel, SETTINGS.MaxLevel)
+			local nextLevel = math.clamp(current + step, SETTINGS.MinLevel, SETTINGS.MaxLevel)
+			if nextLevel ~= current then
+				npc:SetAttribute("AILevel", nextLevel)
+			end
+		end
+	end
 end)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
@@ -24832,6 +24924,132 @@ end)
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
+		</Item>
+	</Item>
+	<Item class="Tool" referent="RBX4F1CB1F5E4D84E09A1A30D41D7C57C45">
+		<Properties>
+			<bool name="CanBeDropped">false</bool>
+			<bool name="Enabled">true</bool>
+			<BinaryString name="AttributesSerialize"></BinaryString>
+			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+			<bool name="DefinesCapabilities">false</bool>
+			<string name="Name">Fastbear AI Level Monitor</string>
+			<int64 name="SourceAssetId">-1</int64>
+			<BinaryString name="Tags"></BinaryString>
+			<bool name="RequiresHandle">false</bool>
+		</Properties>
+		<Item class="LocalScript" referent="RBX4A1AE2A05BB7404EBA7F6C075B5B6776">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local tool = script.Parent
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local REMOTE_NAME = "FastbearAILevelChanged"
+
+local player = Players.LocalPlayer
+local gui
+local levelLabel
+local currentLevel = "--"
+
+local function updateLabel()
+	if levelLabel then
+		levelLabel.Text = ("FASTBEAR AI LEVEL: %s"):format(currentLevel)
+	end
+end
+
+local function createGui()
+	if gui then
+		return
+	end
+
+	gui = Instance.new("ScreenGui")
+	gui.Name = "FastbearAILevelGui"
+	gui.ResetOnSpawn = false
+
+	local frame = Instance.new("Frame")
+	frame.Name = "Container"
+	frame.AnchorPoint = Vector2.new(0.5, 0)
+	frame.Position = UDim2.new(0.5, 0, 0.03, 0)
+	frame.Size = UDim2.new(0, 380, 0, 76)
+	frame.BackgroundColor3 = Color3.fromRGB(20, 18, 26)
+	frame.BackgroundTransparency = 0.08
+	frame.Parent = gui
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, 16)
+	corner.Parent = frame
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = 2
+	stroke.Color = Color3.fromRGB(255, 186, 92)
+	stroke.Parent = frame
+
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(255, 142, 82)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(255, 210, 120)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(255, 255, 235)),
+	})
+	gradient.Rotation = 45
+	gradient.Parent = frame
+
+	local shine = Instance.new("ImageLabel")
+	shine.Name = "Shine"
+	shine.BackgroundTransparency = 1
+	shine.Image = "rbxassetid://3926305904"
+	shine.ImageRectOffset = Vector2.new(4, 4)
+	shine.ImageRectSize = Vector2.new(36, 36)
+	shine.ImageTransparency = 0.6
+	shine.Size = UDim2.new(1, 40, 1, 40)
+	shine.Position = UDim2.new(0, -20, 0, -20)
+	shine.ZIndex = 0
+	shine.Parent = frame
+
+	levelLabel = Instance.new("TextLabel")
+	levelLabel.Name = "LevelLabel"
+	levelLabel.BackgroundTransparency = 1
+	levelLabel.Position = UDim2.new(0, 12, 0, 8)
+	levelLabel.Size = UDim2.new(1, -24, 1, -16)
+	levelLabel.Font = Enum.Font.GothamBlack
+	levelLabel.TextScaled = true
+	levelLabel.TextColor3 = Color3.fromRGB(255, 236, 200)
+	levelLabel.TextStrokeColor3 = Color3.fromRGB(65, 35, 10)
+	levelLabel.TextStrokeTransparency = 0.2
+	levelLabel.Parent = frame
+
+	updateLabel()
+end
+
+local remote = ReplicatedStorage:WaitForChild(REMOTE_NAME, 10)
+if remote then
+	remote.OnClientEvent:Connect(function(level)
+		currentLevel = tostring(level or "--")
+		updateLabel()
+	end)
+end
+
+tool.Equipped:Connect(function()
+	createGui()
+	gui.Parent = player:WaitForChild("PlayerGui")
+end)
+
+tool.Unequipped:Connect(function()
+	if gui then
+		gui.Parent = nil
+	end
+end)
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{B91A5036-3B62-4A7C-AFD5-8F31EEA2EC73}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">AILevelMonitorClient</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
 		</Item>
 	</Item>
 	<SharedStrings>
