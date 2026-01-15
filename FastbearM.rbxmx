@@ -3336,11 +3336,51 @@ local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 
 -- ===== SETTINGS =====
-local CHASE_SPEED = 100
-local DETECTION_RANGE = 200
-local FOV_ANGLE = 70 -- degrees (front vision cone)
-local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
-local STOP_DISTANCE = 5
+local DEFAULTS = {
+	ChaseSpeed = 100,
+	DetectionRange = 200,
+	FovAngle = 70, -- degrees (front vision cone)
+	MemoryTime = 5, -- seconds NPC keeps chasing after losing sight
+	StopDistance = 5,
+}
+
+local function getNumberAttribute(name, fallback, minValue)
+	local value = npc:GetAttribute(name)
+	if type(value) ~= "number" then
+		return fallback
+	end
+	if minValue then
+		return math.max(minValue, value)
+	end
+	return value
+end
+
+local function getConfig()
+	return {
+		ChaseSpeed = getNumberAttribute("ChaseSpeed", DEFAULTS.ChaseSpeed, 0),
+		DetectionRange = getNumberAttribute("DetectionRange", DEFAULTS.DetectionRange, 0),
+		FovAngle = getNumberAttribute("FovAngle", DEFAULTS.FovAngle, 0),
+		MemoryTime = getNumberAttribute("MemoryTime", DEFAULTS.MemoryTime, 0),
+		StopDistance = getNumberAttribute("StopDistance", DEFAULTS.StopDistance, 0),
+	}
+end
+
+local config = getConfig()
+npc:GetAttributeChangedSignal("ChaseSpeed"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("DetectionRange"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("FovAngle"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("MemoryTime"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("StopDistance"):Connect(function()
+	config = getConfig()
+end)
 
 -- ===== INTERNAL =====
 local lastSeenTime = 0
@@ -3362,14 +3402,14 @@ local function isPlayerVisible(player)
 	if not hrp or not hum or hum.Health <= 0 then return false end
 
 	local distance = (hrp.Position - root.Position).Magnitude
-	if distance > DETECTION_RANGE then return false end
+	if distance > config.DetectionRange then return false end
 
 	-- FOV check
 	local directionToPlayer = (hrp.Position - root.Position).Unit
 	local npcForward = root.CFrame.LookVector
 	local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
 
-	if angle > FOV_ANGLE then
+	if angle > config.FovAngle then
 		return false
 	end
 
@@ -3409,11 +3449,11 @@ RunService.Heartbeat:Connect(function()
 		local char = targetPlayer.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-		if hrp and tick() - lastSeenTime <= MEMORY_TIME then
-			humanoid.WalkSpeed = CHASE_SPEED
+		if hrp and tick() - lastSeenTime <= config.MemoryTime then
+			humanoid.WalkSpeed = config.ChaseSpeed
 
 			local distance = (hrp.Position - root.Position).Magnitude
-			if distance > STOP_DISTANCE then
+			if distance > config.StopDistance then
 				humanoid:MoveTo(hrp.Position)
 			else
 				humanoid:Move(Vector3.zero)
@@ -3435,6 +3475,63 @@ end)
 				<bool name="DefinesCapabilities">false</bool>
 				<string name="Name">MainScript</string>
 				<int64 name="SourceAssetId">15977014578</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+		</Item>
+		<Item class="Script" referent="RBXA411E08BA4F744778B6E2C8C0488D6BF">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
+
+local DEFAULT_LEVEL = 10
+local MIN_LEVEL = 0
+local MAX_LEVEL = 20
+
+local BASE = {
+	ChaseSpeed = 80,
+	DetectionRange = 140,
+	MemoryTime = 3.5,
+	FovAngle = 60,
+	StopDistance = 5,
+}
+
+local SCALE = {
+	ChaseSpeed = 2,
+	DetectionRange = 6,
+	MemoryTime = 0.15,
+	FovAngle = 1,
+	StopDistance = 0,
+}
+
+local function applyLevel(level)
+	level = tonumber(level) or DEFAULT_LEVEL
+	level = math.clamp(level, MIN_LEVEL, MAX_LEVEL)
+
+	npc:SetAttribute("AILevel", level)
+	npc:SetAttribute("ChaseSpeed", BASE.ChaseSpeed + (level * SCALE.ChaseSpeed))
+	npc:SetAttribute("DetectionRange", BASE.DetectionRange + (level * SCALE.DetectionRange))
+	npc:SetAttribute("MemoryTime", BASE.MemoryTime + (level * SCALE.MemoryTime))
+	npc:SetAttribute("FovAngle", BASE.FovAngle + (level * SCALE.FovAngle))
+	npc:SetAttribute("StopDistance", BASE.StopDistance + (level * SCALE.StopDistance))
+end
+
+if npc:GetAttribute("AILevel") == nil then
+	npc:SetAttribute("AILevel", DEFAULT_LEVEL)
+end
+
+applyLevel(npc:GetAttribute("AILevel"))
+npc:GetAttributeChangedSignal("AILevel"):Connect(function()
+	applyLevel(npc:GetAttribute("AILevel"))
+end)
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{50F1F1AC-8E7D-493B-A375-33F1827C22BD}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">AILevelServer</string>
+				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
