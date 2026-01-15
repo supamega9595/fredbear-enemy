@@ -3498,10 +3498,93 @@ local function ensureClientScript()
 		return
 	end
 
-	local clientScript = Instance.new("LocalScript")
-	clientScript.Name = CLIENT_SCRIPT_NAME
-	clientScript.Source = [=[
-local Players = game:GetService("Players")
+	local template = npc:FindFirstChild(CLIENT_SCRIPT_NAME, true)
+	if not template or not template:IsA("LocalScript") then
+		warn(("Missing %s LocalScript template under %s."):format(CLIENT_SCRIPT_NAME, npc.Name))
+		return
+	end
+
+	local clientScript = template:Clone()
+	clientScript.Parent = starterScripts
+end
+
+local function getWeightedRandomConfig()
+	local totalWeight = 0
+	for _, config in ipairs(jumpscareConfigs) do
+		totalWeight += config.weight
+	end
+
+	local roll = math.random() * totalWeight
+	local running = 0
+	for _, config in ipairs(jumpscareConfigs) do
+		running += config.weight
+		if roll <= running then
+			return config
+		end
+	end
+	return jumpscareConfigs[1]
+end
+
+local function isPlayer(hit)
+	local char = hit:FindFirstAncestorOfClass("Model")
+	if not char then
+		return false
+	end
+
+	local hum = char:FindFirstChild("Humanoid")
+	local plr = Players:GetPlayerFromCharacter(char)
+	return hum and plr
+end
+
+local remote = ensureRemote()
+ensureClientScript()
+
+local lastKillTime = {}
+
+for _, part in ipairs(npc:GetDescendants()) do
+	if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+		part.Touched:Connect(function(hit)
+			if not isPlayer(hit) then
+				return
+			end
+
+			local char = hit:FindFirstAncestorOfClass("Model")
+			local hum = char:FindFirstChild("Humanoid")
+			local player = Players:GetPlayerFromCharacter(char)
+			if not hum or not player then
+				return
+			end
+
+			local now = os.clock()
+			if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
+				return
+			end
+
+			if hum.Health > 0 then
+				lastKillTime[player] = now
+				hum.Health = 0
+				local chosen = getWeightedRandomConfig()
+				remote:FireClient(player, chosen.name)
+			end
+		end)
+	end
+end
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{2F4906DA-9C66-4C0A-8022-FCA0D9F4D37B}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">Script</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			</Item>
+			<Item class="LocalScript" referent="RBX5F1E68F5A4EE4C92A1C7B6B2C7A2F7D5">
+				<Properties>
+					<ProtectedString name="Source"><![CDATA[local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
 
@@ -3675,85 +3758,20 @@ local function runJumpscare(name)
 end
 
 remote.OnClientEvent:Connect(runJumpscare)
-]=]
-	clientScript.Parent = starterScripts
-end
-
-local function getWeightedRandomConfig()
-	local totalWeight = 0
-	for _, config in ipairs(jumpscareConfigs) do
-		totalWeight += config.weight
-	end
-
-	local roll = math.random() * totalWeight
-	local running = 0
-	for _, config in ipairs(jumpscareConfigs) do
-		running += config.weight
-		if roll <= running then
-			return config
-		end
-	end
-	return jumpscareConfigs[1]
-end
-
-local function isPlayer(hit)
-	local char = hit:FindFirstAncestorOfClass("Model")
-	if not char then
-		return false
-	end
-
-	local hum = char:FindFirstChild("Humanoid")
-	local plr = Players:GetPlayerFromCharacter(char)
-	return hum and plr
-end
-
-local remote = ensureRemote()
-ensureClientScript()
-
-local lastKillTime = {}
-
-for _, part in ipairs(npc:GetDescendants()) do
-	if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-		part.Touched:Connect(function(hit)
-			if not isPlayer(hit) then
-				return
-			end
-
-			local char = hit:FindFirstAncestorOfClass("Model")
-			local hum = char:FindFirstChild("Humanoid")
-			local player = Players:GetPlayerFromCharacter(char)
-			if not hum or not player then
-				return
-			end
-
-			local now = os.clock()
-			if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
-				return
-			end
-
-			if hum.Health > 0 then
-				lastKillTime[player] = now
-				hum.Health = 0
-				local chosen = getWeightedRandomConfig()
-				remote:FireClient(player, chosen.name)
-			end
-		end)
-	end
-end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<token name="RunContext">0</token>
-				<string name="ScriptGuid">{2F4906DA-9C66-4C0A-8022-FCA0D9F4D37B}</string>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">Script</string>
-				<int64 name="SourceAssetId">-1</int64>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="Script" referent="RBX784AE2A0A49B45EE9E5D077B2FEC671C">
+					<bool name="Disabled">false</bool>
+					<Content name="LinkedSource"><null></null></Content>
+					<token name="RunContext">0</token>
+					<string name="ScriptGuid">{A2F71D3D-0D1D-4E92-B7C1-1E4B68A5F03F}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">FredbearJumpscareClient</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="Script" referent="RBX784AE2A0A49B45EE9E5D077B2FEC671C">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
 local humanoid = npc:FindFirstChildOfClass("Humanoid")
