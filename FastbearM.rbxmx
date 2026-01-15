@@ -3333,9 +3333,46 @@ local humanoid = npc:WaitForChild("Humanoid")
 local root = npc:WaitForChild("HumanoidRootPart")
 
 local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
--- ===== SETTINGS =====
+local REMOTE_NAME = "FastbearAILevelChanged"
+
+local LEVEL_SETTINGS = {
+	DefaultLevel = 1,
+	MinLevel = 1,
+	MaxLevel = 20,
+	RampEnabled = true,
+	RampIntervalMinSeconds = 20,
+	RampIntervalMaxSeconds = 30,
+	RampChance = 0.35,
+	RampStepMin = 1,
+	RampStepMax = 4,
+}
+
+local LEVELS = {
+	[1] = { ChaseSpeed = 82, DetectionRange = 146, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
+	[2] = { ChaseSpeed = 84, DetectionRange = 152, MemoryTime = 3.8, FovAngle = 62, StopDistance = 5 },
+	[3] = { ChaseSpeed = 86, DetectionRange = 158, MemoryTime = 3.95, FovAngle = 63, StopDistance = 5 },
+	[4] = { ChaseSpeed = 88, DetectionRange = 164, MemoryTime = 4.1, FovAngle = 64, StopDistance = 5 },
+	[5] = { ChaseSpeed = 90, DetectionRange = 170, MemoryTime = 4.25, FovAngle = 65, StopDistance = 5 },
+	[6] = { ChaseSpeed = 92, DetectionRange = 176, MemoryTime = 4.4, FovAngle = 66, StopDistance = 5 },
+	[7] = { ChaseSpeed = 94, DetectionRange = 182, MemoryTime = 4.55, FovAngle = 67, StopDistance = 5 },
+	[8] = { ChaseSpeed = 96, DetectionRange = 188, MemoryTime = 4.7, FovAngle = 68, StopDistance = 5 },
+	[9] = { ChaseSpeed = 98, DetectionRange = 194, MemoryTime = 4.85, FovAngle = 69, StopDistance = 5 },
+	[10] = { ChaseSpeed = 100, DetectionRange = 200, MemoryTime = 5.0, FovAngle = 70, StopDistance = 5 },
+	[11] = { ChaseSpeed = 102, DetectionRange = 206, MemoryTime = 5.15, FovAngle = 71, StopDistance = 5 },
+	[12] = { ChaseSpeed = 104, DetectionRange = 212, MemoryTime = 5.3, FovAngle = 72, StopDistance = 5 },
+	[13] = { ChaseSpeed = 106, DetectionRange = 218, MemoryTime = 5.45, FovAngle = 73, StopDistance = 5 },
+	[14] = { ChaseSpeed = 108, DetectionRange = 224, MemoryTime = 5.6, FovAngle = 74, StopDistance = 5 },
+	[15] = { ChaseSpeed = 110, DetectionRange = 230, MemoryTime = 5.75, FovAngle = 75, StopDistance = 5 },
+	[16] = { ChaseSpeed = 112, DetectionRange = 236, MemoryTime = 5.9, FovAngle = 76, StopDistance = 5 },
+	[17] = { ChaseSpeed = 114, DetectionRange = 242, MemoryTime = 6.05, FovAngle = 77, StopDistance = 5 },
+	[18] = { ChaseSpeed = 116, DetectionRange = 248, MemoryTime = 6.2, FovAngle = 78, StopDistance = 5 },
+	[19] = { ChaseSpeed = 118, DetectionRange = 254, MemoryTime = 6.35, FovAngle = 79, StopDistance = 5 },
+	[20] = { ChaseSpeed = 120, DetectionRange = 260, MemoryTime = 6.5, FovAngle = 80, StopDistance = 5 },
+}
+
 local DEFAULTS = {
 	ChaseSpeed = 100,
 	DetectionRange = 200,
@@ -3344,16 +3381,106 @@ local DEFAULTS = {
 	StopDistance = 5,
 }
 
-local function getNumberAttribute(name, fallback, minValue)
+local function ensureRemote()
+	local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
+	if not remote then
+		remote = Instance.new("RemoteEvent")
+		remote.Name = REMOTE_NAME
+		remote.Parent = ReplicatedStorage
+	end
+	return remote
+end
+
+local function ensureAttribute(name, value)
+	if npc:GetAttribute(name) == nil then
+		npc:SetAttribute(name, value)
+	end
+end
+
+local function getNumberAttribute(name, fallback, minValue, maxValue)
 	local value = npc:GetAttribute(name)
 	if type(value) ~= "number" then
 		return fallback
 	end
-	if minValue then
-		return math.max(minValue, value)
+	if minValue ~= nil then
+		value = math.max(minValue, value)
+	end
+	if maxValue ~= nil then
+		value = math.min(maxValue, value)
 	end
 	return value
 end
+
+local function getBooleanAttribute(name, fallback)
+	local value = npc:GetAttribute(name)
+	if type(value) ~= "boolean" then
+		return fallback
+	end
+	return value
+end
+
+local function getLevelConfig(level)
+	return LEVELS[level] or LEVELS[LEVEL_SETTINGS.DefaultLevel]
+end
+
+ensureAttribute("AILevel", LEVEL_SETTINGS.DefaultLevel)
+ensureAttribute("RampEnabled", LEVEL_SETTINGS.RampEnabled)
+ensureAttribute("RampIntervalMinSeconds", LEVEL_SETTINGS.RampIntervalMinSeconds)
+ensureAttribute("RampIntervalMaxSeconds", LEVEL_SETTINGS.RampIntervalMaxSeconds)
+ensureAttribute("RampChance", LEVEL_SETTINGS.RampChance)
+ensureAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin)
+ensureAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax)
+
+local remote = ensureRemote()
+
+local function applyLevel(level)
+	level = tonumber(level) or LEVEL_SETTINGS.DefaultLevel
+	level = math.clamp(level, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+
+	local config = getLevelConfig(level)
+	npc:SetAttribute("AILevel", level)
+	npc:SetAttribute("ChaseSpeed", config.ChaseSpeed)
+	npc:SetAttribute("DetectionRange", config.DetectionRange)
+	npc:SetAttribute("MemoryTime", config.MemoryTime)
+	npc:SetAttribute("FovAngle", config.FovAngle)
+	npc:SetAttribute("StopDistance", config.StopDistance)
+
+	remote:FireAllClients(level, config)
+end
+
+applyLevel(npc:GetAttribute("AILevel"))
+npc:GetAttributeChangedSignal("AILevel"):Connect(function()
+	applyLevel(npc:GetAttribute("AILevel"))
+end)
+
+Players.PlayerAdded:Connect(function(player)
+	local level = npc:GetAttribute("AILevel") or LEVEL_SETTINGS.DefaultLevel
+	remote:FireClient(player, level, getLevelConfig(level))
+end)
+
+task.spawn(function()
+	while true do
+		local minInterval = getNumberAttribute("RampIntervalMinSeconds", LEVEL_SETTINGS.RampIntervalMinSeconds, 1)
+		local maxInterval = getNumberAttribute("RampIntervalMaxSeconds", LEVEL_SETTINGS.RampIntervalMaxSeconds, minInterval)
+		task.wait(math.random() * (maxInterval - minInterval) + minInterval)
+
+		if not getBooleanAttribute("RampEnabled", LEVEL_SETTINGS.RampEnabled) then
+			continue
+		end
+
+		local chance = getNumberAttribute("RampChance", LEVEL_SETTINGS.RampChance, 0, 1)
+		if math.random() <= chance then
+			local stepMin = getNumberAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin, 1)
+			local stepMax = getNumberAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax, stepMin)
+			local step = math.random(stepMin, stepMax)
+			local current = getNumberAttribute("AILevel", LEVEL_SETTINGS.DefaultLevel, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+			local nextLevel = math.clamp(current + step, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+			if nextLevel ~= current then
+				npc:SetAttribute("AILevel", nextLevel)
+			end
+		end
+	end
+end)
 
 local function getConfig()
 	return {
@@ -3475,155 +3602,6 @@ end)
 				<bool name="DefinesCapabilities">false</bool>
 				<string name="Name">MainScript</string>
 				<int64 name="SourceAssetId">15977014578</int64>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
-		<Item class="Script" referent="RBXA411E08BA4F744778B6E2C8C0488D6BF">
-			<Properties>
-				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
-local Players = game:GetService("Players")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local REMOTE_NAME = "FastbearAILevelChanged"
-
-local SETTINGS = {
-	DefaultLevel = 1,
-	MinLevel = 1,
-	MaxLevel = 20,
-	RampEnabled = true,
-	RampIntervalSeconds = 20,
-	RampChance = 0.35,
-	RampStep = 1,
-}
-
-local LEVELS = {
-	[1] = { ChaseSpeed = 82, DetectionRange = 146, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
-	[2] = { ChaseSpeed = 84, DetectionRange = 152, MemoryTime = 3.8, FovAngle = 62, StopDistance = 5 },
-	[3] = { ChaseSpeed = 86, DetectionRange = 158, MemoryTime = 3.95, FovAngle = 63, StopDistance = 5 },
-	[4] = { ChaseSpeed = 88, DetectionRange = 164, MemoryTime = 4.1, FovAngle = 64, StopDistance = 5 },
-	[5] = { ChaseSpeed = 90, DetectionRange = 170, MemoryTime = 4.25, FovAngle = 65, StopDistance = 5 },
-	[6] = { ChaseSpeed = 92, DetectionRange = 176, MemoryTime = 4.4, FovAngle = 66, StopDistance = 5 },
-	[7] = { ChaseSpeed = 94, DetectionRange = 182, MemoryTime = 4.55, FovAngle = 67, StopDistance = 5 },
-	[8] = { ChaseSpeed = 96, DetectionRange = 188, MemoryTime = 4.7, FovAngle = 68, StopDistance = 5 },
-	[9] = { ChaseSpeed = 98, DetectionRange = 194, MemoryTime = 4.85, FovAngle = 69, StopDistance = 5 },
-	[10] = { ChaseSpeed = 100, DetectionRange = 200, MemoryTime = 5.0, FovAngle = 70, StopDistance = 5 },
-	[11] = { ChaseSpeed = 102, DetectionRange = 206, MemoryTime = 5.15, FovAngle = 71, StopDistance = 5 },
-	[12] = { ChaseSpeed = 104, DetectionRange = 212, MemoryTime = 5.3, FovAngle = 72, StopDistance = 5 },
-	[13] = { ChaseSpeed = 106, DetectionRange = 218, MemoryTime = 5.45, FovAngle = 73, StopDistance = 5 },
-	[14] = { ChaseSpeed = 108, DetectionRange = 224, MemoryTime = 5.6, FovAngle = 74, StopDistance = 5 },
-	[15] = { ChaseSpeed = 110, DetectionRange = 230, MemoryTime = 5.75, FovAngle = 75, StopDistance = 5 },
-	[16] = { ChaseSpeed = 112, DetectionRange = 236, MemoryTime = 5.9, FovAngle = 76, StopDistance = 5 },
-	[17] = { ChaseSpeed = 114, DetectionRange = 242, MemoryTime = 6.05, FovAngle = 77, StopDistance = 5 },
-	[18] = { ChaseSpeed = 116, DetectionRange = 248, MemoryTime = 6.2, FovAngle = 78, StopDistance = 5 },
-	[19] = { ChaseSpeed = 118, DetectionRange = 254, MemoryTime = 6.35, FovAngle = 79, StopDistance = 5 },
-	[20] = { ChaseSpeed = 120, DetectionRange = 260, MemoryTime = 6.5, FovAngle = 80, StopDistance = 5 },
-}
-
-local function ensureRemote()
-	local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
-	if not remote then
-		remote = Instance.new("RemoteEvent")
-		remote.Name = REMOTE_NAME
-		remote.Parent = ReplicatedStorage
-	end
-	return remote
-end
-
-local function ensureAttribute(name, value)
-	if npc:GetAttribute(name) == nil then
-		npc:SetAttribute(name, value)
-	end
-end
-
-local function getNumberAttribute(name, fallback, minValue, maxValue)
-	local value = npc:GetAttribute(name)
-	if type(value) ~= "number" then
-		return fallback
-	end
-	if minValue ~= nil then
-		value = math.max(minValue, value)
-	end
-	if maxValue ~= nil then
-		value = math.min(maxValue, value)
-	end
-	return value
-end
-
-local function getBooleanAttribute(name, fallback)
-	local value = npc:GetAttribute(name)
-	if type(value) ~= "boolean" then
-		return fallback
-	end
-	return value
-end
-
-ensureAttribute("AILevel", SETTINGS.DefaultLevel)
-ensureAttribute("RampEnabled", SETTINGS.RampEnabled)
-ensureAttribute("RampIntervalSeconds", SETTINGS.RampIntervalSeconds)
-ensureAttribute("RampChance", SETTINGS.RampChance)
-ensureAttribute("RampStep", SETTINGS.RampStep)
-
-local function getLevelConfig(level)
-	return LEVELS[level] or LEVELS[SETTINGS.DefaultLevel]
-end
-
-local remote = ensureRemote()
-
-local function applyLevel(level)
-	level = tonumber(level) or SETTINGS.DefaultLevel
-	level = math.clamp(level, SETTINGS.MinLevel, SETTINGS.MaxLevel)
-
-	local config = getLevelConfig(level)
-	npc:SetAttribute("AILevel", level)
-	npc:SetAttribute("ChaseSpeed", config.ChaseSpeed)
-	npc:SetAttribute("DetectionRange", config.DetectionRange)
-	npc:SetAttribute("MemoryTime", config.MemoryTime)
-	npc:SetAttribute("FovAngle", config.FovAngle)
-	npc:SetAttribute("StopDistance", config.StopDistance)
-
-	remote:FireAllClients(level, config)
-end
-
-applyLevel(npc:GetAttribute("AILevel"))
-npc:GetAttributeChangedSignal("AILevel"):Connect(function()
-	applyLevel(npc:GetAttribute("AILevel"))
-end)
-
-Players.PlayerAdded:Connect(function(player)
-	local level = npc:GetAttribute("AILevel") or SETTINGS.DefaultLevel
-	remote:FireClient(player, level, getLevelConfig(level))
-end)
-
-task.spawn(function()
-	while true do
-		local interval = getNumberAttribute("RampIntervalSeconds", SETTINGS.RampIntervalSeconds, 1)
-		task.wait(interval)
-
-		if not getBooleanAttribute("RampEnabled", SETTINGS.RampEnabled) then
-			continue
-		end
-
-		local chance = getNumberAttribute("RampChance", SETTINGS.RampChance, 0, 1)
-		if math.random() <= chance then
-			local step = getNumberAttribute("RampStep", SETTINGS.RampStep, 1)
-			local current = getNumberAttribute("AILevel", SETTINGS.DefaultLevel, SETTINGS.MinLevel, SETTINGS.MaxLevel)
-			local nextLevel = math.clamp(current + step, SETTINGS.MinLevel, SETTINGS.MaxLevel)
-			if nextLevel ~= current then
-				npc:SetAttribute("AILevel", nextLevel)
-			end
-		end
-	end
-end)
-]]></ProtectedString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<token name="RunContext">0</token>
-				<string name="ScriptGuid">{50F1F1AC-8E7D-493B-A375-33F1827C22BD}</string>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">AILevelServer</string>
-				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
 		</Item>
@@ -24950,6 +24928,19 @@ local player = Players.LocalPlayer
 local gui
 local levelLabel
 local currentLevel = "--"
+local humanoidConn
+
+local function cleanupGui()
+	if humanoidConn then
+		humanoidConn:Disconnect()
+		humanoidConn = nil
+	end
+	if gui then
+		gui:Destroy()
+		gui = nil
+		levelLabel = nil
+	end
+end
 
 local function updateLabel()
 	if levelLabel then
@@ -25031,12 +25022,29 @@ end
 tool.Equipped:Connect(function()
 	createGui()
 	gui.Parent = player:WaitForChild("PlayerGui")
+
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid")
+	if humanoidConn then
+		humanoidConn:Disconnect()
+	end
+	humanoidConn = humanoid.Died:Connect(function()
+		cleanupGui()
+	end)
 end)
 
 tool.Unequipped:Connect(function()
 	if gui then
 		gui.Parent = nil
 	end
+	if humanoidConn then
+		humanoidConn:Disconnect()
+		humanoidConn = nil
+	end
+end)
+
+player.CharacterRemoving:Connect(function()
+	cleanupGui()
 end)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
