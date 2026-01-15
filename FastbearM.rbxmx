@@ -3911,6 +3911,7 @@ do
 
 	for _, part in ipairs(npc:GetDescendants()) do
 		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			part.CanTouch = true
 			part.Touched:Connect(function(hit)
 				if not isPlayer(hit) then
 					return
@@ -25471,8 +25472,40 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local REMOTE_NAME = "FastbearAILevelChanged"
 
+local UI_CONFIG = {
+	FrameSize = UDim2.new(0, 420, 0, 150),
+	FramePosition = UDim2.new(0.5, 0, 0.02, 0),
+	FrameCornerRadius = 18,
+	StrokeThickness = 2,
+	ScanlineImage = "rbxassetid://3926305904",
+	ScanlineTransparency = 0.88,
+	TitleText = "FASTBEAR AI SCANNER",
+	TitleSize = 20,
+	LevelSize = 26,
+	DifficultySize = 20,
+	RangeSize = 16,
+	Pattern = {
+		Enabled = true,
+		ImageId = "rbxassetid://0",
+		Color = Color3.fromRGB(255, 255, 255),
+		Transparency = 0.92,
+		TileSize = 64,
+	},
+	Themes = {
+		Low = { Accent = Color3.fromRGB(124, 240, 168), Stroke = Color3.fromRGB(44, 180, 110), Background = Color3.fromRGB(10, 12, 14) },
+		Medium = { Accent = Color3.fromRGB(255, 214, 112), Stroke = Color3.fromRGB(210, 165, 70), Background = Color3.fromRGB(16, 12, 8) },
+		High = { Accent = Color3.fromRGB(255, 140, 90), Stroke = Color3.fromRGB(200, 90, 50), Background = Color3.fromRGB(18, 10, 10) },
+		Extreme = { Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(210, 40, 40), Background = Color3.fromRGB(20, 6, 8) },
+		Unknown = { Accent = Color3.fromRGB(185, 185, 185), Stroke = Color3.fromRGB(120, 120, 120), Background = Color3.fromRGB(12, 12, 14) },
+	},
+}
+
 local player = Players.LocalPlayer
 local gui
+local frameRef
+local strokeRef
+local titleLabel
+local patternImage
 local levelLabel
 local difficultyLabel
 local rangeLabel
@@ -25509,6 +25542,20 @@ end
 local function updateLabel()
 	if levelLabel and difficultyLabel and rangeLabel then
 		local difficulty, rangeText, color = getDifficulty(currentLevel)
+		if frameRef and strokeRef and titleLabel then
+			local themeKey = difficulty == "LOW" and "Low"
+				or difficulty == "MEDIUM" and "Medium"
+				or difficulty == "HIGH" and "High"
+				or difficulty == "EXTREME" and "Extreme"
+				or "Unknown"
+			local theme = UI_CONFIG.Themes[themeKey] or UI_CONFIG.Themes.Unknown
+			frameRef.BackgroundColor3 = theme.Background
+			strokeRef.Color = theme.Stroke
+			titleLabel.TextColor3 = theme.Accent
+			if patternImage then
+				patternImage.ImageColor3 = theme.Accent:Lerp(Color3.fromRGB(255, 255, 255), 0.6)
+			end
+		end
 		levelLabel.Text = ("AI LEVEL: %s"):format(currentLevel)
 		difficultyLabel.Text = ("DIFFICULTY: %s"):format(difficulty)
 		difficultyLabel.TextColor3 = color
@@ -25528,19 +25575,21 @@ local function createGui()
 	local frame = Instance.new("Frame")
 	frame.Name = "ScannerFrame"
 	frame.AnchorPoint = Vector2.new(0.5, 0)
-	frame.Position = UDim2.new(0.5, 0, 0.02, 0)
-	frame.Size = UDim2.new(0, 420, 0, 160)
-	frame.BackgroundColor3 = Color3.fromRGB(10, 10, 14)
+	frame.Position = UI_CONFIG.FramePosition
+	frame.Size = UI_CONFIG.FrameSize
+	frame.BackgroundColor3 = UI_CONFIG.Themes.Unknown.Background
 	frame.Parent = gui
+	frameRef = frame
 
 	local corner = Instance.new("UICorner")
-	corner.CornerRadius = UDim.new(0, 18)
+	corner.CornerRadius = UDim.new(0, UI_CONFIG.FrameCornerRadius)
 	corner.Parent = frame
 
 	local stroke = Instance.new("UIStroke")
-	stroke.Thickness = 2
-	stroke.Color = Color3.fromRGB(235, 74, 74)
+	stroke.Thickness = UI_CONFIG.StrokeThickness
+	stroke.Color = UI_CONFIG.Themes.Unknown.Stroke
 	stroke.Parent = frame
+	strokeRef = stroke
 
 	local gradient = Instance.new("UIGradient")
 	gradient.Color = ColorSequence.new({
@@ -25551,53 +25600,52 @@ local function createGui()
 	gradient.Rotation = 90
 	gradient.Parent = frame
 
-	local topBar = Instance.new("Frame")
-	topBar.Name = "TopBar"
-	topBar.Size = UDim2.new(1, 0, 0, 34)
-	topBar.BackgroundColor3 = Color3.fromRGB(140, 20, 20)
-	topBar.Parent = frame
-
-	local topGradient = Instance.new("UIGradient")
-	topGradient.Color = ColorSequence.new({
-		ColorSequenceKeypoint.new(0, Color3.fromRGB(180, 24, 32)),
-		ColorSequenceKeypoint.new(1, Color3.fromRGB(70, 10, 14)),
-	})
-	topGradient.Rotation = 0
-	topGradient.Parent = topBar
-
-	local topCorner = Instance.new("UICorner")
-	topCorner.CornerRadius = UDim.new(0, 18)
-	topCorner.Parent = topBar
+	if UI_CONFIG.Pattern.Enabled and UI_CONFIG.Pattern.ImageId ~= "" then
+		local pattern = Instance.new("ImageLabel")
+		pattern.Name = "Pattern"
+		pattern.BackgroundTransparency = 1
+		pattern.Image = UI_CONFIG.Pattern.ImageId
+		pattern.ImageColor3 = UI_CONFIG.Pattern.Color
+		pattern.ImageTransparency = UI_CONFIG.Pattern.Transparency
+		pattern.ScaleType = Enum.ScaleType.Tile
+		pattern.TileSize = UDim2.new(0, UI_CONFIG.Pattern.TileSize, 0, UI_CONFIG.Pattern.TileSize)
+		pattern.Size = UDim2.new(1, 0, 1, 0)
+		pattern.ZIndex = 2
+		pattern.Parent = frame
+		patternImage = pattern
+	end
 
 	local scanlines = Instance.new("ImageLabel")
 	scanlines.Name = "Scanlines"
 	scanlines.BackgroundTransparency = 1
-	scanlines.Image = "rbxassetid://3926305904"
+	scanlines.Image = UI_CONFIG.ScanlineImage
 	scanlines.ImageRectOffset = Vector2.new(4, 4)
 	scanlines.ImageRectSize = Vector2.new(36, 36)
-	scanlines.ImageTransparency = 0.85
+	scanlines.ImageTransparency = UI_CONFIG.ScanlineTransparency
 	scanlines.Size = UDim2.new(1, 0, 1, 0)
+	scanlines.ZIndex = 3
 	scanlines.Parent = frame
 
 	local title = Instance.new("TextLabel")
 	title.Name = "Title"
 	title.BackgroundTransparency = 1
-	title.Position = UDim2.new(0, 16, 0, 4)
+	title.Position = UDim2.new(0, 16, 0, 8)
 	title.Size = UDim2.new(1, -32, 0, 26)
 	title.Font = Enum.Font.GothamBlack
-	title.Text = "FASTBEAR AI SCANNER"
+	title.Text = UI_CONFIG.TitleText
 	title.TextXAlignment = Enum.TextXAlignment.Left
-	title.TextColor3 = Color3.fromRGB(255, 228, 210)
-	title.TextSize = 20
-	title.Parent = topBar
+	title.TextColor3 = UI_CONFIG.Themes.Unknown.Accent
+	title.TextSize = UI_CONFIG.TitleSize
+	title.Parent = frame
+	titleLabel = title
 
 	levelLabel = Instance.new("TextLabel")
 	levelLabel.Name = "LevelLabel"
 	levelLabel.BackgroundTransparency = 1
-	levelLabel.Position = UDim2.new(0, 18, 0, 54)
+	levelLabel.Position = UDim2.new(0, 18, 0, 50)
 	levelLabel.Size = UDim2.new(1, -36, 0, 32)
 	levelLabel.Font = Enum.Font.GothamBlack
-	levelLabel.TextSize = 26
+	levelLabel.TextSize = UI_CONFIG.LevelSize
 	levelLabel.TextXAlignment = Enum.TextXAlignment.Left
 	levelLabel.TextColor3 = Color3.fromRGB(255, 240, 230)
 	levelLabel.Parent = frame
@@ -25605,35 +25653,23 @@ local function createGui()
 	difficultyLabel = Instance.new("TextLabel")
 	difficultyLabel.Name = "DifficultyLabel"
 	difficultyLabel.BackgroundTransparency = 1
-	difficultyLabel.Position = UDim2.new(0, 18, 0, 92)
+	difficultyLabel.Position = UDim2.new(0, 18, 0, 88)
 	difficultyLabel.Size = UDim2.new(1, -36, 0, 26)
 	difficultyLabel.Font = Enum.Font.GothamBold
-	difficultyLabel.TextSize = 20
+	difficultyLabel.TextSize = UI_CONFIG.DifficultySize
 	difficultyLabel.TextXAlignment = Enum.TextXAlignment.Left
 	difficultyLabel.Parent = frame
 
 	rangeLabel = Instance.new("TextLabel")
 	rangeLabel.Name = "RangeLabel"
 	rangeLabel.BackgroundTransparency = 1
-	rangeLabel.Position = UDim2.new(0, 18, 0, 118)
+	rangeLabel.Position = UDim2.new(0, 18, 0, 114)
 	rangeLabel.Size = UDim2.new(1, -36, 0, 22)
 	rangeLabel.Font = Enum.Font.GothamMedium
-	rangeLabel.TextSize = 16
+	rangeLabel.TextSize = UI_CONFIG.RangeSize
 	rangeLabel.TextXAlignment = Enum.TextXAlignment.Left
 	rangeLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
 	rangeLabel.Parent = frame
-
-	local hint = Instance.new("TextLabel")
-	hint.Name = "Hint"
-	hint.BackgroundTransparency = 1
-	hint.Position = UDim2.new(0, 18, 0, 138)
-	hint.Size = UDim2.new(1, -36, 0, 18)
-	hint.Font = Enum.Font.GothamMedium
-	hint.Text = "Signal locked. Awaiting target proximity..."
-	hint.TextSize = 14
-	hint.TextXAlignment = Enum.TextXAlignment.Left
-	hint.TextColor3 = Color3.fromRGB(160, 160, 175)
-	hint.Parent = frame
 
 	updateLabel()
 end
