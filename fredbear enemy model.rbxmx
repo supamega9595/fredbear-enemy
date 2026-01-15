@@ -2996,10 +2996,10 @@ end
 	local FOV_ANGLE = 70 -- degrees (front vision cone)
 	local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
 	local STOP_DISTANCE = 5
-	local PATH_RECOMPUTE_INTERVAL = 0.15
+	local PATH_RECOMPUTE_INTERVAL = 0.2
 	local DIRECT_PATH_CHECK_INTERVAL = 0.05
-	local WAYPOINT_SPACING = 3
-	local TARGET_REPATH_DISTANCE = 3
+	local WAYPOINT_SPACING = 8
+	local TARGET_REPATH_DISTANCE = 6
 	local DIRECT_MOVE_INTERVAL = 0.05
 	
 	-- ===== INTERNAL =====
@@ -3014,14 +3014,14 @@ end
 	local lastTargetPosition = nil
 	local lastDirectMove = 0
 	local nextWaypointMove = 0
-	local WAYPOINT_REACHED_DISTANCE = 2
-	local WAYPOINT_MOVE_INTERVAL = 0.05
+	local WAYPOINT_REACHED_DISTANCE = 4
+	local WAYPOINT_MOVE_INTERVAL = 0.08
 	local lastPosition = root.Position
 	local lastStuckCheck = 0
 	local stuckTime = 0
 	local STUCK_CHECK_INTERVAL = 0.1
-	local STUCK_DISTANCE = 1
-	local STUCK_TIME_LIMIT = 0.4
+	local STUCK_DISTANCE = 1.5
+	local STUCK_TIME_LIMIT = 0.3
 	
 	-- Raycast params
 	local rayParams = RaycastParams.new()
@@ -3219,29 +3219,33 @@ end
 		end
 	
 		local now = tick()
-		if now - lastStuckCheck >= STUCK_CHECK_INTERVAL then
-			local moved = (root.Position - lastPosition).Magnitude
-			if moved < STUCK_DISTANCE then
-				stuckTime += (now - lastStuckCheck)
-			else
-				stuckTime = 0
-			end
-			lastPosition = root.Position
-			lastStuckCheck = now
-		end
-
-		local shouldUsePath = stuckTime >= STUCK_TIME_LIMIT
-		if now - directCheckTime >= DIRECT_PATH_CHECK_INTERVAL then
-			directCheckTime = now
-			if hasDirectPath(hrp.Position) and not shouldUsePath then
-				clearPath()
-				if now - lastDirectMove >= DIRECT_MOVE_INTERVAL then
-					lastDirectMove = now
-					humanoid:MoveTo(hrp.Position)
+			if now - lastStuckCheck >= STUCK_CHECK_INTERVAL then
+				local moved = (root.Position - lastPosition).Magnitude
+				if moved < STUCK_DISTANCE then
+					stuckTime += (now - lastStuckCheck)
+				else
+					stuckTime = 0
 				end
-				return
+				lastPosition = root.Position
+				lastStuckCheck = now
 			end
-		end
+
+			local shouldUsePath = stuckTime >= STUCK_TIME_LIMIT
+			if now - directCheckTime >= DIRECT_PATH_CHECK_INTERVAL then
+				directCheckTime = now
+				if hasDirectPath(hrp.Position) and not shouldUsePath then
+					clearPath()
+					stuckTime = 0
+					if now - lastDirectMove >= DIRECT_MOVE_INTERVAL then
+						lastDirectMove = now
+						local direction = hrp.Position - root.Position
+						if direction.Magnitude > 0 then
+							humanoid:Move(direction.Unit, true)
+						end
+					end
+					return
+				end
+			end
 	
 		local shouldRepath = false
 		if not currentWaypoints then
