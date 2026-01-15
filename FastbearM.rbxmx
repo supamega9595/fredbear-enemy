@@ -3578,6 +3578,8 @@ local FOV_ANGLE = 70 -- degrees (front vision cone)
 local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
 local STOP_DISTANCE = 5
 
+local baseWalkSpeed = humanoid.WalkSpeed
+
 -- ===== INTERNAL =====
 local lastSeenTime = 0
 local targetPlayer = nil
@@ -3595,6 +3597,11 @@ end
 local function setChasingState(isChasing)
 	if npc:GetAttribute("IsChasing") ~= isChasing then
 		npc:SetAttribute("IsChasing", isChasing)
+	end
+	if isChasing then
+		humanoid.WalkSpeed = CHASE_SPEED
+	else
+		humanoid.WalkSpeed = baseWalkSpeed
 	end
 end
 
@@ -3657,7 +3664,6 @@ RunService.Heartbeat:Connect(function()
 
 		if hrp and tick() - lastSeenTime <= MEMORY_TIME then
 			setChasingState(true)
-			humanoid.WalkSpeed = CHASE_SPEED
 
 			local distance = (hrp.Position - root.Position).Magnitude
 			if distance > STOP_DISTANCE then
