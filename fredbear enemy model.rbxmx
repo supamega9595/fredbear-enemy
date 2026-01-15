@@ -3441,40 +3441,301 @@ end)
 		<Item class="Script" referent="RBXE2CA0FDB63124C85BC70D826B6B02D56">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local StarterPlayer = game:GetService("StarterPlayer")
 
--- Kill sound setup
-local KILL_SOUND_ID = "rbxassetid://94716076803400" -- 🔊 Replace with your sound ID
-local killSound = Instance.new("Sound")
-killSound.Name = "KillSound"
-killSound.SoundId = KILL_SOUND_ID
-killSound.Volume = 1
-killSound.Parent = npc:FindFirstChild("HumanoidRootPart") or npc
+local REMOTE_NAME = "FredbearJumpscare"
+local CLIENT_SCRIPT_NAME = "FredbearJumpscareClient"
+local COOLDOWN_SECONDS = 2
 
--- Safety: ignore touches from itself
+local jumpscareConfigs = {
+	{
+		name = "InstantFaceSlam",
+		weight = 5,
+		soundId = "rbxassetid://1234567890",
+		imageId = "rbxassetid://1234567891",
+	},
+	{
+		name = "SilenceSpike",
+		weight = 4,
+		soundId = "rbxassetid://1234567892",
+		imageId = "rbxassetid://1234567893",
+	},
+	{
+		name = "OffAxisSnap",
+		weight = 3,
+		soundId = "rbxassetid://1234567894",
+		imageId = "rbxassetid://1234567895",
+	},
+	{
+		name = "SingleFrameGlitch",
+		weight = 2,
+		soundId = "rbxassetid://1234567896",
+		imageId = "rbxassetid://1234567897",
+	},
+	{
+		name = "FreezeSnap",
+		weight = 2,
+		soundId = "rbxassetid://1234567898",
+		imageId = "rbxassetid://1234567899",
+	},
+}
+
+local function ensureRemote()
+	local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
+	if not remote then
+		remote = Instance.new("RemoteEvent")
+		remote.Name = REMOTE_NAME
+		remote.Parent = ReplicatedStorage
+	end
+	return remote
+end
+
+local function ensureClientScript()
+	local starterScripts = StarterPlayer:WaitForChild("StarterPlayerScripts")
+	if starterScripts:FindFirstChild(CLIENT_SCRIPT_NAME) then
+		return
+	end
+
+	local clientScript = Instance.new("LocalScript")
+	clientScript.Name = CLIENT_SCRIPT_NAME
+	clientScript.Source = [=[
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local SoundService = game:GetService("SoundService")
+
+local player = Players.LocalPlayer
+local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
+
+local scares = {
+	InstantFaceSlam = {
+		imageId = "rbxassetid://1234567891",
+		soundId = "rbxassetid://1234567890",
+		flashDuration = 0.25,
+	},
+	SilenceSpike = {
+		imageId = "rbxassetid://1234567893",
+		soundId = "rbxassetid://1234567892",
+		silenceDuration = 0.25,
+		flashDuration = 0.3,
+	},
+	OffAxisSnap = {
+		imageId = "rbxassetid://1234567895",
+		soundId = "rbxassetid://1234567894",
+		flashDuration = 0.25,
+		xOffset = 0.18,
+	},
+	SingleFrameGlitch = {
+		imageId = "rbxassetid://1234567897",
+		glitchImageId = "rbxassetid://1234567900",
+		soundId = "rbxassetid://1234567896",
+		glitchDuration = 0.04,
+		flashDuration = 0.25,
+	},
+	FreezeSnap = {
+		imageId = "rbxassetid://1234567899",
+		soundId = "rbxassetid://1234567898",
+		freezeDuration = 0.08,
+		flashDuration = 0.25,
+	},
+}
+
+local function getGui()
+	local playerGui = player:WaitForChild("PlayerGui")
+	local gui = playerGui:FindFirstChild("FredbearJumpscareGui")
+	if gui then
+		return gui, gui:FindFirstChild("JumpscareImage")
+	end
+
+	gui = Instance.new("ScreenGui")
+	gui.Name = "FredbearJumpscareGui"
+	gui.IgnoreGuiInset = true
+	gui.ResetOnSpawn = false
+
+	local image = Instance.new("ImageLabel")
+	image.Name = "JumpscareImage"
+	image.BackgroundTransparency = 1
+	image.AnchorPoint = Vector2.new(0.5, 0.5)
+	image.Position = UDim2.fromScale(0.5, 0.5)
+	image.Size = UDim2.fromScale(1, 1)
+	image.ImageTransparency = 1
+	image.Parent = gui
+
+	gui.Parent = playerGui
+	return gui, image
+end
+
+local function playSound(soundId)
+	if not soundId or soundId == "" then
+		return
+	end
+	local sound = Instance.new("Sound")
+	sound.SoundId = soundId
+	sound.Volume = 1
+	sound.Parent = SoundService
+	sound:Play()
+	sound.Ended:Connect(function()
+		sound:Destroy()
+	end)
+end
+
+local function showImage(image, imageId, position)
+	image.Image = imageId
+	image.Position = position or UDim2.fromScale(0.5, 0.5)
+	image.ImageTransparency = 0
+end
+
+local function hideImage(image)
+	image.ImageTransparency = 1
+end
+
+local function runInstantFaceSlam(config, image)
+	showImage(image, config.imageId)
+	playSound(config.soundId)
+	task.delay(config.flashDuration or 0.25, function()
+		hideImage(image)
+	end)
+end
+
+local function runSilenceSpike(config, image)
+	local originalVolume = SoundService.Volume
+	SoundService.Volume = 0
+	task.wait(config.silenceDuration or 0.25)
+	SoundService.Volume = originalVolume
+	showImage(image, config.imageId)
+	playSound(config.soundId)
+	task.delay(config.flashDuration or 0.3, function()
+		hideImage(image)
+	end)
+end
+
+local function runOffAxisSnap(config, image)
+	local offset = config.xOffset or 0.18
+	local position = UDim2.fromScale(0.5 + offset, 0.5)
+	showImage(image, config.imageId, position)
+	playSound(config.soundId)
+	task.delay(config.flashDuration or 0.25, function()
+		hideImage(image)
+		image.Position = UDim2.fromScale(0.5, 0.5)
+	end)
+end
+
+local function runSingleFrameGlitch(config, image)
+	showImage(image, config.glitchImageId or config.imageId)
+	task.wait(config.glitchDuration or 0.04)
+	showImage(image, config.imageId)
+	playSound(config.soundId)
+	task.delay(config.flashDuration or 0.25, function()
+		hideImage(image)
+	end)
+end
+
+local function runFreezeSnap(config, image)
+	local camera = workspace.CurrentCamera
+	local originalType = camera.CameraType
+	local originalCFrame = camera.CFrame
+
+	camera.CameraType = Enum.CameraType.Scriptable
+	camera.CFrame = originalCFrame
+
+	task.wait(config.freezeDuration or 0.08)
+
+	showImage(image, config.imageId)
+	playSound(config.soundId)
+
+	task.delay(config.flashDuration or 0.25, function()
+		hideImage(image)
+		camera.CameraType = originalType
+	end)
+end
+
+local function runJumpscare(name)
+	local config = scares[name]
+	if not config then
+		return
+	end
+
+	local _, image = getGui()
+	if not image then
+		return
+	end
+
+	if name == "InstantFaceSlam" then
+		runInstantFaceSlam(config, image)
+	elseif name == "SilenceSpike" then
+		runSilenceSpike(config, image)
+	elseif name == "OffAxisSnap" then
+		runOffAxisSnap(config, image)
+	elseif name == "SingleFrameGlitch" then
+		runSingleFrameGlitch(config, image)
+	elseif name == "FreezeSnap" then
+		runFreezeSnap(config, image)
+	end
+end
+
+remote.OnClientEvent:Connect(runJumpscare)
+]=]
+	clientScript.Parent = starterScripts
+end
+
+local function getWeightedRandomConfig()
+	local totalWeight = 0
+	for _, config in ipairs(jumpscareConfigs) do
+		totalWeight += config.weight
+	end
+
+	local roll = math.random() * totalWeight
+	local running = 0
+	for _, config in ipairs(jumpscareConfigs) do
+		running += config.weight
+		if roll <= running then
+			return config
+		end
+	end
+	return jumpscareConfigs[1]
+end
+
 local function isPlayer(hit)
 	local char = hit:FindFirstAncestorOfClass("Model")
-	if not char then return false end
+	if not char then
+		return false
+	end
 
 	local hum = char:FindFirstChild("Humanoid")
-	local plr = game:GetService("Players"):GetPlayerFromCharacter(char)
+	local plr = Players:GetPlayerFromCharacter(char)
 	return hum and plr
 end
 
--- Connect to all BaseParts of the NPC
+local remote = ensureRemote()
+ensureClientScript()
+
+local lastKillTime = {}
+
 for _, part in ipairs(npc:GetDescendants()) do
 	if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
 		part.Touched:Connect(function(hit)
-			if isPlayer(hit) then
-				local char = hit:FindFirstAncestorOfClass("Model")
-				local hum = char:FindFirstChild("Humanoid")
-				if hum and hum.Health > 0 then
-					hum.Health = 0 -- kill player
+			if not isPlayer(hit) then
+				return
+			end
 
-					-- 🔊 Play kill sound
-					if not killSound.IsPlaying then
-						killSound:Play()
-					end
-				end
+			local char = hit:FindFirstAncestorOfClass("Model")
+			local hum = char:FindFirstChild("Humanoid")
+			local player = Players:GetPlayerFromCharacter(char)
+			if not hum or not player then
+				return
+			end
+
+			local now = os.clock()
+			if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
+				return
+			end
+
+			if hum.Health > 0 then
+				lastKillTime[player] = now
+				hum.Health = 0
+				local chosen = getWeightedRandomConfig()
+				remote:FireClient(player, chosen.name)
 			end
 		end)
 	end
