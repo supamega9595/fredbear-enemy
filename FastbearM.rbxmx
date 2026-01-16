@@ -3243,6 +3243,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local REMOTE_NAME = "FastbearAILevelChanged"
+local NPC_NAME = "Fast Fredbear"
 
 local LEVEL_SETTINGS = {
 	DefaultLevel = 1,
@@ -3918,16 +3919,30 @@ do
 		return jumpscareConfigs[1]
 	end
 
-	local function isPlayer(hit)
-		local char = hit:FindFirstAncestorOfClass("Model")
-		if not char then
-			return false
+		local function getCharacterFromHit(hit)
+			local model = hit:FindFirstAncestorOfClass("Model")
+			if model then
+				return model
+			end
+			if hit.Parent and hit.Parent:IsA("Tool") then
+				local toolParent = hit.Parent.Parent
+				if toolParent and toolParent:IsA("Model") then
+					return toolParent
+				end
+			end
+			return nil
 		end
 
-		local hum = char:FindFirstChild("Humanoid")
-		local plr = Players:GetPlayerFromCharacter(char)
-		return hum and plr
-	end
+		local function isPlayer(hit)
+			local char = getCharacterFromHit(hit)
+			if not char then
+				return false
+			end
+
+			local hum = char:FindFirstChild("Humanoid")
+			local plr = Players:GetPlayerFromCharacter(char)
+			return hum and plr
+		end
 
 	local remote = ensureRemote()
 	ensureClientScript()
@@ -3943,30 +3958,34 @@ do
 	for _, part in ipairs(npc:GetDescendants()) do
 		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
 			part.CanTouch = true
-			part.Touched:Connect(function(hit)
-				if not isPlayer(hit) then
-					return
-				end
+				part.Touched:Connect(function(hit)
+					local char = getCharacterFromHit(hit)
+					if not char then
+						return
+					end
 
-				local char = hit:FindFirstAncestorOfClass("Model")
-				local hum = char:FindFirstChild("Humanoid")
-				local player = Players:GetPlayerFromCharacter(char)
-				if not hum or not player then
-					return
-				end
+					local hum = char:FindFirstChild("Humanoid")
+					local player = Players:GetPlayerFromCharacter(char)
+					if not hum or not player then
+						return
+					end
 
 				local now = os.clock()
 				if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
 					return
 				end
 
-				if hum.Health > 0 then
-					lastKillTime[player] = now
-					local chosen = getWeightedRandomConfig()
-					remote:FireClient(player, chosen.name, npc)
-					local targetHum = hum
-					task.delay(0.05, function()
-						if targetHum and targetHum.Health > 0 then
+					if hum.Health > 0 then
+						lastKillTime[player] = now
+						local chosen = getWeightedRandomConfig()
+						remote:FireClient(player, chosen.name, npc)
+						task.delay(0.05, function()
+							if hum.Health > 0 then
+								hum.Health = 0
+							end
+						end)
+					end
+				end)
 							targetHum.Health = 0
 						end
 					end)
@@ -25607,6 +25626,31 @@ local function getDifficulty(level)
 		return "LOW", "0-5", Color3.fromRGB(124, 240, 168)
 	elseif value <= 10 then
 		return "MEDIUM", "6-10", Color3.fromRGB(255, 214, 112)
+local function getNpcModel()
+	local npc = workspace:FindFirstChild(NPC_NAME)
+	if npc and npc:IsA("Model") then
+		return npc
+	end
+	for _, child in ipairs(workspace:GetChildren()) do
+		if child:IsA("Model") and child.Name == NPC_NAME then
+			return child
+		end
+	end
+	return nil
+end
+
+local function syncFromNpc()
+	local npc = getNpcModel()
+	if not npc then
+		return
+	end
+	local level = npc:GetAttribute("AILevel")
+	if level ~= nil then
+		currentLevel = tostring(level)
+		updateLabel()
+	end
+end
+
 	elseif value <= 15 then
 		return "HIGH", "11-15", Color3.fromRGB(255, 140, 90)
 	end
@@ -25716,6 +25760,12 @@ local function createGui()
 	levelLabel = Instance.new("TextLabel")
 	levelLabel.Name = "LevelLabel"
 	levelLabel.BackgroundTransparency = 1
+	syncFromNpc()
+	syncFromNpc()
+player.CharacterAdded:Connect(function()
+	syncFromNpc()
+end)
+
 	levelLabel.Position = UDim2.new(0, 18, 0, 50)
 	levelLabel.Size = UDim2.new(1, -36, 0, 32)
 	levelLabel.Font = Enum.Font.GothamBlack
