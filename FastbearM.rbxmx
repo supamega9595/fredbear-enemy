@@ -3962,9 +3962,14 @@ do
 
 				if hum.Health > 0 then
 					lastKillTime[player] = now
-					hum.Health = 0
 					local chosen = getWeightedRandomConfig()
 					remote:FireClient(player, chosen.name, npc)
+					local targetHum = hum
+					task.delay(0.05, function()
+						if targetHum and targetHum.Health > 0 then
+							targetHum.Health = 0
+						end
+					end)
 				end
 			end)
 		end
