@@ -3243,7 +3243,6 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local REMOTE_NAME = "FastbearAILevelChanged"
-local NPC_NAME = "Fast Fredbear"
 
 local LEVEL_SETTINGS = {
 	DefaultLevel = 1,
@@ -25534,6 +25533,7 @@ end)
 						<X>1.05407953</X>
 						<Y>1</Y>
 						<Z>1.07635355</Z>
+local NPC_NAME = "Fast Fredbear"
 					</Vector3>
 					<BinaryString name="AttributesSerialize"></BinaryString>
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
