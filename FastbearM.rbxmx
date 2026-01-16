@@ -1557,7 +1557,7 @@ local function onRunning(speed)
 end
 
 humanoid.Running:Connect(onRunning)]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{6C0A9C50-A18C-4BAD-BAF7-5485CD45E42C}</string>
@@ -2330,7 +2330,7 @@ while Character.Parent ~= nil do
 	stepAnimate(currentGameTime)
 end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{06CB56DF-34E4-4AE7-8AF3-F57F51DB6D02}</string>
@@ -2979,102 +2979,6 @@ end
 				</Properties>
 			</Item>
 		</Item>
-		<Item class="Script" referent="RBX6FA9C8F0D1A04E2EBD3DEB95EEB21FF9">
-			<Properties>
-				<ProtectedString name="Source"><![CDATA[--[[
-	OUTLINE: 
-		Abilities Needed:
-			- Pathfinding
-			- Picking up Tools
-			- Straffing*
---]]
-
-----------------------
----define variables---
-----------------------
-local pathfinding=game:GetService("PathfindingService");--the service used to compute paths
-local AI=script.Parent;--the AI
-local humanoid=AI:WaitForChild("Humanoid");--the Humanoid object
-local Uppertorso=AI:WaitForChild("UpperTorso");--the Torso object
----- user inputs ----
-local maxWalkDistance=500;--the maximum walking distance
-local pickUpTools=true;--will pick up and equip tools that are touched
-local Messages = 
-{
-	"I found something.",
-	"Does anybody need a tool? I found it off of the ground.",
-	"I found a tool.",
-	"I'm keeping this.",
-	"This seems like this would be handy.",
-	
-}
-----------------------
----define functions---
-----------------------
-
---Moves to specific point 'finish' if a path is possible to follow
-function MoveTo(finish,TD)
-	local path=pathfinding:ComputeRawPathAsync(Uppertorso.Position,finish,maxWalkDistance);
---if the path is followable/reachable
-	if path.Status.Value<3 then
-		for _,v in ipairs(path:GetPointCoordinates()) do
-			humanoid:MoveTo(v);
-			local distance=0;
-			repeat
-				distance=TD and (Vector2.new(v.x,v.z)-Vector2.new(Uppertorso.Position.x,Uppertorso.Position.z)).magnitude or (v-Uppertorso.Position).magnitude;
-				Wait();
-			until distance<2
-		end
-	end
-end
-
---returns all of the instances of a specific instance in a model
-function GetSpecificInstances(model,type)
-	local tab={};
-	for _,v in pairs(model:GetChildren()) do
-		if v:IsA(type) then
-			table.insert(tab,v);
-		end
-	end
-	return tab;
-end
-
---------------
----run code---
---------------
-
---equip tools
-if pickUpTools then
-	for _,v in pairs(GetSpecificInstances(AI,"Part")) do
-		v.Touched:connect(function(part)
-			if part.Name=="Handle" and part.Parent:IsA("Tool") then
-				if (#GetSpecificInstances(part.Parent.Parent,"Humanoid")==0 or part.Parent.Parent==workspace) and #GetSpecificInstances(AI,"Tool")==0 then
-					part.Parent.Parent=AI;
-					game:GetService("Chat"):Chat(script.Parent.Head, Messages[math.random(#Messages)], Enum.ChatColor.White)
-			end end
-		end
-		);
-	end
-end
-
-while true do
-	local point=Vector3.new(math.random(-256,256),torso.Position.y,math.random(-256,256));
-	MoveTo(point,true);
-	wait(math.random(3,5))
-end
-]]></ProtectedString>
-				<bool name="Disabled">false</bool>
-				<Content name="LinkedSource"><null></null></Content>
-				<token name="RunContext">0</token>
-				<string name="ScriptGuid">{0080F933-D881-47F1-AD88-98DD4F28B385}</string>
-				<BinaryString name="AttributesSerialize"></BinaryString>
-				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
-				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">AICode</string>
-				<int64 name="SourceAssetId">-1</int64>
-				<BinaryString name="Tags"></BinaryString>
-			</Properties>
-		</Item>
 		<Item class="Script" referent="RBX7B2E4750BEC54DA28E7FC0E0FA4AB8ED">
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local larm = script.Parent:FindFirstChild("Head")
@@ -3162,14 +3066,14 @@ while true do
 		script.Parent.Humanoid.WalkSpeed=16
 end
 end]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{409EF013-52F4-4368-B622-EA59E70477A4}</string>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">nottooclose</string>
+				<string name="Name">Legacy nottooclose (merged)</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -3313,14 +3217,14 @@ end
 
 
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{A34E129E-8D0C-4348-8425-FC4685070D90}</string>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">passive AI</string>
+				<string name="Name">Legacy passive AI (merged)</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -3331,20 +3235,225 @@ end
 local npc = script.Parent
 local humanoid = npc:WaitForChild("Humanoid")
 local root = npc:WaitForChild("HumanoidRootPart")
+local upperTorso = npc:FindFirstChild("UpperTorso") or npc:FindFirstChild("Torso") or root
 
 local Players = game:GetService("Players")
+local ChatService = game:GetService("Chat")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
--- ===== SETTINGS =====
-local CHASE_SPEED = 100
-local DETECTION_RANGE = 200
-local FOV_ANGLE = 70 -- degrees (front vision cone)
-local MEMORY_TIME = 5 -- seconds NPC keeps chasing after losing sight
-local STOP_DISTANCE = 5
+local REMOTE_NAME = "FastbearAILevelChanged"
+
+local LEVEL_SETTINGS = {
+	DefaultLevel = 1,
+	MinLevel = 1,
+	MaxLevel = 20,
+	RampEnabled = true,
+	RampIntervalMinSeconds = 20,
+	RampIntervalMaxSeconds = 30,
+	RampChance = 0.35,
+	RampStepMin = 1,
+	RampStepMax = 4,
+	RampStepChances = {
+		[1] = 60,
+		[2] = 25,
+		[3] = 10,
+		[4] = 5,
+	},
+}
+
+local LEVELS = {
+	[1] = { ChaseSpeed = 82, DetectionRange = 146, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
+	[2] = { ChaseSpeed = 84, DetectionRange = 152, MemoryTime = 3.8, FovAngle = 62, StopDistance = 5 },
+	[3] = { ChaseSpeed = 86, DetectionRange = 158, MemoryTime = 3.95, FovAngle = 63, StopDistance = 5 },
+	[4] = { ChaseSpeed = 88, DetectionRange = 164, MemoryTime = 4.1, FovAngle = 64, StopDistance = 5 },
+	[5] = { ChaseSpeed = 90, DetectionRange = 170, MemoryTime = 4.25, FovAngle = 65, StopDistance = 5 },
+	[6] = { ChaseSpeed = 92, DetectionRange = 176, MemoryTime = 4.4, FovAngle = 66, StopDistance = 5 },
+	[7] = { ChaseSpeed = 94, DetectionRange = 182, MemoryTime = 4.55, FovAngle = 67, StopDistance = 5 },
+	[8] = { ChaseSpeed = 96, DetectionRange = 188, MemoryTime = 4.7, FovAngle = 68, StopDistance = 5 },
+	[9] = { ChaseSpeed = 98, DetectionRange = 194, MemoryTime = 4.85, FovAngle = 69, StopDistance = 5 },
+	[10] = { ChaseSpeed = 100, DetectionRange = 200, MemoryTime = 5.0, FovAngle = 70, StopDistance = 5 },
+	[11] = { ChaseSpeed = 102, DetectionRange = 206, MemoryTime = 5.15, FovAngle = 71, StopDistance = 5 },
+	[12] = { ChaseSpeed = 104, DetectionRange = 212, MemoryTime = 5.3, FovAngle = 72, StopDistance = 5 },
+	[13] = { ChaseSpeed = 106, DetectionRange = 218, MemoryTime = 5.45, FovAngle = 73, StopDistance = 5 },
+	[14] = { ChaseSpeed = 108, DetectionRange = 224, MemoryTime = 5.6, FovAngle = 74, StopDistance = 5 },
+	[15] = { ChaseSpeed = 110, DetectionRange = 230, MemoryTime = 5.75, FovAngle = 75, StopDistance = 5 },
+	[16] = { ChaseSpeed = 112, DetectionRange = 236, MemoryTime = 5.9, FovAngle = 76, StopDistance = 5 },
+	[17] = { ChaseSpeed = 114, DetectionRange = 242, MemoryTime = 6.05, FovAngle = 77, StopDistance = 5 },
+	[18] = { ChaseSpeed = 116, DetectionRange = 248, MemoryTime = 6.2, FovAngle = 78, StopDistance = 5 },
+	[19] = { ChaseSpeed = 118, DetectionRange = 254, MemoryTime = 6.35, FovAngle = 79, StopDistance = 5 },
+	[20] = { ChaseSpeed = 120, DetectionRange = 260, MemoryTime = 6.5, FovAngle = 80, StopDistance = 5 },
+}
+
+local DEFAULTS = {
+	ChaseSpeed = 100,
+	DetectionRange = 200,
+	FovAngle = 70, -- degrees (front vision cone)
+	MemoryTime = 5, -- seconds NPC keeps chasing after losing sight
+	StopDistance = 5,
+}
+
+local function ensureRemote()
+	local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
+	if not remote then
+		remote = Instance.new("RemoteEvent")
+		remote.Name = REMOTE_NAME
+		remote.Parent = ReplicatedStorage
+	end
+	return remote
+end
+
+local function ensureAttribute(name, value)
+	if npc:GetAttribute(name) == nil then
+		npc:SetAttribute(name, value)
+	end
+end
+
+local function getNumberAttribute(name, fallback, minValue, maxValue)
+	local value = npc:GetAttribute(name)
+	if type(value) ~= "number" then
+		return fallback
+	end
+	if minValue ~= nil then
+		value = math.max(minValue, value)
+	end
+	if maxValue ~= nil then
+		value = math.min(maxValue, value)
+	end
+	return value
+end
+
+local function getBooleanAttribute(name, fallback)
+	local value = npc:GetAttribute(name)
+	if type(value) ~= "boolean" then
+		return fallback
+	end
+	return value
+end
+
+local function getLevelConfig(level)
+	return LEVELS[level] or LEVELS[LEVEL_SETTINGS.DefaultLevel]
+end
+
+ensureAttribute("AILevel", LEVEL_SETTINGS.DefaultLevel)
+ensureAttribute("RampEnabled", LEVEL_SETTINGS.RampEnabled)
+ensureAttribute("RampIntervalMinSeconds", LEVEL_SETTINGS.RampIntervalMinSeconds)
+ensureAttribute("RampIntervalMaxSeconds", LEVEL_SETTINGS.RampIntervalMaxSeconds)
+ensureAttribute("RampChance", LEVEL_SETTINGS.RampChance)
+ensureAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin)
+ensureAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax)
+for step = LEVEL_SETTINGS.RampStepMin, LEVEL_SETTINGS.RampStepMax do
+	local chanceDefault = LEVEL_SETTINGS.RampStepChances and LEVEL_SETTINGS.RampStepChances[step] or 0
+	ensureAttribute(("RampStepChance%d"):format(step), chanceDefault)
+end
+
+local remote = ensureRemote()
+
+local function applyLevel(level)
+	level = tonumber(level) or LEVEL_SETTINGS.DefaultLevel
+	level = math.clamp(level, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+
+	local config = getLevelConfig(level)
+	npc:SetAttribute("AILevel", level)
+	npc:SetAttribute("ChaseSpeed", config.ChaseSpeed)
+	npc:SetAttribute("DetectionRange", config.DetectionRange)
+	npc:SetAttribute("MemoryTime", config.MemoryTime)
+	npc:SetAttribute("FovAngle", config.FovAngle)
+	npc:SetAttribute("StopDistance", config.StopDistance)
+
+	remote:FireAllClients(level, config)
+end
+
+applyLevel(npc:GetAttribute("AILevel"))
+npc:GetAttributeChangedSignal("AILevel"):Connect(function()
+	applyLevel(npc:GetAttribute("AILevel"))
+end)
+
+Players.PlayerAdded:Connect(function(player)
+	local level = npc:GetAttribute("AILevel") or LEVEL_SETTINGS.DefaultLevel
+	remote:FireClient(player, level, getLevelConfig(level))
+end)
+
+task.spawn(function()
+	while true do
+		local minInterval = getNumberAttribute("RampIntervalMinSeconds", LEVEL_SETTINGS.RampIntervalMinSeconds, 1)
+		local maxInterval = getNumberAttribute("RampIntervalMaxSeconds", LEVEL_SETTINGS.RampIntervalMaxSeconds, minInterval)
+		task.wait(math.random() * (maxInterval - minInterval) + minInterval)
+
+		if not getBooleanAttribute("RampEnabled", LEVEL_SETTINGS.RampEnabled) then
+			continue
+		end
+
+		local chance = getNumberAttribute("RampChance", LEVEL_SETTINGS.RampChance, 0, 1)
+		if math.random() <= chance then
+			local stepMin = getNumberAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin, 1)
+			local stepMax = getNumberAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax, stepMin)
+			local totalWeight = 0
+			local weightedSteps = {}
+			for step = stepMin, stepMax do
+				local weight = getNumberAttribute(("RampStepChance%d"):format(step),
+					LEVEL_SETTINGS.RampStepChances and LEVEL_SETTINGS.RampStepChances[step] or 0, 0)
+				if weight > 0 then
+					totalWeight += weight
+					table.insert(weightedSteps, { step = step, weight = weight })
+				end
+			end
+			local step = stepMin
+			if totalWeight > 0 then
+				local roll = math.random() * totalWeight
+				local running = 0
+				for _, entry in ipairs(weightedSteps) do
+					running += entry.weight
+					if roll <= running then
+						step = entry.step
+						break
+					end
+				end
+			end
+			local current = getNumberAttribute("AILevel", LEVEL_SETTINGS.DefaultLevel, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+			local nextLevel = math.clamp(current + step, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+			if nextLevel ~= current then
+				npc:SetAttribute("AILevel", nextLevel)
+			end
+		end
+	end
+end)
+
+local function getConfig()
+	return {
+		ChaseSpeed = getNumberAttribute("ChaseSpeed", DEFAULTS.ChaseSpeed, 0),
+		DetectionRange = getNumberAttribute("DetectionRange", DEFAULTS.DetectionRange, 0),
+		FovAngle = getNumberAttribute("FovAngle", DEFAULTS.FovAngle, 0),
+		MemoryTime = getNumberAttribute("MemoryTime", DEFAULTS.MemoryTime, 0),
+		StopDistance = getNumberAttribute("StopDistance", DEFAULTS.StopDistance, 0),
+	}
+end
+
+local config = getConfig()
+npc:GetAttributeChangedSignal("ChaseSpeed"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("DetectionRange"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("FovAngle"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("MemoryTime"):Connect(function()
+	config = getConfig()
+end)
+npc:GetAttributeChangedSignal("StopDistance"):Connect(function()
+	config = getConfig()
+end)
 
 -- ===== INTERNAL =====
+local idleWalkSpeed = humanoid.WalkSpeed
 local lastSeenTime = 0
 local targetPlayer = nil
+
+local function isChasing()
+	return targetPlayer and tick() - lastSeenTime <= config.MemoryTime
+end
 
 -- Raycast params
 local rayParams = RaycastParams.new()
@@ -3362,14 +3471,14 @@ local function isPlayerVisible(player)
 	if not hrp or not hum or hum.Health <= 0 then return false end
 
 	local distance = (hrp.Position - root.Position).Magnitude
-	if distance > DETECTION_RANGE then return false end
+	if distance > config.DetectionRange then return false end
 
 	-- FOV check
 	local directionToPlayer = (hrp.Position - root.Position).Unit
 	local npcForward = root.CFrame.LookVector
 	local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
 
-	if angle > FOV_ANGLE then
+	if angle > config.FovAngle then
 		return false
 	end
 
@@ -3409,11 +3518,11 @@ RunService.Heartbeat:Connect(function()
 		local char = targetPlayer.Character
 		local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-		if hrp and tick() - lastSeenTime <= MEMORY_TIME then
-			humanoid.WalkSpeed = CHASE_SPEED
+		if hrp and tick() - lastSeenTime <= config.MemoryTime then
+			humanoid.WalkSpeed = config.ChaseSpeed
 
 			local distance = (hrp.Position - root.Position).Magnitude
-			if distance > STOP_DISTANCE then
+			if distance > config.StopDistance then
 				humanoid:MoveTo(hrp.Position)
 			else
 				humanoid:Move(Vector3.zero)
@@ -3425,8 +3534,645 @@ RunService.Heartbeat:Connect(function()
 		end
 	end
 end)
+
+do
+	local PathfindingService = game:GetService("PathfindingService")
+	local toolPickupEnabled = true
+	local maxWalkDistance = 500
+	local toolPickupMessages = {
+		"I found something.",
+		"Does anybody need a tool? I found it off of the ground.",
+		"I found a tool.",
+		"I'm keeping this.",
+		"This seems like this would be handy.",
+	}
+
+	local function moveTo(finish, use2d)
+		if not upperTorso then
+			return
+		end
+		local path = PathfindingService:CreatePath()
+		path:ComputeAsync(upperTorso.Position, finish)
+		if path.Status == Enum.PathStatus.Success then
+			for _, waypoint in ipairs(path:GetWaypoints()) do
+				humanoid:MoveTo(waypoint.Position)
+				local distance = 0
+				repeat
+					if use2d then
+						distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
+					else
+						distance = (waypoint.Position - upperTorso.Position).Magnitude
+					end
+					task.wait()
+				until distance < 2
+			end
+		end
+	end
+
+	local function getSpecificInstances(model, typeName)
+		local tab = {}
+		for _, child in pairs(model:GetChildren()) do
+			if child:IsA(typeName) then
+				table.insert(tab, child)
+			end
+		end
+		return tab
+	end
+
+	if toolPickupEnabled then
+		for _, part in ipairs(getSpecificInstances(npc, "BasePart")) do
+			part.Touched:Connect(function(hit)
+				if hit.Name == "Handle" and hit.Parent:IsA("Tool") then
+					if (#getSpecificInstances(hit.Parent.Parent, "Humanoid") == 0 or hit.Parent.Parent == workspace)
+						and #getSpecificInstances(npc, "Tool") == 0 then
+						hit.Parent.Parent = npc
+						local head = npc:FindFirstChild("Head") or upperTorso or root
+						if head then
+							ChatService:Chat(head, toolPickupMessages[math.random(#toolPickupMessages)], Enum.ChatColor.White)
+						end
+					end
+				end
+			end)
+		end
+	end
+
+	task.spawn(function()
+		if not upperTorso then
+			return
+		end
+		while true do
+			if not isChasing() then
+				local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
+				moveTo(point, true)
+				task.wait(math.random(3, 5))
+			else
+				task.wait(1)
+			end
+		end
+	end)
+end
+
+do
+	local bumpMessages = {
+		"oof, I didn't see you there.",
+		"Sorry for running into you.",
+		"Sorry about that.",
+		"Sorry, I wasn't paying attention to where I was going.",
+		"Ow, I should be more aware of where i'm going.",
+		"Watch where you're going!",
+		"Oh sorry.",
+	}
+
+	local debounce = false
+
+	local function findNearestRoot(pos)
+		local closest = nil
+		local dist = 10
+		for _, model in ipairs(workspace:GetChildren()) do
+			if model:IsA("Model") and model ~= npc then
+				local human = model:FindFirstChildOfClass("Humanoid")
+				local rootPart = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")
+				if human and rootPart and human.Health > 0 then
+					local currentDistance = (rootPart.Position - pos).Magnitude
+					if currentDistance < dist then
+						closest = rootPart
+						dist = currentDistance
+					end
+				end
+			end
+		end
+		return closest
+	end
+
+	local function onHit(hit)
+		local human = hit.Parent and hit.Parent:FindFirstChildOfClass("Humanoid")
+		if human and not debounce then
+			debounce = true
+			local head = npc:FindFirstChild("Head") or upperTorso or root
+			if head then
+				ChatService:Chat(head, bumpMessages[math.random(#bumpMessages)], Enum.ChatColor.White)
+			end
+			task.wait(2)
+			debounce = false
+		end
+	end
+
+	for _, partName in ipairs({ "Head", "UpperTorso", "Torso" }) do
+		local part = npc:FindFirstChild(partName)
+		if part and part:IsA("BasePart") then
+			part.Touched:Connect(onHit)
+		end
+	end
+
+	task.spawn(function()
+		local anchor = upperTorso or root
+		if not anchor then
+			return
+		end
+		while true do
+			if isChasing() then
+				task.wait(0.1)
+			else
+				local target = findNearestRoot(anchor.Position)
+				if target then
+					humanoid.WalkSpeed = 0
+				else
+					humanoid.WalkSpeed = idleWalkSpeed
+				end
+				task.wait(0.1)
+			end
+		end
+	end)
+end
+
+do
+	local rig = npc
+	local human = humanoid
+	local walkSpeed = idleWalkSpeed
+	local lastHP = human.Health
+	local attacked = false
+	local threat = nil
+	local panicking = false
+	local eventRunning = false
+
+	human.Changed:Connect(function()
+		if eventRunning then
+			return
+		end
+		if isChasing() then
+			lastHP = human.Health
+			return
+		end
+
+		eventRunning = true
+		if human.Health < lastHP then
+			lastHP = human.Health
+			task.wait(0.1)
+			local rootPart = rig:FindFirstChild("HumanoidRootPart") or upperTorso or root
+			if rootPart then
+				local possibles = rootPart:GetTouchingParts()
+				for _, part in ipairs(possibles) do
+					if part.Parent ~= rig then
+						if part:IsA("BasePart") and ((part.Parent.ClassName == "Model" and part.Parent:FindFirstChildOfClass("Humanoid")) or part.Parent.ClassName == "Tool") then
+							threat = part
+						end
+					end
+				end
+			end
+			attacked = true
+		end
+
+		if attacked and not panicking then
+			panicking = true
+			human.WalkSpeed = walkSpeed * 4
+
+			if math.random(1, 10) == 3 then
+				human.Jump = true
+			end
+
+			local rootPart = rig:FindFirstChild("HumanoidRootPart") or upperTorso or root
+			if threat and rootPart then
+				local delta = (threat.Position - rootPart.Position).Unit
+				local xAway = delta.X * 1000
+				local zAway = delta.Z * 1000
+				local selfPos = rootPart.Position
+				human.WalkToPoint = Vector3.new(selfPos.X + xAway, selfPos.Y, selfPos.Z + zAway)
+				task.wait(math.random(3, 5))
+				human.WalkToPoint = rootPart.Position
+			elseif rootPart then
+				for _ = 1, math.random(2, 4) do
+					local rand1 = math.random(-1000, 1000)
+					local rand2 = math.random(-1000, 1000)
+					human.WalkToPoint = Vector3.new(rand1, rootPart.Position.Y, rand2)
+					task.wait(math.random(2, 4))
+				end
+				human.WalkToPoint = rootPart.Position
+			end
+
+			human.WalkSpeed = walkSpeed
+			panicking = false
+		end
+
+		attacked = false
+		threat = nil
+		lastHP = human.Health
+		eventRunning = false
+	end)
+
+	task.spawn(function()
+		while task.wait(math.random(3, 6)) do
+			if panicking or isChasing() then
+				continue
+			end
+
+			local rootPart = rig:FindFirstChild("HumanoidRootPart") or upperTorso or root
+			if not rootPart then
+				continue
+			end
+
+			local rand1 = math.random(-40, 40)
+			local rand2 = math.random(-40, 40)
+
+			local pathfindingservice = game:GetService("PathfindingService")
+			local path = pathfindingservice:CreatePath()
+			path:ComputeAsync(rootPart.Position, Vector3.new(rootPart.Position.X + rand1, rootPart.Position.Y, rootPart.Position.Z + rand2))
+			local waypoints = path:GetWaypoints()
+			local panicked = false
+
+			if math.random(1, 20) == 4 then
+				human.Jump = false
+			end
+
+			for _, waypoint in ipairs(waypoints) do
+				if not panicking and not panicked then
+					human.WalkToPoint = waypoint.Position
+					human.MoveToFinished:Wait()
+				else
+					panicked = true
+				end
+			end
+		end
+	end)
+end
+
+do
+	local REMOTE_NAME = "FredbearJumpscare"
+	local CLIENT_SCRIPT_NAME = "FredbearJumpscareClient"
+	local COOLDOWN_SECONDS = 2
+
+	local jumpscareConfigs = {
+		{
+			name = "HardLockLunge",
+			weight = 4,
+			soundId = "rbxassetid://6982454389",
+			duration = 0.6,
+			distance = 2.2,
+			shakePower = 0.35,
+			shakeFrequency = 22,
+			pullInSpeed = 12,
+		},
+		{
+			name = "SnapZoom",
+			weight = 3,
+			soundId = "rbxassetid://6982454389",
+			duration = 0.45,
+			distance = 1.6,
+			shakePower = 0.45,
+			shakeFrequency = 28,
+			pullInSpeed = 22,
+		},
+		{
+			name = "WhiplashTilt",
+			weight = 3,
+			soundId = "rbxassetid://6982454389",
+			duration = 0.55,
+			distance = 2,
+			shakePower = 0.3,
+			shakeFrequency = 18,
+			pullInSpeed = 14,
+			tiltDegrees = 20,
+		},
+		{
+			name = "GlitchLock",
+			weight = 2,
+			soundId = "rbxassetid://6982454389",
+			duration = 0.5,
+			distance = 1.8,
+			shakePower = 0.4,
+			shakeFrequency = 30,
+			pullInSpeed = 16,
+			glitchFrames = 3,
+		},
+		{
+			name = "BassDropStare",
+			weight = 2,
+			soundId = "rbxassetid://6982454389",
+			duration = 0.7,
+			distance = 2.6,
+			shakePower = 0.25,
+			shakeFrequency = 16,
+			pullInSpeed = 10,
+		},
+	}
+
+	local function ensureRemote()
+		local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
+		if not remote then
+			remote = Instance.new("RemoteEvent")
+			remote.Name = REMOTE_NAME
+			remote.Parent = ReplicatedStorage
+		end
+		return remote
+	end
+
+	local function getClientTemplate()
+		local template = npc:FindFirstChild(CLIENT_SCRIPT_NAME, true)
+		if not template or not template:IsA("LocalScript") then
+			warn(("Missing %s LocalScript template under %s."):format(CLIENT_SCRIPT_NAME, npc.Name))
+			return nil
+		end
+		return template
+	end
+
+	local function addScriptToPlayer(player, template)
+		local playerScripts = player:WaitForChild("PlayerScripts")
+		if playerScripts:FindFirstChild(CLIENT_SCRIPT_NAME) then
+			return
+		end
+
+		local clientScript = template:Clone()
+		clientScript.Parent = playerScripts
+	end
+
+	local function ensureClientScript()
+		local starterScripts = game:GetService("StarterPlayer"):WaitForChild("StarterPlayerScripts")
+		local template = getClientTemplate()
+		if not template then
+			return
+		end
+
+		if not starterScripts:FindFirstChild(CLIENT_SCRIPT_NAME) then
+			local clientScript = template:Clone()
+			clientScript.Parent = starterScripts
+		end
+
+		for _, player in ipairs(Players:GetPlayers()) do
+			addScriptToPlayer(player, template)
+		end
+	end
+
+	local function getWeightedRandomConfig()
+		local totalWeight = 0
+		for _, config in ipairs(jumpscareConfigs) do
+			totalWeight += config.weight
+		end
+
+		local roll = math.random() * totalWeight
+		local running = 0
+		for _, config in ipairs(jumpscareConfigs) do
+			running += config.weight
+			if roll <= running then
+				return config
+			end
+		end
+		return jumpscareConfigs[1]
+	end
+
+	local function isPlayer(hit)
+		local char = hit:FindFirstAncestorOfClass("Model")
+		if not char then
+			return false
+		end
+
+		local hum = char:FindFirstChild("Humanoid")
+		local plr = Players:GetPlayerFromCharacter(char)
+		return hum and plr
+	end
+
+	local remote = ensureRemote()
+	ensureClientScript()
+	Players.PlayerAdded:Connect(function(player)
+		local template = getClientTemplate()
+		if template then
+			addScriptToPlayer(player, template)
+		end
+	end)
+
+	local lastKillTime = {}
+
+	for _, part in ipairs(npc:GetDescendants()) do
+		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
+			part.CanTouch = true
+			part.Touched:Connect(function(hit)
+				if not isPlayer(hit) then
+					return
+				end
+
+				local char = hit:FindFirstAncestorOfClass("Model")
+				local hum = char:FindFirstChild("Humanoid")
+				local player = Players:GetPlayerFromCharacter(char)
+				if not hum or not player then
+					return
+				end
+
+				local now = os.clock()
+				if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
+					return
+				end
+
+				if hum.Health > 0 then
+					lastKillTime[player] = now
+					hum.Health = 0
+					local chosen = getWeightedRandomConfig()
+					remote:FireClient(player, chosen.name, npc)
+				end
+			end)
+		end
+	end
+end
+
+do
+	humanoid:GetPropertyChangedSignal("SeatPart"):Connect(function()
+		if humanoid.SeatPart then
+			task.wait(0.1)
+			humanoid.Jump = true
+		end
+	end)
+end
+
+do
+	local LookAtPlayerRange = 30
+	local LookAtNonPlayer = false
+	local PartToLookAt = "Head"
+	local LookBackOnNil = true
+	local SearchLoc = { workspace }
+
+	local HeadHorFactor = 0.8
+	local HeadVertFactor = 0.5
+	local BodyHorFactor = 0.4
+	local BodyVertFactor = 0.4
+
+	local UpdateSpeed = 0.3
+	local UpdateDelay = 0.05
+
+	task.wait(1)
+
+	local Ang = CFrame.Angles
+	local aTan = math.atan
+	local Body = npc
+	local Head = Body:WaitForChild("Head")
+	local Hum = Body:WaitForChild("Humanoid")
+	local Core = Body:WaitForChild("HumanoidRootPart")
+	local IsR6 = (Hum.RigType.Value == 0)
+	local Trso = (IsR6 and Body:WaitForChild("Torso")) or Body:WaitForChild("UpperTorso")
+	local Neck = (IsR6 and Trso:WaitForChild("Neck")) or Head:WaitForChild("Neck")
+	local Waist = (not IsR6 and Trso:WaitForChild("Waist"))
+
+	local NeckOrgnC0 = Neck.C0
+	local WaistOrgnC0 = (not IsR6 and Waist.C0)
+
+	local LookingAtValue = Instance.new("ObjectValue")
+	LookingAtValue.Parent = Body
+	LookingAtValue.Name = "LookingAt"
+
+	local ErrorPart = nil
+	local function GetValidPartToLookAt(Char, bodypart)
+		local pHum = Char:FindFirstChild("Humanoid")
+		if not Char and pHum then
+			return nil
+		end
+		local pIsR6 = (pHum.RigType.Value == 0)
+		if table.find({ "Torso", "UpperTorso" }, bodypart) then
+			if pIsR6 then
+				bodypart = "Torso"
+			else
+				bodypart = "UpperTorso"
+			end
+		end
+		local ValidPart = Char:FindFirstChild(bodypart) or Char:FindFirstChild("HumanoidRootPart")
+		if ValidPart then
+			return ValidPart
+		else
+			if ErrorPart ~= bodypart then
+				ErrorPart = bodypart
+			end
+			return nil
+		end
+	end
+
+	local function getClosestPlayer()
+		local closest_player, closest_distance = nil, LookAtPlayerRange
+		for i = 1, #SearchLoc do
+			for _, player in pairs(SearchLoc[i]:GetChildren()) do
+				if player:FindFirstChild("Humanoid") and player ~= Body
+					and (Players:GetPlayerFromCharacter(player) or LookAtNonPlayer)
+					and GetValidPartToLookAt(player, PartToLookAt) then
+					local distance = (Core.Position - player.PrimaryPart.Position).Magnitude
+					if distance < closest_distance then
+						closest_player = player
+						closest_distance = distance
+					end
+				end
+			end
+		end
+		return closest_player
+	end
+
+	local function rWait(n)
+		n = n or 0.05
+		local startTime = os.clock()
+		while os.clock() - startTime < n do
+			game:GetService("RunService").Heartbeat:Wait()
+		end
+	end
+
+	local function LookAt(NeckC0, WaistC0)
+		if not IsR6 then
+			if Neck then
+				Neck.C0 = Neck.C0:lerp(NeckC0, UpdateSpeed / 2)
+			end
+			if Waist then
+				Waist.C0 = Waist.C0:lerp(WaistC0, UpdateSpeed / 2)
+			end
+		else
+			if Neck then
+				Neck.C0 = Neck.C0:lerp(NeckC0, UpdateSpeed / 2)
+			end
+		end
+	end
+
+	game:GetService("RunService").Heartbeat:Connect(function()
+		rWait(UpdateDelay)
+		local TrsoLV = Trso.CFrame.LookVector
+		local HdPos = Head.CFrame.Position
+		local player = getClosestPlayer()
+		local LookAtPart
+		if Neck or Waist then
+			if player then
+				local success = pcall(function()
+					LookAtPart = GetValidPartToLookAt(player, PartToLookAt)
+					if LookAtPart then
+						local is_in_front = Core.CFrame:ToObjectSpace(LookAtPart.CFrame).Z < 0
+						if is_in_front then
+							if LookingAtValue.Value ~= player then
+								LookingAtValue.Value = player
+							end
+
+							local Dist = (Head.CFrame.Position - LookAtPart.CFrame.Position).Magnitude
+							local Diff = Head.CFrame.Position.Y - LookAtPart.CFrame.Position.Y
+
+							if not IsR6 then
+								LookAt(NeckOrgnC0 * Ang(-(aTan(Diff / Dist) * HeadVertFactor), (((HdPos - LookAtPart.CFrame.Position).Unit):Cross(TrsoLV)).Y * HeadHorFactor, 0),
+									WaistOrgnC0 * Ang(-(aTan(Diff / Dist) * BodyVertFactor), (((HdPos - LookAtPart.CFrame.Position).Unit):Cross(TrsoLV)).Y * BodyHorFactor, 0))
+							else
+								LookAt(NeckOrgnC0 * Ang((aTan(Diff / Dist) * HeadVertFactor), 0, (((HdPos - LookAtPart.CFrame.Position).Unit):Cross(TrsoLV)).Y * HeadHorFactor))
+							end
+						elseif LookBackOnNil then
+							if LookingAtValue.Value ~= nil then
+								LookingAtValue.Value = nil
+							end
+							if not IsR6 then
+								LookAt(NeckOrgnC0, WaistOrgnC0)
+							else
+								LookAt(NeckOrgnC0)
+							end
+						end
+					end
+				end)
+				if not success and LookBackOnNil then
+					if not IsR6 then
+						LookAt(NeckOrgnC0, WaistOrgnC0)
+					else
+						LookAt(NeckOrgnC0)
+					end
+				end
+			elseif LookBackOnNil then
+				if LookingAtValue.Value ~= nil then
+					LookingAtValue.Value = nil
+				end
+				if not IsR6 then
+					LookAt(NeckOrgnC0, WaistOrgnC0)
+				else
+					LookAt(NeckOrgnC0)
+				end
+			end
+		end
+	end)
+end
+
+do
+	local soundIds = {
+		"rbxassetid://0",
+		"rbxassetid://0",
+		"rbxassetid://0",
+	}
+
+	local minDelay = 5
+	local maxDelay = 15
+
+	local function playRandomSound()
+		local sound = Instance.new("Sound")
+		sound.SoundId = soundIds[math.random(1, #soundIds)]
+		sound.Parent = npc:FindFirstChild("Head") or npc:FindFirstChildWhichIsA("BasePart") or npc
+		sound.Volume = 1
+		sound.RollOffMode = Enum.RollOffMode.Inverse
+		sound.RollOffMinDistance = 5
+		sound.RollOffMaxDistance = 20
+		sound:Play()
+		sound.Ended:Connect(function()
+			sound:Destroy()
+		end)
+	end
+
+	task.spawn(function()
+		while npc and npc.Parent do
+			playRandomSound()
+			task.wait(math.random(minDelay, maxDelay))
+		end
+	end)
+end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{A03ACED1-B2EC-4FBA-9428-6E90BF5903CE}</string>
@@ -3618,14 +4364,14 @@ for _, part in ipairs(npc:GetDescendants()) do
 		end
 	end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{3D4B789E-D5F2-4418-9220-970C5908AFD9}</string>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">Script</string>
+				<string name="Name">Legacy Jumpscare Server (merged)</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -3647,14 +4393,18 @@ local scares = {
 		shakePower = 0.35,
 		shakeFrequency = 22,
 		pullInSpeed = 12,
+		mode = "closeShake",
 	},
 	SnapZoom = {
 		soundId = "rbxassetid://6982454389",
 		duration = 0.45,
-		distance = 1.6,
+		distance = 2.4,
 		shakePower = 0.45,
 		shakeFrequency = 28,
 		pullInSpeed = 22,
+		mode = "flashSwap",
+		swapInterval = 0.08,
+		bodyDistance = 4,
 	},
 	WhiplashTilt = {
 		soundId = "rbxassetid://6982454389",
@@ -3664,6 +4414,9 @@ local scares = {
 		shakeFrequency = 18,
 		pullInSpeed = 14,
 		tiltDegrees = 20,
+		mode = "orbit",
+		orbitRadius = 3,
+		orbitSpeed = 6,
 	},
 	GlitchLock = {
 		soundId = "rbxassetid://6982454389",
@@ -3673,6 +4426,8 @@ local scares = {
 		shakeFrequency = 30,
 		pullInSpeed = 16,
 		glitchFrames = 3,
+		mode = "glitchSnap",
+		snapIntensity = 0.4,
 	},
 	BassDropStare = {
 		soundId = "rbxassetid://6982454389",
@@ -3681,6 +4436,7 @@ local scares = {
 		shakePower = 0.25,
 		shakeFrequency = 16,
 		pullInSpeed = 10,
+		mode = "bodyZoom",
 	},
 }
 
@@ -3705,6 +4461,13 @@ local function getHead(target)
 	return target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
 end
 
+local function getRoot(target)
+	if not target or not target:IsA("Model") then
+		return nil
+	end
+	return target:FindFirstChild("HumanoidRootPart") or target:FindFirstChild("UpperTorso") or target:FindFirstChild("Torso")
+end
+
 local function getShakeOffset(power)
 	local x = (math.random() - 0.5) * 2 * power
 	local y = (math.random() - 0.5) * 2 * power
@@ -3727,6 +4490,7 @@ local function playCameraJumpscare(config, target)
 	if not head then
 		return
 	end
+	local root = getRoot(target) or head
 
 	local camera = workspace.CurrentCamera
 	local originalType = camera.CameraType
@@ -3750,7 +4514,27 @@ local function playCameraJumpscare(config, target)
 		local elapsed = os.clock() - startTime
 		local progress = math.clamp(elapsed * pullInSpeed / duration, 0, 1)
 		local currentDistance = distance * (1 - progress * 0.6)
-		local baseCFrame = getLookCFrame(head, currentDistance, tiltDegrees)
+		local baseCFrame
+		if config.mode == "flashSwap" then
+			local swap = math.floor(elapsed / (config.swapInterval or 0.1)) % 2 == 0
+			local targetPart = swap and head or root
+			local targetDistance = swap and currentDistance or (config.bodyDistance or currentDistance + 2)
+			baseCFrame = getLookCFrame(targetPart, targetDistance, tiltDegrees)
+		elseif config.mode == "orbit" then
+			local radius = config.orbitRadius or currentDistance
+			local speed = config.orbitSpeed or 4
+			local angle = elapsed * speed
+			local offset = Vector3.new(math.cos(angle), 0.5, math.sin(angle)) * radius
+			local basePos = head.Position + offset
+			baseCFrame = CFrame.new(basePos, head.Position)
+		elseif config.mode == "bodyZoom" then
+			baseCFrame = getLookCFrame(root, currentDistance + 1, tiltDegrees)
+		elseif config.mode == "glitchSnap" then
+			local snap = (math.random() - 0.5) * 2 * (config.snapIntensity or 0.3)
+			baseCFrame = getLookCFrame(head, currentDistance, tiltDegrees) * CFrame.Angles(0, 0, snap)
+		else
+			baseCFrame = getLookCFrame(head, currentDistance, tiltDegrees)
+		end
 
 		local shake = Vector3.zero
 		if shakePower > 0 then
@@ -3788,7 +4572,7 @@ end
 
 remote.OnClientEvent:Connect(runJumpscare)
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{C404AD72-AD6C-4925-A8C5-70B08B580B11}</string>
@@ -3814,14 +4598,14 @@ if humanoid then
 	end)
 end
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{201D0047-6990-4237-9CC3-10C053ADD996}</string>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">Script JUMP</string>
+				<string name="Name">Legacy Seat Jump (merged)</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -3993,14 +4777,14 @@ game:GetService("RunService").Heartbeat:Connect(function()
 		end
 	end
 end)]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{81DD491A-56B3-4CD5-BD94-9E753921B4CB}</string>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">LookAtPlayer</string>
+				<string name="Name">Legacy LookAtPlayer (merged)</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -4045,14 +4829,14 @@ task.spawn(function()
 	end
 end)
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{69183C8B-2F3A-4242-90CC-ADDD71ADA9E8}</string>
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">Script</string>
+				<string name="Name">Legacy Ambient Sound (merged)</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -24735,6 +25519,277 @@ end)
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
 			</Item>
+		</Item>
+	</Item>
+	<Item class="Tool" referent="RBX4F1CB1F5E4D84E09A1A30D41D7C57C45">
+		<Properties>
+			<bool name="CanBeDropped">false</bool>
+			<bool name="Enabled">true</bool>
+			<BinaryString name="AttributesSerialize"></BinaryString>
+			<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+			<bool name="DefinesCapabilities">false</bool>
+			<string name="Name">Fastbear AI Level Monitor</string>
+			<int64 name="SourceAssetId">-1</int64>
+			<BinaryString name="Tags"></BinaryString>
+			<bool name="RequiresHandle">false</bool>
+		</Properties>
+		<Item class="LocalScript" referent="RBX4A1AE2A05BB7404EBA7F6C075B5B6776">
+			<Properties>
+				<ProtectedString name="Source"><![CDATA[local tool = script.Parent
+local Players = game:GetService("Players")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local REMOTE_NAME = "FastbearAILevelChanged"
+
+local UI_CONFIG = {
+	FrameSize = UDim2.new(0, 420, 0, 150),
+	FramePosition = UDim2.new(0.5, 0, 0.02, 0),
+	FrameCornerRadius = 18,
+	StrokeThickness = 2,
+	ScanlineImage = "rbxassetid://3926305904",
+	ScanlineTransparency = 0.88,
+	TitleText = "FASTBEAR AI SCANNER",
+	TitleSize = 20,
+	LevelSize = 26,
+	DifficultySize = 20,
+	RangeSize = 16,
+	Pattern = {
+		Enabled = true,
+		ImageId = "rbxassetid://0",
+		Color = Color3.fromRGB(255, 255, 255),
+		Transparency = 0.92,
+		TileSize = 64,
+	},
+	Themes = {
+		Low = { Accent = Color3.fromRGB(124, 240, 168), Stroke = Color3.fromRGB(44, 180, 110), Background = Color3.fromRGB(10, 12, 14) },
+		Medium = { Accent = Color3.fromRGB(255, 214, 112), Stroke = Color3.fromRGB(210, 165, 70), Background = Color3.fromRGB(16, 12, 8) },
+		High = { Accent = Color3.fromRGB(255, 140, 90), Stroke = Color3.fromRGB(200, 90, 50), Background = Color3.fromRGB(18, 10, 10) },
+		Extreme = { Accent = Color3.fromRGB(255, 80, 80), Stroke = Color3.fromRGB(210, 40, 40), Background = Color3.fromRGB(20, 6, 8) },
+		Unknown = { Accent = Color3.fromRGB(185, 185, 185), Stroke = Color3.fromRGB(120, 120, 120), Background = Color3.fromRGB(12, 12, 14) },
+	},
+}
+
+local player = Players.LocalPlayer
+local gui
+local frameRef
+local strokeRef
+local titleLabel
+local patternImage
+local levelLabel
+local difficultyLabel
+local rangeLabel
+local currentLevel = "--"
+local humanoidConn
+
+local function cleanupGui()
+	if humanoidConn then
+		humanoidConn:Disconnect()
+		humanoidConn = nil
+	end
+	if gui then
+		gui:Destroy()
+		gui = nil
+		levelLabel = nil
+	end
+end
+
+local function getDifficulty(level)
+	local value = tonumber(level)
+	if not value then
+		return "UNKNOWN", "—", Color3.fromRGB(185, 185, 185)
+	end
+	if value <= 5 then
+		return "LOW", "0-5", Color3.fromRGB(124, 240, 168)
+	elseif value <= 10 then
+		return "MEDIUM", "6-10", Color3.fromRGB(255, 214, 112)
+	elseif value <= 15 then
+		return "HIGH", "11-15", Color3.fromRGB(255, 140, 90)
+	end
+	return "EXTREME", "16-20", Color3.fromRGB(255, 80, 80)
+end
+
+local function updateLabel()
+	if levelLabel and difficultyLabel and rangeLabel then
+		local difficulty, rangeText, color = getDifficulty(currentLevel)
+		if frameRef and strokeRef and titleLabel then
+			local themeKey = difficulty == "LOW" and "Low"
+				or difficulty == "MEDIUM" and "Medium"
+				or difficulty == "HIGH" and "High"
+				or difficulty == "EXTREME" and "Extreme"
+				or "Unknown"
+			local theme = UI_CONFIG.Themes[themeKey] or UI_CONFIG.Themes.Unknown
+			frameRef.BackgroundColor3 = theme.Background
+			strokeRef.Color = theme.Stroke
+			titleLabel.TextColor3 = theme.Accent
+			if patternImage then
+				patternImage.ImageColor3 = theme.Accent:Lerp(Color3.fromRGB(255, 255, 255), 0.6)
+			end
+		end
+		levelLabel.Text = ("AI LEVEL: %s"):format(currentLevel)
+		difficultyLabel.Text = ("DIFFICULTY: %s"):format(difficulty)
+		difficultyLabel.TextColor3 = color
+		rangeLabel.Text = ("RANGE: %s"):format(rangeText)
+	end
+end
+
+local function createGui()
+	if gui then
+		return
+	end
+
+	gui = Instance.new("ScreenGui")
+	gui.Name = "FastbearAILevelGui"
+	gui.ResetOnSpawn = false
+
+	local frame = Instance.new("Frame")
+	frame.Name = "ScannerFrame"
+	frame.AnchorPoint = Vector2.new(0.5, 0)
+	frame.Position = UI_CONFIG.FramePosition
+	frame.Size = UI_CONFIG.FrameSize
+	frame.BackgroundColor3 = UI_CONFIG.Themes.Unknown.Background
+	frame.Parent = gui
+	frameRef = frame
+
+	local corner = Instance.new("UICorner")
+	corner.CornerRadius = UDim.new(0, UI_CONFIG.FrameCornerRadius)
+	corner.Parent = frame
+
+	local stroke = Instance.new("UIStroke")
+	stroke.Thickness = UI_CONFIG.StrokeThickness
+	stroke.Color = UI_CONFIG.Themes.Unknown.Stroke
+	stroke.Parent = frame
+	strokeRef = stroke
+
+	local gradient = Instance.new("UIGradient")
+	gradient.Color = ColorSequence.new({
+		ColorSequenceKeypoint.new(0, Color3.fromRGB(18, 18, 26)),
+		ColorSequenceKeypoint.new(0.5, Color3.fromRGB(12, 12, 16)),
+		ColorSequenceKeypoint.new(1, Color3.fromRGB(30, 6, 10)),
+	})
+	gradient.Rotation = 90
+	gradient.Parent = frame
+
+	if UI_CONFIG.Pattern.Enabled and UI_CONFIG.Pattern.ImageId ~= "" then
+		local pattern = Instance.new("ImageLabel")
+		pattern.Name = "Pattern"
+		pattern.BackgroundTransparency = 1
+		pattern.Image = UI_CONFIG.Pattern.ImageId
+		pattern.ImageColor3 = UI_CONFIG.Pattern.Color
+		pattern.ImageTransparency = UI_CONFIG.Pattern.Transparency
+		pattern.ScaleType = Enum.ScaleType.Tile
+		pattern.TileSize = UDim2.new(0, UI_CONFIG.Pattern.TileSize, 0, UI_CONFIG.Pattern.TileSize)
+		pattern.Size = UDim2.new(1, 0, 1, 0)
+		pattern.ZIndex = 2
+		pattern.Parent = frame
+		patternImage = pattern
+	end
+
+	local scanlines = Instance.new("ImageLabel")
+	scanlines.Name = "Scanlines"
+	scanlines.BackgroundTransparency = 1
+	scanlines.Image = UI_CONFIG.ScanlineImage
+	scanlines.ImageRectOffset = Vector2.new(4, 4)
+	scanlines.ImageRectSize = Vector2.new(36, 36)
+	scanlines.ImageTransparency = UI_CONFIG.ScanlineTransparency
+	scanlines.Size = UDim2.new(1, 0, 1, 0)
+	scanlines.ZIndex = 3
+	scanlines.Parent = frame
+
+	local title = Instance.new("TextLabel")
+	title.Name = "Title"
+	title.BackgroundTransparency = 1
+	title.Position = UDim2.new(0, 16, 0, 8)
+	title.Size = UDim2.new(1, -32, 0, 26)
+	title.Font = Enum.Font.GothamBlack
+	title.Text = UI_CONFIG.TitleText
+	title.TextXAlignment = Enum.TextXAlignment.Left
+	title.TextColor3 = UI_CONFIG.Themes.Unknown.Accent
+	title.TextSize = UI_CONFIG.TitleSize
+	title.Parent = frame
+	titleLabel = title
+
+	levelLabel = Instance.new("TextLabel")
+	levelLabel.Name = "LevelLabel"
+	levelLabel.BackgroundTransparency = 1
+	levelLabel.Position = UDim2.new(0, 18, 0, 50)
+	levelLabel.Size = UDim2.new(1, -36, 0, 32)
+	levelLabel.Font = Enum.Font.GothamBlack
+	levelLabel.TextSize = UI_CONFIG.LevelSize
+	levelLabel.TextXAlignment = Enum.TextXAlignment.Left
+	levelLabel.TextColor3 = Color3.fromRGB(255, 240, 230)
+	levelLabel.Parent = frame
+
+	difficultyLabel = Instance.new("TextLabel")
+	difficultyLabel.Name = "DifficultyLabel"
+	difficultyLabel.BackgroundTransparency = 1
+	difficultyLabel.Position = UDim2.new(0, 18, 0, 88)
+	difficultyLabel.Size = UDim2.new(1, -36, 0, 26)
+	difficultyLabel.Font = Enum.Font.GothamBold
+	difficultyLabel.TextSize = UI_CONFIG.DifficultySize
+	difficultyLabel.TextXAlignment = Enum.TextXAlignment.Left
+	difficultyLabel.Parent = frame
+
+	rangeLabel = Instance.new("TextLabel")
+	rangeLabel.Name = "RangeLabel"
+	rangeLabel.BackgroundTransparency = 1
+	rangeLabel.Position = UDim2.new(0, 18, 0, 114)
+	rangeLabel.Size = UDim2.new(1, -36, 0, 22)
+	rangeLabel.Font = Enum.Font.GothamMedium
+	rangeLabel.TextSize = UI_CONFIG.RangeSize
+	rangeLabel.TextXAlignment = Enum.TextXAlignment.Left
+	rangeLabel.TextColor3 = Color3.fromRGB(200, 200, 210)
+	rangeLabel.Parent = frame
+
+	updateLabel()
+end
+
+local remote = ReplicatedStorage:WaitForChild(REMOTE_NAME, 10)
+if remote then
+	remote.OnClientEvent:Connect(function(level)
+		currentLevel = tostring(level or "--")
+		updateLabel()
+	end)
+end
+
+tool.Equipped:Connect(function()
+	createGui()
+	gui.Parent = player:WaitForChild("PlayerGui")
+
+	local character = player.Character or player.CharacterAdded:Wait()
+	local humanoid = character:FindFirstChildOfClass("Humanoid") or character:WaitForChild("Humanoid")
+	if humanoidConn then
+		humanoidConn:Disconnect()
+	end
+	humanoidConn = humanoid.Died:Connect(function()
+		cleanupGui()
+	end)
+end)
+
+tool.Unequipped:Connect(function()
+	if gui then
+		gui.Parent = nil
+	end
+	if humanoidConn then
+		humanoidConn:Disconnect()
+		humanoidConn = nil
+	end
+end)
+
+player.CharacterRemoving:Connect(function()
+	cleanupGui()
+end)
+]]></ProtectedString>
+				<bool name="Disabled">false</bool>
+				<Content name="LinkedSource"><null></null></Content>
+				<token name="RunContext">0</token>
+				<string name="ScriptGuid">{B91A5036-3B62-4A7C-AFD5-8F31EEA2EC73}</string>
+				<BinaryString name="AttributesSerialize"></BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">AILevelMonitorClient</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
 		</Item>
 	</Item>
 	<SharedStrings>
