@@ -4009,7 +4009,7 @@ do
 
 		local function moveTo(finish, use2d)
 			if not upperTorso then
-				return
+				return false
 			end
 			local path = PathfindingService:CreatePath({
 				WaypointSpacing = 10,
@@ -4017,6 +4017,9 @@ do
 			path:ComputeAsync(upperTorso.Position, finish)
 			if path.Status == Enum.PathStatus.Success then
 				for _, waypoint in ipairs(path:GetWaypoints()) do
+					if isChasing() then
+						return false
+					end
 					if waypoint.Action == Enum.PathWaypointAction.Jump then
 						humanoid.Jump = true
 					end
@@ -4026,6 +4029,9 @@ do
 					local startPos = upperTorso.Position
 					local maxTime = math.max(2, (waypoint.Position - startPos).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
 					repeat
+						if isChasing() then
+							return false
+						end
 						if use2d then
 							distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
 						else
@@ -4043,7 +4049,9 @@ do
 						task.wait()
 					until distance < 2
 				end
+				return true
 			end
+			return false
 		end
 
 	local function getSpecificInstances(model, typeName)
@@ -4073,8 +4081,10 @@ do
 		end
 	end
 
-	local waypointFolderName = "FredbearWaypoints"
-	local waypointPool = {}
+		local waypointFolderName = "FredbearWaypoints"
+		local waypointPool = {}
+		local lastRoamTarget = nil
+		local minRoamDistance = 40
 
 	local function getWaypointParts()
 		local folder = workspace:FindFirstChild(waypointFolderName)
@@ -4094,26 +4104,38 @@ do
 		waypointPool = getWaypointParts()
 	end
 
-	local function pickNextWaypoint(currentPos)
-		if #waypointPool == 0 then
-			refillWaypointPool()
-		end
-		if #waypointPool == 0 then
-			return nil
-		end
+		local function pickNextWaypoint(currentPos)
+			if #waypointPool == 0 then
+				refillWaypointPool()
+			end
+			if #waypointPool == 0 then
+				return nil
+			end
 
-		local scored = {}
-		for index, part in ipairs(waypointPool) do
-			local distance = (part.Position - currentPos).Magnitude
-			table.insert(scored, {
-				index = index,
-				part = part,
-				distance = distance,
-			})
-		end
+			local scored = {}
+			for index, part in ipairs(waypointPool) do
+				local distance = (part.Position - currentPos).Magnitude
+				if not lastRoamTarget or (part.Position - lastRoamTarget).Magnitude >= minRoamDistance then
+					table.insert(scored, {
+						index = index,
+						part = part,
+						distance = distance,
+					})
+				end
+			end
+			if #scored == 0 then
+				for index, part in ipairs(waypointPool) do
+					local distance = (part.Position - currentPos).Magnitude
+					table.insert(scored, {
+						index = index,
+						part = part,
+						distance = distance,
+					})
+				end
+			end
 
-		table.sort(scored, function(a, b)
-			return a.distance > b.distance
+			table.sort(scored, function(a, b)
+				return a.distance > b.distance
 		end)
 
 		local maxIndex = math.max(1, math.floor(#scored * 0.4))
@@ -4122,26 +4144,36 @@ do
 		return chosen.part
 	end
 
-	task.spawn(function()
-		if not upperTorso then
-			return
-		end
-		while true do
-			if not isChasing() then
-				local anchor = upperTorso or root
-				local waypoint = anchor and pickNextWaypoint(anchor.Position)
-				if waypoint then
-					moveTo(waypoint.Position, true)
-				else
-					local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
-					moveTo(point, true)
-				end
-				task.wait(math.random(3, 5))
-			else
-				task.wait(1)
+		task.spawn(function()
+			if not upperTorso then
+				return
 			end
-		end
-	end)
+			local wasChasing = false
+			while true do
+				local chasing = isChasing()
+				if chasing then
+					wasChasing = true
+					task.wait(1)
+				else
+					if wasChasing then
+						refillWaypointPool()
+						lastRoamTarget = nil
+						wasChasing = false
+					end
+					local anchor = upperTorso or root
+					local waypoint = anchor and pickNextWaypoint(anchor.Position)
+					if waypoint then
+						if moveTo(waypoint.Position, true) then
+							lastRoamTarget = waypoint.Position
+						end
+					else
+						local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
+						moveTo(point, true)
+					end
+					task.wait(math.random(3, 5))
+				end
+			end
+		end)
 end
 
 do
