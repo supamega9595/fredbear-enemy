@@ -4011,22 +4011,33 @@ do
 			if not upperTorso then
 				return
 			end
-			local path = PathfindingService:CreatePath()
+			local path = PathfindingService:CreatePath({
+				WaypointSpacing = 10,
+			})
 			path:ComputeAsync(upperTorso.Position, finish)
 			if path.Status == Enum.PathStatus.Success then
 				for _, waypoint in ipairs(path:GetWaypoints()) do
+					if waypoint.Action == Enum.PathWaypointAction.Jump then
+						humanoid.Jump = true
+					end
 					humanoid:MoveTo(waypoint.Position)
 					local distance = 0
 					local startTime = tick()
-					local maxTime = math.max(2, (waypoint.Position - upperTorso.Position).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
+					local startPos = upperTorso.Position
+					local maxTime = math.max(2, (waypoint.Position - startPos).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
 					repeat
 						if use2d then
 							distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
 						else
 							distance = (waypoint.Position - upperTorso.Position).Magnitude
 						end
+						local traveled = (upperTorso.Position - startPos).Magnitude
+						local expectedDistance = (waypoint.Position - startPos).Magnitude
 						if tick() - startTime > maxTime then
 							humanoid.Jump = true
+							break
+						end
+						if traveled > expectedDistance + 2 then
 							break
 						end
 						task.wait()
