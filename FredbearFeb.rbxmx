@@ -1544,7 +1544,15 @@ sound.SoundId = "rbxassetid://117057161454198" --Change 0 to the audio's asset I
 sound.Parent = root
 sound.Looped = true
 
+local function isChasing()
+	return character:GetAttribute("IsChasing") == true
+end
+
 local function onRunning(speed)
+	if not isChasing() then
+		sound:Pause()
+		return
+	end
 	if speed > 0.8 then
 		if sound.IsPaused then
 			sound:Resume()
@@ -1555,6 +1563,10 @@ local function onRunning(speed)
 		sound:Pause()
 	end
 end
+
+character:GetAttributeChangedSignal("IsChasing"):Connect(function()
+	onRunning(humanoid.MoveDirection.Magnitude * humanoid.WalkSpeed)
+end)
 
 humanoid.Running:Connect(onRunning)]]></ProtectedString>
 				<bool name="Disabled">false</bool>
@@ -3974,26 +3986,27 @@ RunService.Heartbeat:Connect(function()
 		lastSeenTime = tick()
 	end
 
-	if targetPlayer then
-		local char = targetPlayer.Character
-		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		if targetPlayer then
+			local char = targetPlayer.Character
+			local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-		if hrp and tick() - lastSeenTime <= config.MemoryTime then
-			humanoid.WalkSpeed = config.ChaseSpeed
+			if hrp and tick() - lastSeenTime <= config.MemoryTime then
+				humanoid.WalkSpeed = config.ChaseSpeed
 
-			local distance = (hrp.Position - root.Position).Magnitude
-			if distance > config.StopDistance then
-				humanoid:MoveTo(hrp.Position)
+				local distance = (hrp.Position - root.Position).Magnitude
+				if distance > config.StopDistance then
+					humanoid:MoveTo(hrp.Position)
+				else
+					humanoid:Move(Vector3.zero)
+				end
 			else
+				-- Memory expired
+				targetPlayer = nil
 				humanoid:Move(Vector3.zero)
 			end
-		else
-			-- Memory expired
-			targetPlayer = nil
-			humanoid:Move(Vector3.zero)
 		end
-	end
-end)
+		npc:SetAttribute("IsChasing", isChasing())
+	end)
 
 do
 	local PathfindingService = game:GetService("PathfindingService")
@@ -4016,7 +4029,19 @@ do
 			})
 			path:ComputeAsync(upperTorso.Position, finish)
 			if path.Status == Enum.PathStatus.Success then
-				for _, waypoint in ipairs(path:GetWaypoints()) do
+				local rawWaypoints = path:GetWaypoints()
+				local waypoints = {}
+				local lastPosition = nil
+				for _, waypoint in ipairs(rawWaypoints) do
+					if not lastPosition or (waypoint.Position - lastPosition).Magnitude >= 6 then
+						table.insert(waypoints, waypoint)
+						lastPosition = waypoint.Position
+					end
+				end
+				if #waypoints == 0 and rawWaypoints[1] then
+					waypoints = rawWaypoints
+				end
+				for _, waypoint in ipairs(waypoints) do
 					if isChasing() then
 						return false
 					end
@@ -4246,6 +4271,7 @@ do
 				task.wait(0.1)
 			end
 		end
+		npc:SetAttribute("IsChasing", isChasing())
 	end)
 end
 
