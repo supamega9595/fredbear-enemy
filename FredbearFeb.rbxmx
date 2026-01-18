@@ -4007,27 +4007,33 @@ do
 		"This seems like this would be handy.",
 	}
 
-	local function moveTo(finish, use2d)
-		if not upperTorso then
-			return
-		end
-		local path = PathfindingService:CreatePath()
-		path:ComputeAsync(upperTorso.Position, finish)
-		if path.Status == Enum.PathStatus.Success then
-			for _, waypoint in ipairs(path:GetWaypoints()) do
-				humanoid:MoveTo(waypoint.Position)
-				local distance = 0
-				repeat
-					if use2d then
-						distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
-					else
-						distance = (waypoint.Position - upperTorso.Position).Magnitude
-					end
-					task.wait()
-				until distance < 2
+		local function moveTo(finish, use2d)
+			if not upperTorso then
+				return
+			end
+			local path = PathfindingService:CreatePath()
+			path:ComputeAsync(upperTorso.Position, finish)
+			if path.Status == Enum.PathStatus.Success then
+				for _, waypoint in ipairs(path:GetWaypoints()) do
+					humanoid:MoveTo(waypoint.Position)
+					local distance = 0
+					local startTime = tick()
+					local maxTime = math.max(2, (waypoint.Position - upperTorso.Position).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
+					repeat
+						if use2d then
+							distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
+						else
+							distance = (waypoint.Position - upperTorso.Position).Magnitude
+						end
+						if tick() - startTime > maxTime then
+							humanoid.Jump = true
+							break
+						end
+						task.wait()
+					until distance < 2
+				end
 			end
 		end
-	end
 
 	local function getSpecificInstances(model, typeName)
 		local tab = {}
