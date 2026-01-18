@@ -4056,14 +4056,69 @@ do
 		end
 	end
 
+	local waypointFolderName = "FredbearWaypoints"
+	local waypointPool = {}
+
+	local function getWaypointParts()
+		local folder = workspace:FindFirstChild(waypointFolderName)
+		if not folder then
+			return {}
+		end
+		local parts = {}
+		for _, child in ipairs(folder:GetChildren()) do
+			if child:IsA("BasePart") then
+				table.insert(parts, child)
+			end
+		end
+		return parts
+	end
+
+	local function refillWaypointPool()
+		waypointPool = getWaypointParts()
+	end
+
+	local function pickNextWaypoint(currentPos)
+		if #waypointPool == 0 then
+			refillWaypointPool()
+		end
+		if #waypointPool == 0 then
+			return nil
+		end
+
+		local scored = {}
+		for index, part in ipairs(waypointPool) do
+			local distance = (part.Position - currentPos).Magnitude
+			table.insert(scored, {
+				index = index,
+				part = part,
+				distance = distance,
+			})
+		end
+
+		table.sort(scored, function(a, b)
+			return a.distance > b.distance
+		end)
+
+		local maxIndex = math.max(1, math.floor(#scored * 0.4))
+		local chosen = scored[math.random(1, maxIndex)]
+		table.remove(waypointPool, chosen.index)
+		return chosen.part
+	end
+
 	task.spawn(function()
 		if not upperTorso then
 			return
 		end
 		while true do
 			if not isChasing() then
-				local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
-				moveTo(point, true)
+				local anchor = upperTorso or root
+				local waypoint = anchor and pickNextWaypoint(anchor.Position)
+				if waypoint then
+					moveTo(waypoint.Position, true)
+				else
+					local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
+					moveTo(point, true)
+				end
 				task.wait(math.random(3, 5))
 			else
 				task.wait(1)
