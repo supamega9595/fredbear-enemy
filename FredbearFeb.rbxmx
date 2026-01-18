@@ -1543,6 +1543,9 @@ local sound = Instance.new"Sound"
 sound.SoundId = "rbxassetid://117057161454198" --Change 0 to the audio's asset ID.
 sound.Parent = root
 sound.Looped = true
+sound.Volume = 1
+sound.RollOffMinDistance = 10
+sound.RollOffMaxDistance = 120
 
 local function isChasing()
 	return character:GetAttribute("IsChasing") == true
@@ -4025,19 +4028,19 @@ do
 				return false
 			end
 			local path = PathfindingService:CreatePath({
-				WaypointSpacing = 10,
+				WaypointSpacing = 15,
 			})
 			path:ComputeAsync(upperTorso.Position, finish)
 			if path.Status == Enum.PathStatus.Success then
 				local rawWaypoints = path:GetWaypoints()
 				local waypoints = {}
 				local lastPosition = nil
-				for _, waypoint in ipairs(rawWaypoints) do
-					if not lastPosition or (waypoint.Position - lastPosition).Magnitude >= 6 then
-						table.insert(waypoints, waypoint)
-						lastPosition = waypoint.Position
+					for _, waypoint in ipairs(rawWaypoints) do
+						if not lastPosition or (waypoint.Position - lastPosition).Magnitude >= 12 then
+							table.insert(waypoints, waypoint)
+							lastPosition = waypoint.Position
+						end
 					end
-				end
 				if #waypoints == 0 and rawWaypoints[1] then
 					waypoints = rawWaypoints
 				end
@@ -4072,7 +4075,7 @@ do
 							break
 						end
 						task.wait()
-					until distance < 2
+					until distance < 4
 				end
 				return true
 			end
