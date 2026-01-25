@@ -25342,7 +25342,7 @@ end)]]]]></ProtectedString>
 				<BinaryString name="Tags" />
 			</Properties>
 		</Item>
-		<Item class="StringValue" referent="RBX72DE650344DC448CA79DB0AAB933964C"><Properties><string name="Value">Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX154965391EF14414AE30E70683AAD8EF">
+		<Item class="StringValue" referent="RBX72DE650344DC448CA79DB0AAB933964C"><Properties><string name="Value">Fast Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX154965391EF14414AE30E70683AAD8EF">
 			<Properties>
 				<token name="shape">1</token>
 				<token name="formFactorRaw">1</token>
@@ -25728,7 +25728,7 @@ end)]]]]></ProtectedString>
 local tool = script.Parent.Parent.Parent.Parent
 local maxDistance = tool:WaitForChild("MaxDistance").Value
 local targetNameValue = tool:FindFirstChild("TargetName")
-local targetName = targetNameValue and targetNameValue.Value or "Fredbear"
+local targetName = targetNameValue and targetNameValue.Value or "Fast Fredbear"
 local toolHandle = tool:WaitForChild("Handle")
 
 local function findTarget()
@@ -26302,7 +26302,7 @@ end)]]]]></ProtectedString>
 				<BinaryString name="Tags" />
 			</Properties>
 		</Item>
-		<Item class="StringValue" referent="RBXDA469AB91D3544E383F3232057D9827B"><Properties><string name="Value">Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX0B61030B223A49119C8D3558B6B4B94B">
+		<Item class="StringValue" referent="RBXDA469AB91D3544E383F3232057D9827B"><Properties><string name="Value">Fast Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX0B61030B223A49119C8D3558B6B4B94B">
 			<Properties>
 				<token name="shape">1</token>
 				<token name="formFactorRaw">1</token>
@@ -26601,7 +26601,7 @@ end)]]]]></ProtectedString>
 						<int name="MaxVisibleGraphemes">-1</int>
 						<string name="OpenTypeFeatures" />
 						<bool name="RichText">false</bool>
-						<string name="Text">AI LEVEL</string>
+						<string name="Text"></string>
 						<Color3 name="TextColor3">
 							<R>1</R>
 							<G>1</G>
@@ -26687,7 +26687,7 @@ end)]]]]></ProtectedString>
 
 local tool = script.Parent.Parent.Parent.Parent
 local targetNameValue = tool:FindFirstChild("TargetName")
-local targetName = targetNameValue and targetNameValue.Value or "Fredbear"
+local targetName = targetNameValue and targetNameValue.Value or "Fast Fredbear"
 local minLevelValue = tool:FindFirstChild("MinAILevel")
 local maxLevelValue = tool:FindFirstChild("MaxAILevel")
 local dangerLevelValue = tool:FindFirstChild("DangerLevel")
