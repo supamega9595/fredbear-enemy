@@ -25730,6 +25730,7 @@ local maxDistance = tool:WaitForChild("MaxDistance").Value
 local targetNameValue = tool:FindFirstChild("TargetName")
 local targetName = targetNameValue and targetNameValue.Value or "Fast Fredbear"
 local toolHandle = tool:WaitForChild("Handle")
+local updateInterval = 2.5
 
 local function findTarget()
 	local direct = workspace:FindFirstChild(targetName)
@@ -25739,7 +25740,24 @@ local function findTarget()
 	return workspace:FindFirstChild(targetName, true)
 end
 
-while task.wait(1) do
+local function getTargetPosition(target)
+	if not target then
+		return nil
+	end
+	if target:IsA("Model") then
+		local primary = target.PrimaryPart or target:FindFirstChild("HumanoidRootPart")
+		if primary then
+			return primary.Position
+		end
+		return target:GetPivot().Position
+	end
+	if target:IsA("BasePart") then
+		return target.Position
+	end
+	return nil
+end
+
+while task.wait(updateInterval) do
 	local target = findTarget()
 	if not target then
 		script.Parent.Text = "No Signal"
@@ -25749,8 +25767,22 @@ while task.wait(1) do
 		continue
 	end
 
-	local targetPosition = target:IsA("Model") and (target.PrimaryPart and target.PrimaryPart.Position or target:GetPivot().Position) or target.Position
+	local targetPosition = getTargetPosition(target)
+	if not targetPosition then
+		script.Parent.Text = "No Signal"
+		toolHandle.Sound:Stop()
+		tool.Parent.Light.Color = Color3.fromRGB(0, 0, 0)
+		toolHandle.Sound.PlaybackSpeed = 1
+		continue
+	end
+
 	local distance = (toolHandle.Position - targetPosition).Magnitude
+
+	-- Beep on every update tick.
+	if not toolHandle.Sound.IsPlaying then
+		toolHandle.Sound.Looped = false
+		toolHandle.Sound:Play()
+	end
 
 	script.Parent.Text = math.floor(distance)
 	if distance > maxDistance then
@@ -26695,6 +26727,7 @@ local lowColorValue = tool:FindFirstChild("LowColor")
 local midColorValue = tool:FindFirstChild("MidColor")
 local highColorValue = tool:FindFirstChild("HighColor")
 local statusLight = tool:WaitForChild("Light")
+local updateInterval = 1
 
 local minLevel = minLevelValue and minLevelValue.Value or 1
 local maxLevel = maxLevelValue and maxLevelValue.Value or 20
@@ -26722,7 +26755,34 @@ local function findTarget()
 	return workspace:FindFirstChild(targetName, true)
 end
 
-while task.wait(0.5) do
+local function getAILevel(target)
+	if not target then
+		return nil
+	end
+	local level = target:GetAttribute("AILevel")
+	if level ~= nil then
+		return level
+	end
+	if target:IsA("Model") then
+		local humanoid = target:FindFirstChildOfClass("Humanoid")
+		if humanoid then
+			level = humanoid:GetAttribute("AILevel")
+			if level ~= nil then
+				return level
+			end
+		end
+		local root = target:FindFirstChild("HumanoidRootPart")
+		if root then
+			level = root:GetAttribute("AILevel")
+			if level ~= nil then
+				return level
+			end
+		end
+	end
+	return nil
+end
+
+while task.wait(updateInterval) do
 	local target = findTarget()
 	if not target then
 		script.Parent.Text = "AI LEVEL: --
@@ -26731,12 +26791,14 @@ STATUS: NO SIGNAL"
 		continue
 	end
 
-	local level = 0
-	if target:IsA("Model") then
-		level = target:GetAttribute("AILevel") or 0
-	else
-		level = target:GetAttribute("AILevel") or 0
+	local level = getAILevel(target)
+	if level == nil then
+		script.Parent.Text = "AI LEVEL: --
+STATUS: NO DATA"
+		statusLight.Color = Color3.fromRGB(0, 0, 0)
+		continue
 	end
+
 	local color = getColor(level)
 	script.Parent.Text = ("AI LEVEL: %d
 STATUS: %s"):format(level, level >= dangerLevel and "DANGER" or "TRACKING")
