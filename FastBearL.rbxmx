@@ -25778,29 +25778,25 @@ while task.wait(updateInterval) do
 
 	local distance = (toolHandle.Position - targetPosition).Magnitude
 
-	-- Beep on every update tick.
-	if not toolHandle.Sound.IsPlaying then
-		toolHandle.Sound.Looped = false
-		toolHandle.Sound:Play()
-	end
-
 	script.Parent.Text = math.floor(distance)
 	if distance > maxDistance then
 		script.Parent.Text = "Signal Lost"
 		toolHandle.Sound.Looped = false
-		toolHandle.Sound:Play()
-		tool.Parent.Light.Color = Color3.fromRGB(255, 255, 255)
 		toolHandle.Sound.PlaybackSpeed = 0.8
+		tool.Parent.Light.Color = Color3.fromRGB(255, 255, 255)
+		toolHandle.Sound:Stop()
+		toolHandle.Sound:Play()
 	elseif distance > 120 then
 		script.Parent.Text = math.floor(distance)
-		toolHandle.Sound:Play()
 		toolHandle.Sound.Looped = false
-		tool.Parent.Light.Color = Color3.fromRGB(255, 175, 0)
 		toolHandle.Sound.PlaybackSpeed = 1
+		tool.Parent.Light.Color = Color3.fromRGB(255, 175, 0)
+		toolHandle.Sound:Stop()
+		toolHandle.Sound:Play()
 	elseif distance > 50 then
 		script.Parent.Text = "!! " .. math.floor(distance) .. " !!"
-		toolHandle.Sound.PlaybackSpeed = 1.2
 		toolHandle.Sound.Looped = true
+		toolHandle.Sound.PlaybackSpeed = 1.2
 		tool.Parent.Light.Color = Color3.fromRGB(255, 85, 0)
 		if not toolHandle.Sound.IsPlaying then
 			toolHandle.Sound:Play()
@@ -26785,23 +26781,20 @@ end
 while task.wait(updateInterval) do
 	local target = findTarget()
 	if not target then
-		script.Parent.Text = "AI LEVEL: --
-STATUS: NO SIGNAL"
+		script.Parent.Text = "AI LEVEL: --\nSTATUS: NO SIGNAL"
 		statusLight.Color = Color3.fromRGB(0, 0, 0)
 		continue
 	end
 
 	local level = getAILevel(target)
 	if level == nil then
-		script.Parent.Text = "AI LEVEL: --
-STATUS: NO DATA"
+		script.Parent.Text = "AI LEVEL: --\nSTATUS: NO DATA"
 		statusLight.Color = Color3.fromRGB(0, 0, 0)
 		continue
 	end
 
 	local color = getColor(level)
-	script.Parent.Text = ("AI LEVEL: %d
-STATUS: %s"):format(level, level >= dangerLevel and "DANGER" or "TRACKING")
+	script.Parent.Text = ("AI LEVEL: %d\nSTATUS: %s"):format(level, level >= dangerLevel and "DANGER" or "TRACKING")
 	script.Parent.TextColor3 = color
 	statusLight.Color = color
 end
