@@ -26781,7 +26781,7 @@ end)]]></ProtectedString>
 			</Properties>
 			<Item class="SurfaceGui" referent="RBX20D903919E0E48318F1E0BCB224B88F2">
 				<Properties>
-					<bool name="AlwaysOnTop">false</bool>
+					<bool name="AlwaysOnTop">true</bool>
 					<float name="Brightness">1</float>
 					<Vector2 name="CanvasSize">
 						<X>400</X>
@@ -26796,7 +26796,7 @@ end)]]></ProtectedString>
 					<float name="ZOffset">0</float>
 					<bool name="Active">true</bool>
 					<Ref name="Adornee">null</Ref>
-					<token name="Face">0</token>
+					<token name="Face">2</token>
 					<bool name="Enabled">true</bool>
 					<bool name="ResetOnSpawn">true</bool>
 					<token name="ZIndexBehavior">1</token>
@@ -27801,7 +27801,7 @@ end
 			</Properties>
 			<Item class="SurfaceGui" referent="RBX542C9EC311734D5AA352ED93F79AEA77">
 				<Properties>
-					<bool name="AlwaysOnTop">false</bool>
+					<bool name="AlwaysOnTop">true</bool>
 					<float name="Brightness">1</float>
 					<Vector2 name="CanvasSize">
 						<X>600</X>
@@ -27816,7 +27816,7 @@ end
 					<float name="ZOffset">0</float>
 					<bool name="Active">true</bool>
 					<Ref name="Adornee">null</Ref>
-					<token name="Face">0</token>
+					<token name="Face">2</token>
 					<bool name="Enabled">true</bool>
 					<bool name="ResetOnSpawn">true</bool>
 					<token name="ZIndexBehavior">1</token>
