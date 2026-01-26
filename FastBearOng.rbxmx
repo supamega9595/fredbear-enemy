@@ -26796,7 +26796,7 @@ end)]]></ProtectedString>
 					<float name="ZOffset">0</float>
 					<bool name="Active">true</bool>
 					<Ref name="Adornee">null</Ref>
-					<token name="Face">2</token>
+					<token name="Face">0</token>
 					<bool name="Enabled">true</bool>
 					<bool name="ResetOnSpawn">true</bool>
 					<token name="ZIndexBehavior">1</token>
@@ -27816,7 +27816,7 @@ end
 					<float name="ZOffset">0</float>
 					<bool name="Active">true</bool>
 					<Ref name="Adornee">null</Ref>
-					<token name="Face">2</token>
+					<token name="Face">0</token>
 					<bool name="Enabled">true</bool>
 					<bool name="ResetOnSpawn">true</bool>
 					<token name="ZIndexBehavior">1</token>
