@@ -25765,7 +25765,7 @@ while wait(1) do
 	end
 	end	
 end]]></ProtectedString>
-							<bool name="Disabled">true</bool>
+							<bool name="Disabled">false</bool>
 							<Content name="LinkedSource"><null></null></Content>
 							<token name="RunContext">0</token>
 							<string name="ScriptGuid">{5A0B7613-0DD2-4D71-9AE3-B8BF8917D765}</string>
