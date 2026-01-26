@@ -225,7 +225,7 @@ function configureAnimationSet(name, fileList)
 	end
 	
 	-- fallback to defaults
-	if (animTable[name].count <= 0) then
+	if (animTable[name].count &lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -293,7 +293,7 @@ function configureAnimationSetOld(name, fileList)
 	end
 
 	-- fallback to defaults
-	if (animTable[name].count <= 0) then
+	if (animTable[name].count &lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -433,9 +433,9 @@ local function setRunSpeed(speed)
 	local walkAnimationTimewarp = runSpeed/normalizedWalkSpeed
 	local runAnimationTimerwarp = runSpeed/normalizedRunSpeed
 
-	if runSpeed <= normalizedWalkSpeed then
+	if runSpeed &lt;= normalizedWalkSpeed then
 		walkAnimationWeight = 1
-	elseif runSpeed < normalizedRunSpeed then
+	elseif runSpeed &lt; normalizedRunSpeed then
 		local fadeInRun = (runSpeed - normalizedWalkSpeed)/(normalizedRunSpeed - normalizedWalkSpeed)
 		walkAnimationWeight = 1 - fadeInRun
 		runAnimationWeight  = fadeInRun
@@ -503,7 +503,7 @@ function rollAnimation(animName)
 	local roll = math.random(1, animTable[animName].totalWeight) 
 	local origRoll = roll
 	local idx = 1
-	while (roll > animTable[animName][idx].weight) do
+	while (roll &gt; animTable[animName][idx].weight) do
 		roll = roll - animTable[animName][idx].weight
 		idx = idx + 1
 	end
@@ -643,7 +643,7 @@ function onRunning(speed)
 	
 	local movedDuringEmote = currentlyPlayingEmote and Humanoid.MoveDirection == Vector3.new(0, 0, 0)
 	local speedThreshold = movedDuringEmote and (Humanoid.WalkSpeed / heightScale) or 0.75
-	if speed > speedThreshold * heightScale then
+	if speed &gt; speedThreshold * heightScale then
 		local scale = 16.0
 		playAnimation("walk", 0.2, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -681,7 +681,7 @@ function onGettingUp()
 end
 
 function onFreeFall()
-	if (jumpAnimTime <= 0) then
+	if (jumpAnimTime &lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	end
 	pose = "FreeFall"
@@ -706,7 +706,7 @@ function onSwimming(speed)
 	if userAnimateScaleRun then
 		speed /= getHeightScale()
 	end
-	if speed > 1.00 then
+	if speed &gt; 1.00 then
 		local scale = 10.0
 		playAnimation("swim", 0.4, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -754,11 +754,11 @@ function stepAnimate(currentTime)
 	local climbFudge = 0
 	local setAngles = false
 
-  	if (jumpAnimTime > 0) then
+  	if (jumpAnimTime &gt; 0) then
   		jumpAnimTime = jumpAnimTime - deltaTime
   	end
 
-	if (pose == "FreeFall" and jumpAnimTime <= 0) then
+	if (pose == "FreeFall" and jumpAnimTime &lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	elseif (pose == "Seated") then
 		playAnimation("sit", 0.5, Humanoid)
@@ -784,7 +784,7 @@ function stepAnimate(currentTime)
 			toolAnimTime = currentTime + .3
 		end
 
-		if currentTime > toolAnimTime then
+		if currentTime &gt; toolAnimTime then
 			toolAnimTime = 0
 			toolAnim = "None"
 		end
@@ -1556,7 +1556,7 @@ local function onRunning(speed)
 		sound:Pause()
 		return
 	end
-	if speed > 0.8 then
+	if speed &gt; 0.8 then
 		if sound.IsPaused then
 			sound:Resume()
 		else
@@ -1769,7 +1769,7 @@ function configureAnimationSet(name, fileList)
 	end
 
 	-- fallback to defaults
-	if (animTable[name].count <= 0) then
+	if (animTable[name].count &lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -1846,7 +1846,7 @@ function configureAnimationSetOld(name, fileList)
 	end
 
 	-- fallback to defaults
-	if (animTable[name].count <= 0) then
+	if (animTable[name].count &lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -1969,10 +1969,10 @@ function setRunSpeed(speed)
 	local runSpeed = speedScaled / heightScale
 
 	if runSpeed ~= currentAnimSpeed then
-		if runSpeed < 0.33 then
+		if runSpeed &lt; 0.33 then
 			currentAnimTrack:AdjustWeight(1.0)
 			runAnimTrack:AdjustWeight(smallButNotZero)
-		elseif runSpeed < 0.66 then
+		elseif runSpeed &lt; 0.66 then
 			local weight = ((runSpeed - 0.33) / 0.33)
 			currentAnimTrack:AdjustWeight(1.0 - weight + smallButNotZero)
 			runAnimTrack:AdjustWeight(weight + smallButNotZero)
@@ -2039,7 +2039,7 @@ function rollAnimation(animName)
 	local roll = math.random(1, animTable[animName].totalWeight)
 	local origRoll = roll
 	local idx = 1
-	while (roll > animTable[animName][idx].weight) do
+	while (roll &gt; animTable[animName][idx].weight) do
 		roll = roll - animTable[animName][idx].weight
 		idx = idx + 1
 	end
@@ -2174,7 +2174,7 @@ end
 -- STATE CHANGE HANDLERS
 
 function onRunning(speed)
-	if speed > 0.5 then
+	if speed &gt; 0.5 then
 		local scale = 16.0
 		playAnimation("walk", 0.2, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -2209,7 +2209,7 @@ function onGettingUp()
 end
 
 function onFreeFall()
-	if (jumpAnimTime <= 0) then
+	if (jumpAnimTime &lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	end
 	pose = "FreeFall"
@@ -2231,7 +2231,7 @@ end
 -------------------------------------------------------------------------------------------
 
 function onSwimming(speed)
-	if speed > 1.00 then
+	if speed &gt; 1.00 then
 		local scale = 10.0
 		playAnimation("swim", 0.4, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -2279,11 +2279,11 @@ function stepAnimate(currentTime)
 	local climbFudge = 0
 	local setAngles = false
 
-  	if (jumpAnimTime > 0) then
+  	if (jumpAnimTime &gt; 0) then
   		jumpAnimTime = jumpAnimTime - deltaTime
   	end
 
-	if (pose == "FreeFall" and jumpAnimTime <= 0) then
+	if (pose == "FreeFall" and jumpAnimTime &lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	elseif (pose == "Seated") then
 		playAnimation("sit", 0.5, Humanoid)
@@ -2309,7 +2309,7 @@ function stepAnimate(currentTime)
 			toolAnimTime = currentTime + .3
 		end
 
-		if currentTime > toolAnimTime then
+		if currentTime &gt; toolAnimTime then
 			toolAnimTime = 0
 			toolAnim = "None"
 		end
@@ -3150,7 +3150,7 @@ task.spawn(function()
 		end
 
 		local chance = getNumberAttribute("RampChance", LEVEL_SETTINGS.RampChance, 0, 1)
-		if math.random() <= chance then
+		if math.random() &lt;= chance then
 			local stepMin = getNumberAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin, 1)
 			local stepMax = getNumberAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax, stepMin)
 			local totalWeight = 0
@@ -3158,18 +3158,18 @@ task.spawn(function()
 			for step = stepMin, stepMax do
 				local weight = getNumberAttribute(("RampStepChance%d"):format(step),
 					LEVEL_SETTINGS.RampStepChances and LEVEL_SETTINGS.RampStepChances[step] or 0, 0)
-				if weight > 0 then
+				if weight &gt; 0 then
 					totalWeight += weight
 					table.insert(weightedSteps, { step = step, weight = weight })
 				end
 			end
 			local step = stepMin
-			if totalWeight > 0 then
+			if totalWeight &gt; 0 then
 				local roll = math.random() * totalWeight
 				local running = 0
 				for _, entry in ipairs(weightedSteps) do
 					running += entry.weight
-					if roll <= running then
+					if roll &lt;= running then
 						step = entry.step
 						break
 					end
@@ -3217,7 +3217,7 @@ local lastSeenTime = 0
 local targetPlayer = nil
 
 local function isChasing()
-	return targetPlayer and tick() - lastSeenTime <= config.MemoryTime
+	return targetPlayer and tick() - lastSeenTime &lt;= config.MemoryTime
 end
 
 -- Raycast params
@@ -3233,17 +3233,17 @@ local function isPlayerVisible(player)
 
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChild("Humanoid")
-	if not hrp or not hum or hum.Health <= 0 then return false end
+	if not hrp or not hum or hum.Health &lt;= 0 then return false end
 
 	local distance = (hrp.Position - root.Position).Magnitude
-	if distance > config.DetectionRange then return false end
+	if distance &gt; config.DetectionRange then return false end
 
 	-- FOV check
 	local directionToPlayer = (hrp.Position - root.Position).Unit
 	local npcForward = root.CFrame.LookVector
 	local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
 
-	if angle > config.FovAngle then
+	if angle &gt; config.FovAngle then
 		return false
 	end
 
@@ -3283,11 +3283,11 @@ RunService.Heartbeat:Connect(function()
 			local char = targetPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-			if hrp and tick() - lastSeenTime <= config.MemoryTime then
+			if hrp and tick() - lastSeenTime &lt;= config.MemoryTime then
 				humanoid.WalkSpeed = config.ChaseSpeed
 
 				local distance = (hrp.Position - root.Position).Magnitude
-				if distance > config.StopDistance then
+				if distance &gt; config.StopDistance then
 					humanoid:MoveTo(hrp.Position)
 				else
 					humanoid:Move(Vector3.zero)
@@ -3326,7 +3326,7 @@ do
 				local waypoints = {}
 				local lastPosition = nil
 					for _, waypoint in ipairs(rawWaypoints) do
-						if not lastPosition or (waypoint.Position - lastPosition).Magnitude >= 12 then
+						if not lastPosition or (waypoint.Position - lastPosition).Magnitude &gt;= 12 then
 							table.insert(waypoints, waypoint)
 							lastPosition = waypoint.Position
 						end
@@ -3357,15 +3357,15 @@ do
 						end
 						local traveled = (upperTorso.Position - startPos).Magnitude
 						local expectedDistance = (waypoint.Position - startPos).Magnitude
-						if tick() - startTime > maxTime then
+						if tick() - startTime &gt; maxTime then
 							humanoid.Jump = true
 							break
 						end
-						if traveled > expectedDistance + 2 then
+						if traveled &gt; expectedDistance + 2 then
 							break
 						end
 						task.wait()
-					until distance < 4
+					until distance &lt; 4
 				end
 				return true
 			end
@@ -3433,7 +3433,7 @@ do
 			local scored = {}
 			for index, part in ipairs(waypointPool) do
 				local distance = (part.Position - currentPos).Magnitude
-				if not lastRoamTarget or (part.Position - lastRoamTarget).Magnitude >= minRoamDistance then
+				if not lastRoamTarget or (part.Position - lastRoamTarget).Magnitude &gt;= minRoamDistance then
 					table.insert(scored, {
 						index = index,
 						part = part,
@@ -3453,7 +3453,7 @@ do
 			end
 
 			table.sort(scored, function(a, b)
-				return a.distance > b.distance
+				return a.distance &gt; b.distance
 		end)
 
 		local maxIndex = math.max(1, math.floor(#scored * 0.4))
@@ -3514,9 +3514,9 @@ do
 			if model:IsA("Model") and model ~= npc then
 				local human = model:FindFirstChildOfClass("Humanoid")
 				local rootPart = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")
-				if human and rootPart and human.Health > 0 then
+				if human and rootPart and human.Health &gt; 0 then
 					local currentDistance = (rootPart.Position - pos).Magnitude
-					if currentDistance < dist then
+					if currentDistance &lt; dist then
 						closest = rootPart
 						dist = currentDistance
 					end
@@ -3588,7 +3588,7 @@ do
 		end
 
 		eventRunning = true
-		if human.Health < lastHP then
+		if human.Health &lt; lastHP then
 			lastHP = human.Health
 			task.wait(0.1)
 			local rootPart = rig:FindFirstChild("HumanoidRootPart") or upperTorso or root
@@ -3794,7 +3794,7 @@ do
 		local running = 0
 		for _, config in ipairs(jumpscareConfigs) do
 			running += config.weight
-			if roll <= running then
+			if roll &lt;= running then
 				return config
 			end
 		end
@@ -3839,17 +3839,17 @@ do
 				end
 
 				local now = os.clock()
-				if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
+				if lastKillTime[player] and now - lastKillTime[player] &lt; COOLDOWN_SECONDS then
 					return
 				end
 
-				if hum.Health > 0 then
+				if hum.Health &gt; 0 then
 					lastKillTime[player] = now
 					local chosen = getWeightedRandomConfig()
 					remote:FireClient(player, chosen.name, npc)
 					local targetHum = hum
 					task.delay(0.05, function()
-						if targetHum and targetHum.Health > 0 then
+						if targetHum and targetHum.Health &gt; 0 then
 							targetHum.Health = 0
 						end
 					end)
@@ -3936,7 +3936,7 @@ do
 					and (Players:GetPlayerFromCharacter(player) or LookAtNonPlayer)
 					and GetValidPartToLookAt(player, PartToLookAt) then
 					local distance = (Core.Position - player.PrimaryPart.Position).Magnitude
-					if distance < closest_distance then
+					if distance &lt; closest_distance then
 						closest_player = player
 						closest_distance = distance
 					end
@@ -3949,7 +3949,7 @@ do
 	local function rWait(n)
 		n = n or 0.05
 		local startTime = os.clock()
-		while os.clock() - startTime < n do
+		while os.clock() - startTime &lt; n do
 			game:GetService("RunService").Heartbeat:Wait()
 		end
 	end
@@ -3980,7 +3980,7 @@ do
 				local success = pcall(function()
 					LookAtPart = GetValidPartToLookAt(player, PartToLookAt)
 					if LookAtPart then
-						local is_in_front = Core.CFrame:ToObjectSpace(LookAtPart.CFrame).Z < 0
+						local is_in_front = Core.CFrame:ToObjectSpace(LookAtPart.CFrame).Z &lt; 0
 						if is_in_front then
 							if LookingAtValue.Value ~= player then
 								LookingAtValue.Value = player
@@ -4185,7 +4185,7 @@ local function playCameraJumpscare(config, target)
 	local glitchToggle = false
 	local glitchCounter = 0
 
-	while os.clock() - startTime < duration do
+	while os.clock() - startTime &lt; duration do
 		local elapsed = os.clock() - startTime
 		local progress = math.clamp(elapsed * pullInSpeed / duration, 0, 1)
 		local currentDistance = distance * (1 - progress * 0.6)
@@ -4212,14 +4212,14 @@ local function playCameraJumpscare(config, target)
 		end
 
 		local shake = Vector3.zero
-		if shakePower > 0 then
+		if shakePower &gt; 0 then
 			local shakeTime = elapsed * shakeFrequency
-			if shakeTime - math.floor(shakeTime) < 0.5 then
+			if shakeTime - math.floor(shakeTime) &lt; 0.5 then
 				shake = getShakeOffset(shakePower)
 			end
 		end
 
-		if glitchFrames > 0 then
+		if glitchFrames &gt; 0 then
 			glitchCounter += 1
 			if glitchCounter % glitchFrames == 0 then
 				glitchToggle = not glitchToggle
@@ -25730,7 +25730,7 @@ local maxDistance = tool:WaitForChild("MaxDistance").Value
 local targetNameValue = tool:FindFirstChild("TargetName")
 local targetName = targetNameValue and targetNameValue.Value or "Fast Fredbear"
 local toolHandle = tool:WaitForChild("Handle")
-local updateInterval = 2.5
+local updateInterval = 1
 
 local function findTarget()
 	local direct = workspace:FindFirstChild(targetName)
@@ -26268,6 +26268,7 @@ wait(0.5)
 script.Parent.Light.Color = Color3.fromRGB(255,255,255)
 script.Parent.Light.Material = Enum.Material.Neon
 script.Parent.Screen.SurfaceGui.AIText.Text = ""
+script.Parent.Screen.SurfaceGui.StatusText.Text = ""
 Toggle = true
 elseif Toggle == true and Day == false then
 script.Parent.Screen.SurfaceGui.AIText.Main.Disabled = true
@@ -26276,6 +26277,7 @@ script.Parent.Light.Color = Color3.fromRGB(0,0,0)
 script.Parent.Light.Material = Enum.Material.SmoothPlastic
 script.Parent.Handle.Sound:Stop()
 script.Parent.Screen.SurfaceGui.AIText.Text = ""
+script.Parent.Screen.SurfaceGui.StatusText.Text = ""
 script.Parent.Handle.Sound.PlaybackSpeed = 1
 Toggle = false
 end
@@ -26286,6 +26288,7 @@ script.Parent.Light.Color = Color3.fromRGB(0,0,0)
 script.Parent.Light.Material = Enum.Material.SmoothPlastic
 script.Parent.Handle.Sound:Stop()
 script.Parent.Screen.SurfaceGui.AIText.Text = ""
+script.Parent.Screen.SurfaceGui.StatusText.Text = ""
 script.Parent.Handle.Sound.PlaybackSpeed = 1
 end)
 
@@ -26303,6 +26306,7 @@ script.Parent.Light.Color = Color3.fromRGB(0,0,0)
 script.Parent.Light.Material = Enum.Material.SmoothPlastic
 script.Parent.Handle.Sound:Stop()
 script.Parent.Screen.SurfaceGui.AIText.Text = "Can't use at day"
+script.Parent.Screen.SurfaceGui.StatusText.Text = "Can't use at day"
 script.Parent.Handle.Sound.PlaybackSpeed = 1
 end
 end
@@ -26629,7 +26633,7 @@ end)]]]]></ProtectedString>
 						<int name="MaxVisibleGraphemes">-1</int>
 						<string name="OpenTypeFeatures" />
 						<bool name="RichText">false</bool>
-						<string name="Text"></string>
+						<string name="Text" />
 						<Color3 name="TextColor3">
 							<R>1</R>
 							<G>1</G>
@@ -26689,7 +26693,7 @@ end)]]]]></ProtectedString>
 						<UDim2 name="Size">
 							<XS>1</XS>
 							<XO>0</XO>
-							<YS>1</YS>
+							<YS>0.72</YS>
 							<YO>0</YO>
 						</UDim2>
 						<token name="SizeConstraint">0</token>
@@ -26723,6 +26727,8 @@ local lowColorValue = tool:FindFirstChild("LowColor")
 local midColorValue = tool:FindFirstChild("MidColor")
 local highColorValue = tool:FindFirstChild("HighColor")
 local statusLight = tool:WaitForChild("Light")
+local toolHandle = tool:WaitForChild("Handle")
+local statusLabel = script.Parent.Parent:FindFirstChild("StatusText")
 local updateInterval = 1
 
 local minLevel = minLevelValue and minLevelValue.Value or 1
@@ -26741,6 +26747,17 @@ local function getColor(value)
 		return low:Lerp(mid, t * 2)
 	end
 	return mid:Lerp(high, (t - 0.5) * 2)
+end
+
+local function getStatus(level)
+	if level <= 5 then
+		return "SLEEPWALK"
+	elseif level <= 10 then
+		return "STALK"
+	elseif level <= 15 then
+		return "HUNT"
+	end
+	return "RAMPAGE"
 end
 
 local function findTarget()
@@ -26781,22 +26798,37 @@ end
 while task.wait(updateInterval) do
 	local target = findTarget()
 	if not target then
-		script.Parent.Text = "AI LEVEL: --\nSTATUS: NO SIGNAL"
+		script.Parent.Text = "--"
+		if statusLabel then
+			statusLabel.Text = "NO SIGNAL"
+		end
 		statusLight.Color = Color3.fromRGB(0, 0, 0)
 		continue
 	end
 
 	local level = getAILevel(target)
 	if level == nil then
-		script.Parent.Text = "AI LEVEL: --\nSTATUS: NO DATA"
+		script.Parent.Text = "--"
+		if statusLabel then
+			statusLabel.Text = "NO DATA"
+		end
 		statusLight.Color = Color3.fromRGB(0, 0, 0)
 		continue
 	end
 
 	local color = getColor(level)
-	script.Parent.Text = ("AI LEVEL: %d\nSTATUS: %s"):format(level, level >= dangerLevel and "DANGER" or "TRACKING")
+	script.Parent.Text = tostring(level)
+	if statusLabel then
+		statusLabel.Text = getStatus(level)
+		statusLabel.TextColor3 = color
+	end
 	script.Parent.TextColor3 = color
 	statusLight.Color = color
+
+	toolHandle.Sound.Looped = false
+	toolHandle.Sound.PlaybackSpeed = 1.1
+	toolHandle.Sound:Stop()
+	toolHandle.Sound:Play()
 end
 ]]></ProtectedString>
 							<bool name="Disabled">true</bool>
@@ -26812,6 +26844,101 @@ end
 						</Properties>
 					</Item>
 				</Item>
+			<Item class="TextLabel" referent="RBXAB7D6CD1777149A18A19382B50BAE0E3">
+					<Properties>
+						<Font name="FontFace">
+							<Family><url>rbxasset://fonts/families/Zekton.json</url></Family>
+							<Weight>400</Weight>
+							<Style>Normal</Style>
+							<CachedFaceId><url>rbxasset://fonts/zekton_rg.ttf</url></CachedFaceId>
+						</Font>
+						<float name="LineHeight">1</float>
+						<string name="LocalizationMatchIdentifier" />
+						<string name="LocalizationMatchedSourceText" />
+						<int name="MaxVisibleGraphemes">-1</int>
+						<string name="OpenTypeFeatures" />
+						<bool name="RichText">false</bool>
+						<string name="Text" />
+						<Color3 name="TextColor3">
+							<R>1</R>
+							<G>1</G>
+							<B>1</B>
+						</Color3>
+						<token name="TextDirection">0</token>
+						<bool name="TextScaled">false</bool>
+						<float name="TextSize">14</float>
+						<Color3 name="TextStrokeColor3">
+							<R>0</R>
+							<G>0</G>
+							<B>0</B>
+						</Color3>
+						<float name="TextStrokeTransparency">0</float>
+						<float name="TextTransparency">0</float>
+						<token name="TextTruncate">0</token>
+						<bool name="TextWrapped">true</bool>
+						<token name="TextXAlignment">2</token>
+						<token name="TextYAlignment">1</token>
+						<bool name="Active">false</bool>
+						<Vector2 name="AnchorPoint">
+							<X>0</X>
+							<Y>0</Y>
+						</Vector2>
+						<token name="AutomaticSize">0</token>
+						<Color3 name="BackgroundColor3">
+							<R>0</R>
+							<G>0</G>
+							<B>0</B>
+						</Color3>
+						<float name="BackgroundTransparency">10</float>
+						<Color3 name="BorderColor3">
+							<R>0</R>
+							<G>0</G>
+							<B>0</B>
+						</Color3>
+						<token name="BorderMode">0</token>
+						<int name="BorderSizePixel">0</int>
+						<bool name="ClipsDescendants">false</bool>
+						<bool name="Draggable">false</bool>
+						<bool name="Interactable">true</bool>
+						<int name="LayoutOrder">0</int>
+						<Ref name="NextSelectionDown">null</Ref>
+						<Ref name="NextSelectionLeft">null</Ref>
+						<Ref name="NextSelectionRight">null</Ref>
+						<Ref name="NextSelectionUp">null</Ref>
+						<UDim2 name="Position">
+							<XS>0</XS>
+							<XO>0</XO>
+							<YS>0.72</YS>
+							<YO>0</YO>
+						</UDim2>
+						<float name="Rotation">0</float>
+						<bool name="Selectable">false</bool>
+						<Ref name="SelectionImageObject">null</Ref>
+						<int name="SelectionOrder">0</int>
+						<UDim2 name="Size">
+							<XS>1</XS>
+							<XO>0</XO>
+							<YS>0.28</YS>
+							<YO>0</YO>
+						</UDim2>
+						<token name="SizeConstraint">0</token>
+						<bool name="Visible">true</bool>
+						<int name="ZIndex">1</int>
+						<bool name="AutoLocalize">true</bool>
+						<Ref name="RootLocalizationTable">null</Ref>
+						<token name="SelectionBehaviorDown">0</token>
+						<token name="SelectionBehaviorLeft">0</token>
+						<token name="SelectionBehaviorRight">0</token>
+						<token name="SelectionBehaviorUp">0</token>
+						<bool name="SelectionGroup">false</bool>
+						<BinaryString name="AttributesSerialize" />
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">StatusText</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags" />
+					</Properties>
+					</Item>
 			</Item>
 		</Item>
 		<Item class="Part" referent="RBX8387244DC8B84C2C9DC006526EBF60A5">
