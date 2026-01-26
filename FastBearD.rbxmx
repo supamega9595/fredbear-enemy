@@ -24938,8 +24938,8 @@ remote.OnClientEvent:Connect(runJumpscare)
 				</Properties>
 			</Item>
 		</Item>
-	</Item>
-	<Item class="Tool" referent="RBXE73715A835064C809981CEDA0F7CBBA5">
+		</Item>
+		<Item class="Tool" referent="RBXE73715A835064C809981CEDA0F7CBBA5">
 		<Properties>
 			<bool name="CanBeDropped">true</bool>
 			<bool name="Enabled">true</bool>
@@ -25095,6 +25095,565 @@ end
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 					<bool name="DefinesCapabilities">false</bool>
 					<string name="Name">PowerTool</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+		</Item>
+		<Item class="Tool" referent="RBXAI00A1B2C3D4E5F60708">
+			<Properties>
+				<bool name="CanBeDropped">true</bool>
+				<bool name="Enabled">true</bool>
+				<CoordinateFrame name="Grip">
+					<X>0</X>
+					<Y>0</Y>
+					<Z>0</Z>
+					<R00>1</R00>
+					<R01>0</R01>
+					<R02>0</R02>
+					<R10>0</R10>
+					<R11>1</R11>
+					<R12>0</R12>
+					<R20>0</R20>
+					<R21>0</R21>
+					<R22>1</R22>
+				</CoordinateFrame>
+				<bool name="ManualActivationOnly">false</bool>
+				<bool name="RequiresHandle">true</bool>
+				<string name="ToolTip"></string>
+				<Content name="TextureId"><null></null></Content>
+				<token name="LevelOfDetail">0</token>
+				<CoordinateFrame name="ModelMeshCFrame">
+					<X>0</X>
+					<Y>0</Y>
+					<Z>0</Z>
+					<R00>1</R00>
+					<R01>0</R01>
+					<R02>0</R02>
+					<R10>0</R10>
+					<R11>1</R11>
+					<R12>0</R12>
+					<R20>0</R20>
+					<R21>0</R21>
+					<R22>1</R22>
+				</CoordinateFrame>
+				<SharedString name="ModelMeshData">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
+				<Vector3 name="ModelMeshSize">
+					<X>0</X>
+					<Y>0</Y>
+					<Z>0</Z>
+				</Vector3>
+				<token name="ModelStreamingMode">0</token>
+				<bool name="NeedsPivotMigration">false</bool>
+				<Ref name="PrimaryPart">null</Ref>
+				<float name="ScaleFactor">1</float>
+				<SharedString name="SlimHash">yuZpQdnvvUBOTYh1jqZ2cA==</SharedString>
+				<OptionalCoordinateFrame name="WorldPivotData">
+					<CFrame>
+						<X>0</X>
+						<Y>0</Y>
+						<Z>0</Z>
+						<R00>1</R00>
+						<R01>0</R01>
+						<R02>0</R02>
+						<R10>0</R10>
+						<R11>1</R11>
+						<R12>0</R12>
+						<R20>0</R20>
+						<R21>0</R21>
+						<R22>1</R22>
+					</CFrame>
+				</OptionalCoordinateFrame>
+				<BinaryString name="AttributesSerialize">AgAAAAYAAABIb2xkRlgDAQsAAABIb2xkUHJvZmlsZQIFAAAAVG9vbHM=</BinaryString>
+				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+				<bool name="DefinesCapabilities">false</bool>
+				<string name="Name">AI Radar</string>
+				<int64 name="SourceAssetId">-1</int64>
+				<BinaryString name="Tags"></BinaryString>
+			</Properties>
+			<Item class="Part" referent="RBXAIHANDLE1234567890ABCD">
+				<Properties>
+					<bool name="Anchored">false</bool>
+					<bool name="CanCollide">false</bool>
+					<bool name="CanQuery">false</bool>
+					<bool name="CanTouch">false</bool>
+					<bool name="CastShadow">false</bool>
+					<string name="CollisionGroup">Default</string>
+					<int name="CollisionGroupId">0</int>
+					<Color3uint8 name="Color3uint8">4288217087</Color3uint8>
+					<PhysicalProperties name="CustomPhysicalProperties">
+						<CustomPhysics>false</CustomPhysics>
+					</PhysicalProperties>
+					<CoordinateFrame name="CFrame">
+						<X>0</X>
+						<Y>0</Y>
+						<Z>0</Z>
+						<R00>1</R00>
+						<R01>0</R01>
+						<R02>0</R02>
+						<R10>0</R10>
+						<R11>1</R11>
+						<R12>0</R12>
+						<R20>0</R20>
+						<R21>0</R21>
+						<R22>1</R22>
+					</CoordinateFrame>
+					<bool name="Locked">false</bool>
+					<bool name="Massless">false</bool>
+					<token name="Material">256</token>
+					<string name="MaterialVariantSerialized"></string>
+					<float name="Reflectance">0</float>
+					<float name="Transparency">0</float>
+					<Vector3 name="size">
+						<X>1.4</X>
+						<Y>1</Y>
+						<Z>0.2</Z>
+					</Vector3>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">Handle</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+				<Item class="SurfaceGui" referent="RBXAISURFACE1234567890">
+					<Properties>
+						<bool name="AlwaysOnTop">true</bool>
+						<float name="Brightness">1</float>
+						<Vector2 name="CanvasSize">
+							<X>512</X>
+							<Y>256</Y>
+						</Vector2>
+						<bool name="ClipsDescendants">true</bool>
+						<float name="LightInfluence">0</float>
+						<float name="MaxDistance">0</float>
+						<float name="PixelsPerStud">50</float>
+						<token name="SizingMode">0</token>
+						<float name="ToolPunchThroughDistance">0</float>
+						<float name="ZOffset">0</float>
+						<bool name="Active">true</bool>
+						<Ref name="Adornee">null</Ref>
+						<token name="Face">0</token>
+						<bool name="Enabled">true</bool>
+						<bool name="ResetOnSpawn">true</bool>
+						<token name="ZIndexBehavior">1</token>
+						<bool name="AutoLocalize">true</bool>
+						<Ref name="RootLocalizationTable">null</Ref>
+						<token name="SelectionBehaviorDown">0</token>
+						<token name="SelectionBehaviorLeft">0</token>
+						<token name="SelectionBehaviorRight">0</token>
+						<token name="SelectionBehaviorUp">0</token>
+						<bool name="SelectionGroup">false</bool>
+						<BinaryString name="AttributesSerialize"></BinaryString>
+						<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+						<bool name="DefinesCapabilities">false</bool>
+						<string name="Name">SurfaceGui</string>
+						<int64 name="SourceAssetId">-1</int64>
+						<BinaryString name="Tags"></BinaryString>
+					</Properties>
+					<Item class="Frame" referent="RBXAIPANEL1234567890">
+						<Properties>
+							<UDim2 name="Position">
+								<XS>0</XS>
+								<XO>0</XO>
+								<YS>0</YS>
+								<YO>0</YO>
+							</UDim2>
+							<UDim2 name="Size">
+								<XS>1</XS>
+								<XO>0</XO>
+								<YS>1</YS>
+								<YO>0</YO>
+							</UDim2>
+							<Color3 name="BackgroundColor3">
+								<R>0.0392156877</R>
+								<G>0.137254909</G>
+								<B>0.0980392247</B>
+							</Color3>
+							<float name="BackgroundTransparency">0</float>
+							<Color3 name="BorderColor3">
+								<R>0</R>
+								<G>1</G>
+								<B>0.666666687</B>
+							</Color3>
+							<int name="BorderSizePixel">2</int>
+							<bool name="Visible">true</bool>
+							<int name="ZIndex">1</int>
+							<bool name="ClipsDescendants">false</bool>
+							<bool name="Active">false</bool>
+							<BinaryString name="AttributesSerialize"></BinaryString>
+							<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+							<bool name="DefinesCapabilities">false</bool>
+							<string name="Name">Panel</string>
+							<int64 name="SourceAssetId">-1</int64>
+							<BinaryString name="Tags"></BinaryString>
+						</Properties>
+						<Item class="Frame" referent="RBXAIAACENT1234567890">
+							<Properties>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>0</XO>
+									<YS>0</YS>
+									<YO>0</YO>
+								</UDim2>
+								<UDim2 name="Size">
+									<XS>0</XS>
+									<XO>10</XO>
+									<YS>1</YS>
+									<YO>0</YO>
+								</UDim2>
+								<Color3 name="BackgroundColor3">
+									<R>0</R>
+									<G>0.866666675</G>
+									<B>1</B>
+								</Color3>
+								<float name="BackgroundTransparency">0</float>
+								<int name="BorderSizePixel">0</int>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">2</int>
+								<bool name="ClipsDescendants">false</bool>
+								<bool name="Active">false</bool>
+								<BinaryString name="AttributesSerialize"></BinaryString>
+								<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+								<bool name="DefinesCapabilities">false</bool>
+								<string name="Name">Accent</string>
+								<int64 name="SourceAssetId">-1</int64>
+								<BinaryString name="Tags"></BinaryString>
+							</Properties>
+						</Item>
+						<Item class="TextLabel" referent="RBXAITITLE1234567890">
+							<Properties>
+								<Font name="FontFace">
+									<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
+									<Weight>700</Weight>
+									<Style>Normal</Style>
+									<CachedFaceId><url>rbxasset://fonts/SourceSansPro-Bold.ttf</url></CachedFaceId>
+								</Font>
+								<string name="Text">AI RADAR</string>
+								<Color3 name="TextColor3">
+									<R>0.90196079</R>
+									<G>1</G>
+									<B>0.960784316</B>
+								</Color3>
+								<float name="TextSize">28</float>
+								<bool name="TextScaled">false</bool>
+								<bool name="TextWrapped">true</bool>
+								<token name="TextXAlignment">0</token>
+								<token name="TextYAlignment">1</token>
+								<Color3 name="TextStrokeColor3">
+									<R>0</R>
+									<G>0</G>
+									<B>0</B>
+								</Color3>
+								<float name="TextStrokeTransparency">0.4</float>
+								<bool name="Active">false</bool>
+								<Color3 name="BackgroundColor3">
+									<R>0</R>
+									<G>0</G>
+									<B>0</B>
+								</Color3>
+								<float name="BackgroundTransparency">1</float>
+								<int name="BorderSizePixel">0</int>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>20</XO>
+									<YS>0</YS>
+									<YO>10</YO>
+								</UDim2>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>-40</XO>
+									<YS>0</YS>
+									<YO>32</YO>
+								</UDim2>
+								<int name="ZIndex">3</int>
+								<BinaryString name="AttributesSerialize"></BinaryString>
+								<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+								<bool name="DefinesCapabilities">false</bool>
+								<string name="Name">Title</string>
+								<int64 name="SourceAssetId">-1</int64>
+								<BinaryString name="Tags"></BinaryString>
+							</Properties>
+						</Item>
+						<Item class="TextLabel" referent="RBXAILEVELLABEL1234567890">
+							<Properties>
+								<Font name="FontFace">
+									<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
+									<Weight>600</Weight>
+									<Style>Normal</Style>
+									<CachedFaceId><url>rbxasset://fonts/SourceSansPro-SemiBold.ttf</url></CachedFaceId>
+								</Font>
+								<string name="Text">AI LEVEL</string>
+								<Color3 name="TextColor3">
+									<R>0.90196079</R>
+									<G>1</G>
+									<B>0.960784316</B>
+								</Color3>
+								<float name="TextSize">22</float>
+								<bool name="TextScaled">false</bool>
+								<bool name="TextWrapped">true</bool>
+								<token name="TextXAlignment">0</token>
+								<token name="TextYAlignment">1</token>
+								<Color3 name="TextStrokeColor3">
+									<R>0</R>
+									<G>0</G>
+									<B>0</B>
+								</Color3>
+								<float name="TextStrokeTransparency">0.5</float>
+								<bool name="Active">false</bool>
+								<Color3 name="BackgroundColor3">
+									<R>0</R>
+									<G>0</G>
+									<B>0</B>
+								</Color3>
+								<float name="BackgroundTransparency">1</float>
+								<int name="BorderSizePixel">0</int>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>20</XO>
+									<YS>0</YS>
+									<YO>60</YO>
+								</UDim2>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>-40</XO>
+									<YS>0</YS>
+									<YO>24</YO>
+								</UDim2>
+								<int name="ZIndex">3</int>
+								<BinaryString name="AttributesSerialize"></BinaryString>
+								<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+								<bool name="DefinesCapabilities">false</bool>
+								<string name="Name">LevelLabel</string>
+								<int64 name="SourceAssetId">-1</int64>
+								<BinaryString name="Tags"></BinaryString>
+							</Properties>
+						</Item>
+						<Item class="TextLabel" referent="RBXAILEVELVALUE1234567890">
+							<Properties>
+								<Font name="FontFace">
+									<Family><url>rbxasset://fonts/families/SourceSansPro.json</url></Family>
+									<Weight>900</Weight>
+									<Style>Normal</Style>
+									<CachedFaceId><url>rbxasset://fonts/SourceSansPro-Black.ttf</url></CachedFaceId>
+								</Font>
+								<string name="Text">20</string>
+								<Color3 name="TextColor3">
+									<R>1</R>
+									<G>1</G>
+									<B>1</B>
+								</Color3>
+								<float name="TextSize">90</float>
+								<bool name="TextScaled">true</bool>
+								<bool name="TextWrapped">true</bool>
+								<token name="TextXAlignment">1</token>
+								<token name="TextYAlignment">1</token>
+								<Color3 name="TextStrokeColor3">
+									<R>0</R>
+									<G>0</G>
+									<B>0</B>
+								</Color3>
+								<float name="TextStrokeTransparency">0.15</float>
+								<bool name="Active">false</bool>
+								<Color3 name="BackgroundColor3">
+									<R>0</R>
+									<G>0</G>
+									<B>0</B>
+								</Color3>
+								<float name="BackgroundTransparency">1</float>
+								<int name="BorderSizePixel">0</int>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>20</XO>
+									<YS>0</YS>
+									<YO>90</YO>
+								</UDim2>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>-40</XO>
+									<YS>0.5</YS>
+									<YO>0</YO>
+								</UDim2>
+								<int name="ZIndex">3</int>
+								<BinaryString name="AttributesSerialize"></BinaryString>
+								<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+								<bool name="DefinesCapabilities">false</bool>
+								<string name="Name">LevelValue</string>
+								<int64 name="SourceAssetId">-1</int64>
+								<BinaryString name="Tags"></BinaryString>
+							</Properties>
+						</Item>
+						<Item class="Frame" referent="RBXAIBAR1234567890">
+							<Properties>
+								<UDim2 name="Position">
+									<XS>0</XS>
+									<XO>20</XO>
+									<YS>1</YS>
+									<YO>-34</YO>
+								</UDim2>
+								<UDim2 name="Size">
+									<XS>1</XS>
+									<XO>-40</XO>
+									<YS>0</YS>
+									<YO>16</YO>
+								</UDim2>
+								<Color3 name="BackgroundColor3">
+									<R>0</R>
+									<G>1</G>
+									<B>0.666666687</B>
+								</Color3>
+								<float name="BackgroundTransparency">0.2</float>
+								<int name="BorderSizePixel">0</int>
+								<bool name="Visible">true</bool>
+								<int name="ZIndex">2</int>
+								<bool name="ClipsDescendants">true</bool>
+								<bool name="Active">false</bool>
+								<BinaryString name="AttributesSerialize"></BinaryString>
+								<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+								<bool name="DefinesCapabilities">false</bool>
+								<string name="Name">Bar</string>
+								<int64 name="SourceAssetId">-1</int64>
+								<BinaryString name="Tags"></BinaryString>
+							</Properties>
+							<Item class="Frame" referent="RBXAIBARFILL1234567890">
+								<Properties>
+									<UDim2 name="Position">
+										<XS>0</XS>
+										<XO>0</XO>
+										<YS>0</YS>
+										<YO>0</YO>
+									</UDim2>
+									<UDim2 name="Size">
+										<XS>0.5</XS>
+										<XO>0</XO>
+										<YS>1</YS>
+										<YO>0</YO>
+									</UDim2>
+									<Color3 name="BackgroundColor3">
+										<R>0</R>
+										<G>0.866666675</G>
+										<B>1</B>
+									</Color3>
+									<float name="BackgroundTransparency">0</float>
+									<int name="BorderSizePixel">0</int>
+									<bool name="Visible">true</bool>
+									<int name="ZIndex">3</int>
+									<bool name="ClipsDescendants">false</bool>
+									<bool name="Active">false</bool>
+									<BinaryString name="AttributesSerialize"></BinaryString>
+									<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+									<bool name="DefinesCapabilities">false</bool>
+									<string name="Name">Fill</string>
+									<int64 name="SourceAssetId">-1</int64>
+									<BinaryString name="Tags"></BinaryString>
+								</Properties>
+							</Item>
+						</Item>
+					</Item>
+				</Item>
+			</Item>
+			<Item class="LocalScript" referent="RBXAILOCALSCRIPT1234567890">
+				<Properties>
+					<ProtectedString name="Source"><![CDATA[local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local TweenService = game:GetService("TweenService")
+
+local tool = script.Parent
+local handle = tool:WaitForChild("Handle")
+local surfaceGui = handle:WaitForChild("SurfaceGui")
+local panel = surfaceGui:WaitForChild("Panel")
+local title = panel:WaitForChild("Title")
+local levelLabel = panel:WaitForChild("LevelLabel")
+local levelValue = panel:WaitForChild("LevelValue")
+local bar = panel:WaitForChild("Bar")
+local fill = bar:WaitForChild("Fill")
+local accent = panel:WaitForChild("Accent")
+
+local remote = ReplicatedStorage:WaitForChild("FastbearAILevelChanged")
+
+local themes = {
+	{
+		max = 7,
+		background = Color3.fromRGB(10, 35, 25),
+		border = Color3.fromRGB(0, 255, 170),
+		accent = Color3.fromRGB(0, 220, 255),
+		text = Color3.fromRGB(230, 255, 245),
+	},
+	{
+		max = 14,
+		background = Color3.fromRGB(35, 20, 5),
+		border = Color3.fromRGB(255, 175, 70),
+		accent = Color3.fromRGB(255, 130, 60),
+		text = Color3.fromRGB(255, 240, 220),
+	},
+	{
+		max = 20,
+		background = Color3.fromRGB(40, 5, 12),
+		border = Color3.fromRGB(255, 70, 90),
+		accent = Color3.fromRGB(255, 40, 60),
+		text = Color3.fromRGB(255, 220, 230),
+	},
+}
+
+local currentTween
+
+local function getTheme(level)
+	for _, theme in ipairs(themes) do
+		if level <= theme.max then
+			return theme
+		end
+	end
+	return themes[#themes]
+end
+
+local function updateLevel(level)
+	level = math.clamp(tonumber(level) or 1, 1, 20)
+	levelValue.Text = tostring(level)
+
+	local theme = getTheme(level)
+	panel.BackgroundColor3 = theme.background
+	panel.BorderColor3 = theme.border
+	accent.BackgroundColor3 = theme.accent
+	title.TextColor3 = theme.text
+	levelLabel.TextColor3 = theme.text
+	levelValue.TextColor3 = theme.text
+	bar.BackgroundColor3 = theme.border
+	fill.BackgroundColor3 = theme.accent
+
+	local targetSize = UDim2.new(level / 20, 0, 1, 0)
+	if currentTween then
+		currentTween:Cancel()
+	end
+	currentTween = TweenService:Create(fill, TweenInfo.new(0.25, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = targetSize,
+	})
+	currentTween:Play()
+end
+
+local function getInitialLevel()
+	local npc = workspace:FindFirstChild("Fast Fredbear")
+	if npc then
+		local value = npc:GetAttribute("AILevel")
+		if typeof(value) == "number" then
+			return value
+		end
+	end
+	return 1
+end
+
+updateLevel(getInitialLevel())
+
+remote.OnClientEvent:Connect(function(level)
+	updateLevel(level)
+end)
+]]></ProtectedString>
+					<bool name="Disabled">false</bool>
+					<Content name="LinkedSource"><null></null></Content>
+					<token name="RunContext">0</token>
+					<string name="ScriptGuid">{0FE8F4A0-4874-4D66-8D7F-6E3E925E2817}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">AIRadarClient</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
