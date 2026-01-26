@@ -225,7 +225,7 @@ function configureAnimationSet(name, fileList)
 	end
 	
 	-- fallback to defaults
-	if (animTable[name].count &lt;= 0) then
+	if (animTable[name].count &amp;lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -293,7 +293,7 @@ function configureAnimationSetOld(name, fileList)
 	end
 
 	-- fallback to defaults
-	if (animTable[name].count &lt;= 0) then
+	if (animTable[name].count &amp;lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -433,9 +433,9 @@ local function setRunSpeed(speed)
 	local walkAnimationTimewarp = runSpeed/normalizedWalkSpeed
 	local runAnimationTimerwarp = runSpeed/normalizedRunSpeed
 
-	if runSpeed &lt;= normalizedWalkSpeed then
+	if runSpeed &amp;lt;= normalizedWalkSpeed then
 		walkAnimationWeight = 1
-	elseif runSpeed &lt; normalizedRunSpeed then
+	elseif runSpeed &amp;lt; normalizedRunSpeed then
 		local fadeInRun = (runSpeed - normalizedWalkSpeed)/(normalizedRunSpeed - normalizedWalkSpeed)
 		walkAnimationWeight = 1 - fadeInRun
 		runAnimationWeight  = fadeInRun
@@ -503,7 +503,7 @@ function rollAnimation(animName)
 	local roll = math.random(1, animTable[animName].totalWeight) 
 	local origRoll = roll
 	local idx = 1
-	while (roll &gt; animTable[animName][idx].weight) do
+	while (roll &amp;gt; animTable[animName][idx].weight) do
 		roll = roll - animTable[animName][idx].weight
 		idx = idx + 1
 	end
@@ -643,7 +643,7 @@ function onRunning(speed)
 	
 	local movedDuringEmote = currentlyPlayingEmote and Humanoid.MoveDirection == Vector3.new(0, 0, 0)
 	local speedThreshold = movedDuringEmote and (Humanoid.WalkSpeed / heightScale) or 0.75
-	if speed &gt; speedThreshold * heightScale then
+	if speed &amp;gt; speedThreshold * heightScale then
 		local scale = 16.0
 		playAnimation("walk", 0.2, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -681,7 +681,7 @@ function onGettingUp()
 end
 
 function onFreeFall()
-	if (jumpAnimTime &lt;= 0) then
+	if (jumpAnimTime &amp;lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	end
 	pose = "FreeFall"
@@ -706,7 +706,7 @@ function onSwimming(speed)
 	if userAnimateScaleRun then
 		speed /= getHeightScale()
 	end
-	if speed &gt; 1.00 then
+	if speed &amp;gt; 1.00 then
 		local scale = 10.0
 		playAnimation("swim", 0.4, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -754,11 +754,11 @@ function stepAnimate(currentTime)
 	local climbFudge = 0
 	local setAngles = false
 
-  	if (jumpAnimTime &gt; 0) then
+  	if (jumpAnimTime &amp;gt; 0) then
   		jumpAnimTime = jumpAnimTime - deltaTime
   	end
 
-	if (pose == "FreeFall" and jumpAnimTime &lt;= 0) then
+	if (pose == "FreeFall" and jumpAnimTime &amp;lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	elseif (pose == "Seated") then
 		playAnimation("sit", 0.5, Humanoid)
@@ -784,7 +784,7 @@ function stepAnimate(currentTime)
 			toolAnimTime = currentTime + .3
 		end
 
-		if currentTime &gt; toolAnimTime then
+		if currentTime &amp;gt; toolAnimTime then
 			toolAnimTime = 0
 			toolAnim = "None"
 		end
@@ -1556,7 +1556,7 @@ local function onRunning(speed)
 		sound:Pause()
 		return
 	end
-	if speed &gt; 0.8 then
+	if speed &amp;gt; 0.8 then
 		if sound.IsPaused then
 			sound:Resume()
 		else
@@ -1769,7 +1769,7 @@ function configureAnimationSet(name, fileList)
 	end
 
 	-- fallback to defaults
-	if (animTable[name].count &lt;= 0) then
+	if (animTable[name].count &amp;lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -1846,7 +1846,7 @@ function configureAnimationSetOld(name, fileList)
 	end
 
 	-- fallback to defaults
-	if (animTable[name].count &lt;= 0) then
+	if (animTable[name].count &amp;lt;= 0) then
 		for idx, anim in pairs(fileList) do
 			animTable[name][idx] = {}
 			animTable[name][idx].anim = Instance.new("Animation")
@@ -1969,10 +1969,10 @@ function setRunSpeed(speed)
 	local runSpeed = speedScaled / heightScale
 
 	if runSpeed ~= currentAnimSpeed then
-		if runSpeed &lt; 0.33 then
+		if runSpeed &amp;lt; 0.33 then
 			currentAnimTrack:AdjustWeight(1.0)
 			runAnimTrack:AdjustWeight(smallButNotZero)
-		elseif runSpeed &lt; 0.66 then
+		elseif runSpeed &amp;lt; 0.66 then
 			local weight = ((runSpeed - 0.33) / 0.33)
 			currentAnimTrack:AdjustWeight(1.0 - weight + smallButNotZero)
 			runAnimTrack:AdjustWeight(weight + smallButNotZero)
@@ -2039,7 +2039,7 @@ function rollAnimation(animName)
 	local roll = math.random(1, animTable[animName].totalWeight)
 	local origRoll = roll
 	local idx = 1
-	while (roll &gt; animTable[animName][idx].weight) do
+	while (roll &amp;gt; animTable[animName][idx].weight) do
 		roll = roll - animTable[animName][idx].weight
 		idx = idx + 1
 	end
@@ -2174,7 +2174,7 @@ end
 -- STATE CHANGE HANDLERS
 
 function onRunning(speed)
-	if speed &gt; 0.5 then
+	if speed &amp;gt; 0.5 then
 		local scale = 16.0
 		playAnimation("walk", 0.2, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -2209,7 +2209,7 @@ function onGettingUp()
 end
 
 function onFreeFall()
-	if (jumpAnimTime &lt;= 0) then
+	if (jumpAnimTime &amp;lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	end
 	pose = "FreeFall"
@@ -2231,7 +2231,7 @@ end
 -------------------------------------------------------------------------------------------
 
 function onSwimming(speed)
-	if speed &gt; 1.00 then
+	if speed &amp;gt; 1.00 then
 		local scale = 10.0
 		playAnimation("swim", 0.4, Humanoid)
 		setAnimationSpeed(speed / scale)
@@ -2279,11 +2279,11 @@ function stepAnimate(currentTime)
 	local climbFudge = 0
 	local setAngles = false
 
-  	if (jumpAnimTime &gt; 0) then
+  	if (jumpAnimTime &amp;gt; 0) then
   		jumpAnimTime = jumpAnimTime - deltaTime
   	end
 
-	if (pose == "FreeFall" and jumpAnimTime &lt;= 0) then
+	if (pose == "FreeFall" and jumpAnimTime &amp;lt;= 0) then
 		playAnimation("fall", fallTransitionTime, Humanoid)
 	elseif (pose == "Seated") then
 		playAnimation("sit", 0.5, Humanoid)
@@ -2309,7 +2309,7 @@ function stepAnimate(currentTime)
 			toolAnimTime = currentTime + .3
 		end
 
-		if currentTime &gt; toolAnimTime then
+		if currentTime &amp;gt; toolAnimTime then
 			toolAnimTime = 0
 			toolAnim = "None"
 		end
@@ -3150,7 +3150,7 @@ task.spawn(function()
 		end
 
 		local chance = getNumberAttribute("RampChance", LEVEL_SETTINGS.RampChance, 0, 1)
-		if math.random() &lt;= chance then
+		if math.random() &amp;lt;= chance then
 			local stepMin = getNumberAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin, 1)
 			local stepMax = getNumberAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax, stepMin)
 			local totalWeight = 0
@@ -3158,18 +3158,18 @@ task.spawn(function()
 			for step = stepMin, stepMax do
 				local weight = getNumberAttribute(("RampStepChance%d"):format(step),
 					LEVEL_SETTINGS.RampStepChances and LEVEL_SETTINGS.RampStepChances[step] or 0, 0)
-				if weight &gt; 0 then
+				if weight &amp;gt; 0 then
 					totalWeight += weight
 					table.insert(weightedSteps, { step = step, weight = weight })
 				end
 			end
 			local step = stepMin
-			if totalWeight &gt; 0 then
+			if totalWeight &amp;gt; 0 then
 				local roll = math.random() * totalWeight
 				local running = 0
 				for _, entry in ipairs(weightedSteps) do
 					running += entry.weight
-					if roll &lt;= running then
+					if roll &amp;lt;= running then
 						step = entry.step
 						break
 					end
@@ -3217,7 +3217,7 @@ local lastSeenTime = 0
 local targetPlayer = nil
 
 local function isChasing()
-	return targetPlayer and tick() - lastSeenTime &lt;= config.MemoryTime
+	return targetPlayer and tick() - lastSeenTime &amp;lt;= config.MemoryTime
 end
 
 -- Raycast params
@@ -3233,17 +3233,17 @@ local function isPlayerVisible(player)
 
 	local hrp = char:FindFirstChild("HumanoidRootPart")
 	local hum = char:FindFirstChild("Humanoid")
-	if not hrp or not hum or hum.Health &lt;= 0 then return false end
+	if not hrp or not hum or hum.Health &amp;lt;= 0 then return false end
 
 	local distance = (hrp.Position - root.Position).Magnitude
-	if distance &gt; config.DetectionRange then return false end
+	if distance &amp;gt; config.DetectionRange then return false end
 
 	-- FOV check
 	local directionToPlayer = (hrp.Position - root.Position).Unit
 	local npcForward = root.CFrame.LookVector
 	local angle = math.deg(math.acos(npcForward:Dot(directionToPlayer)))
 
-	if angle &gt; config.FovAngle then
+	if angle &amp;gt; config.FovAngle then
 		return false
 	end
 
@@ -3283,11 +3283,11 @@ RunService.Heartbeat:Connect(function()
 			local char = targetPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
 
-			if hrp and tick() - lastSeenTime &lt;= config.MemoryTime then
+			if hrp and tick() - lastSeenTime &amp;lt;= config.MemoryTime then
 				humanoid.WalkSpeed = config.ChaseSpeed
 
 				local distance = (hrp.Position - root.Position).Magnitude
-				if distance &gt; config.StopDistance then
+				if distance &amp;gt; config.StopDistance then
 					humanoid:MoveTo(hrp.Position)
 				else
 					humanoid:Move(Vector3.zero)
@@ -3326,7 +3326,7 @@ do
 				local waypoints = {}
 				local lastPosition = nil
 					for _, waypoint in ipairs(rawWaypoints) do
-						if not lastPosition or (waypoint.Position - lastPosition).Magnitude &gt;= 12 then
+						if not lastPosition or (waypoint.Position - lastPosition).Magnitude &amp;gt;= 12 then
 							table.insert(waypoints, waypoint)
 							lastPosition = waypoint.Position
 						end
@@ -3357,15 +3357,15 @@ do
 						end
 						local traveled = (upperTorso.Position - startPos).Magnitude
 						local expectedDistance = (waypoint.Position - startPos).Magnitude
-						if tick() - startTime &gt; maxTime then
+						if tick() - startTime &amp;gt; maxTime then
 							humanoid.Jump = true
 							break
 						end
-						if traveled &gt; expectedDistance + 2 then
+						if traveled &amp;gt; expectedDistance + 2 then
 							break
 						end
 						task.wait()
-					until distance &lt; 4
+					until distance &amp;lt; 4
 				end
 				return true
 			end
@@ -3433,7 +3433,7 @@ do
 			local scored = {}
 			for index, part in ipairs(waypointPool) do
 				local distance = (part.Position - currentPos).Magnitude
-				if not lastRoamTarget or (part.Position - lastRoamTarget).Magnitude &gt;= minRoamDistance then
+				if not lastRoamTarget or (part.Position - lastRoamTarget).Magnitude &amp;gt;= minRoamDistance then
 					table.insert(scored, {
 						index = index,
 						part = part,
@@ -3453,7 +3453,7 @@ do
 			end
 
 			table.sort(scored, function(a, b)
-				return a.distance &gt; b.distance
+				return a.distance &amp;gt; b.distance
 		end)
 
 		local maxIndex = math.max(1, math.floor(#scored * 0.4))
@@ -3514,9 +3514,9 @@ do
 			if model:IsA("Model") and model ~= npc then
 				local human = model:FindFirstChildOfClass("Humanoid")
 				local rootPart = model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("Torso") or model:FindFirstChild("UpperTorso")
-				if human and rootPart and human.Health &gt; 0 then
+				if human and rootPart and human.Health &amp;gt; 0 then
 					local currentDistance = (rootPart.Position - pos).Magnitude
-					if currentDistance &lt; dist then
+					if currentDistance &amp;lt; dist then
 						closest = rootPart
 						dist = currentDistance
 					end
@@ -3588,7 +3588,7 @@ do
 		end
 
 		eventRunning = true
-		if human.Health &lt; lastHP then
+		if human.Health &amp;lt; lastHP then
 			lastHP = human.Health
 			task.wait(0.1)
 			local rootPart = rig:FindFirstChild("HumanoidRootPart") or upperTorso or root
@@ -3794,7 +3794,7 @@ do
 		local running = 0
 		for _, config in ipairs(jumpscareConfigs) do
 			running += config.weight
-			if roll &lt;= running then
+			if roll &amp;lt;= running then
 				return config
 			end
 		end
@@ -3839,17 +3839,17 @@ do
 				end
 
 				local now = os.clock()
-				if lastKillTime[player] and now - lastKillTime[player] &lt; COOLDOWN_SECONDS then
+				if lastKillTime[player] and now - lastKillTime[player] &amp;lt; COOLDOWN_SECONDS then
 					return
 				end
 
-				if hum.Health &gt; 0 then
+				if hum.Health &amp;gt; 0 then
 					lastKillTime[player] = now
 					local chosen = getWeightedRandomConfig()
 					remote:FireClient(player, chosen.name, npc)
 					local targetHum = hum
 					task.delay(0.05, function()
-						if targetHum and targetHum.Health &gt; 0 then
+						if targetHum and targetHum.Health &amp;gt; 0 then
 							targetHum.Health = 0
 						end
 					end)
@@ -3936,7 +3936,7 @@ do
 					and (Players:GetPlayerFromCharacter(player) or LookAtNonPlayer)
 					and GetValidPartToLookAt(player, PartToLookAt) then
 					local distance = (Core.Position - player.PrimaryPart.Position).Magnitude
-					if distance &lt; closest_distance then
+					if distance &amp;lt; closest_distance then
 						closest_player = player
 						closest_distance = distance
 					end
@@ -3949,7 +3949,7 @@ do
 	local function rWait(n)
 		n = n or 0.05
 		local startTime = os.clock()
-		while os.clock() - startTime &lt; n do
+		while os.clock() - startTime &amp;lt; n do
 			game:GetService("RunService").Heartbeat:Wait()
 		end
 	end
@@ -3980,7 +3980,7 @@ do
 				local success = pcall(function()
 					LookAtPart = GetValidPartToLookAt(player, PartToLookAt)
 					if LookAtPart then
-						local is_in_front = Core.CFrame:ToObjectSpace(LookAtPart.CFrame).Z &lt; 0
+						local is_in_front = Core.CFrame:ToObjectSpace(LookAtPart.CFrame).Z &amp;lt; 0
 						if is_in_front then
 							if LookingAtValue.Value ~= player then
 								LookingAtValue.Value = player
@@ -4185,7 +4185,7 @@ local function playCameraJumpscare(config, target)
 	local glitchToggle = false
 	local glitchCounter = 0
 
-	while os.clock() - startTime &lt; duration do
+	while os.clock() - startTime &amp;lt; duration do
 		local elapsed = os.clock() - startTime
 		local progress = math.clamp(elapsed * pullInSpeed / duration, 0, 1)
 		local currentDistance = distance * (1 - progress * 0.6)
@@ -4212,14 +4212,14 @@ local function playCameraJumpscare(config, target)
 		end
 
 		local shake = Vector3.zero
-		if shakePower &gt; 0 then
+		if shakePower &amp;gt; 0 then
 			local shakeTime = elapsed * shakeFrequency
-			if shakeTime - math.floor(shakeTime) &lt; 0.5 then
+			if shakeTime - math.floor(shakeTime) &amp;lt; 0.5 then
 				shake = getShakeOffset(shakePower)
 			end
 		end
 
-		if glitchFrames &gt; 0 then
+		if glitchFrames &amp;gt; 0 then
 			glitchCounter += 1
 			if glitchCounter % glitchFrames == 0 then
 				glitchToggle = not glitchToggle
@@ -25342,7 +25342,7 @@ end)]]]]></ProtectedString>
 				<BinaryString name="Tags" />
 			</Properties>
 		</Item>
-		<Item class="StringValue" referent="RBX72DE650344DC448CA79DB0AAB933964C"><Properties><string name="Value">Fast Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX154965391EF14414AE30E70683AAD8EF">
+		<Item class="NumberValue" referent="RBX41A478CB3DED4A1B9B999B2908D38FA5"><Properties><float name="Value">2</float><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><string name="Name">UpdateInterval</string><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="StringValue" referent="RBX72DE650344DC448CA79DB0AAB933964C"><Properties><string name="Value">Fast Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX154965391EF14414AE30E70683AAD8EF">
 			<Properties>
 				<token name="shape">1</token>
 				<token name="formFactorRaw">1</token>
@@ -25721,16 +25721,19 @@ end)]]]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags" />
 					</Properties>
-					<Item class="Script" referent="RBX9995204CBC174634BE6195E1236C8D63">
+					<Item class="LocalScript" referent="RBX9995204CBC174634BE6195E1236C8D63">
 						<Properties>
-							<ProtectedString name="Source"><![CDATA[-- Script by XcorrectTheDev
+							<ProtectedString name="Source"><![CDATA[&lt;![CDATA[-- Script by XcorrectTheDev
 
 local tool = script.Parent.Parent.Parent.Parent
 local maxDistance = tool:WaitForChild("MaxDistance").Value
+local updateIntervalValue = tool:FindFirstChild("UpdateInterval")
+local updateInterval = updateIntervalValue and updateIntervalValue.Value or 2
 local targetNameValue = tool:FindFirstChild("TargetName")
 local targetName = targetNameValue and targetNameValue.Value or "Fast Fredbear"
 local toolHandle = tool:WaitForChild("Handle")
-local updateInterval = 1
+
+local lastDistance = nil
 
 local function findTarget()
 	local direct = workspace:FindFirstChild(targetName)
@@ -25776,42 +25779,36 @@ while task.wait(updateInterval) do
 		continue
 	end
 
-	local distance = (toolHandle.Position - targetPosition).Magnitude
+	local distance = math.floor((toolHandle.Position - targetPosition).Magnitude)
+	local changed = lastDistance == nil or distance ~= lastDistance
+	lastDistance = distance
 
-	script.Parent.Text = math.floor(distance)
-	if distance > maxDistance then
-		script.Parent.Text = "Signal Lost"
+	script.Parent.Text = distance
+	if changed then
 		toolHandle.Sound.Looped = false
+		toolHandle.Sound:Stop()
+		toolHandle.Sound:Play()
+	end
+
+	if distance &gt; maxDistance then
+		script.Parent.Text = "Signal Lost"
 		toolHandle.Sound.PlaybackSpeed = 0.8
 		tool.Parent.Light.Color = Color3.fromRGB(255, 255, 255)
-		toolHandle.Sound:Stop()
-		toolHandle.Sound:Play()
-	elseif distance > 120 then
-		script.Parent.Text = math.floor(distance)
-		toolHandle.Sound.Looped = false
+	elseif distance &gt; 120 then
+		script.Parent.Text = distance
 		toolHandle.Sound.PlaybackSpeed = 1
 		tool.Parent.Light.Color = Color3.fromRGB(255, 175, 0)
-		toolHandle.Sound:Stop()
-		toolHandle.Sound:Play()
-	elseif distance > 50 then
-		script.Parent.Text = "!! " .. math.floor(distance) .. " !!"
-		toolHandle.Sound.Looped = true
+	elseif distance &gt; 50 then
+		script.Parent.Text = "!! " .. distance .. " !!"
 		toolHandle.Sound.PlaybackSpeed = 1.2
 		tool.Parent.Light.Color = Color3.fromRGB(255, 85, 0)
-		if not toolHandle.Sound.IsPlaying then
-			toolHandle.Sound:Play()
-		end
 	else
-		script.Parent.Text = "!!! " .. math.floor(distance) .. " !!!"
-		toolHandle.Sound.Looped = true
+		script.Parent.Text = "!!! " .. distance .. " !!!"
 		toolHandle.Sound.PlaybackSpeed = 1.4
 		tool.Parent.Light.Color = Color3.fromRGB(255, 0, 0)
-		if not toolHandle.Sound.IsPlaying then
-			toolHandle.Sound:Play()
-		end
 	end
 end
-]]></ProtectedString>
+]]&gt;]]></ProtectedString>
 							<bool name="Disabled">true</bool>
 							<Content name="LinkedSource"><null /></Content>
 							<token name="RunContext">0</token>
@@ -26334,7 +26331,7 @@ end)]]]]></ProtectedString>
 				<BinaryString name="Tags" />
 			</Properties>
 		</Item>
-		<Item class="StringValue" referent="RBXDA469AB91D3544E383F3232057D9827B"><Properties><string name="Value">Fast Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX0B61030B223A49119C8D3558B6B4B94B">
+		<Item class="NumberValue" referent="RBX9CA9BF81BB4746748F811DA6EA1B566D"><Properties><float name="Value">1</float><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><string name="Name">UpdateInterval</string><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="StringValue" referent="RBXDA469AB91D3544E383F3232057D9827B"><Properties><string name="Value">Fast Fredbear</string><string name="Name">TargetName</string><BinaryString name="AttributesSerialize" /><SecurityCapabilities name="Capabilities">0</SecurityCapabilities><bool name="DefinesCapabilities">false</bool><int64 name="SourceAssetId">-1</int64><BinaryString name="Tags" /></Properties></Item><Item class="Part" referent="RBX0B61030B223A49119C8D3558B6B4B94B">
 			<Properties>
 				<token name="shape">1</token>
 				<token name="formFactorRaw">1</token>
@@ -26713,48 +26710,47 @@ end)]]]]></ProtectedString>
 						<int64 name="SourceAssetId">-1</int64>
 						<BinaryString name="Tags" />
 					</Properties>
-					<Item class="Script" referent="RBXC642AF97F7F246BCA2BE0637F04D4BF6">
+					<Item class="LocalScript" referent="RBXC642AF97F7F246BCA2BE0637F04D4BF6">
 						<Properties>
-							<ProtectedString name="Source"><![CDATA[-- AI level radar script
+							<ProtectedString name="Source"><![CDATA[&lt;![CDATA[-- AI level radar script
 
 local tool = script.Parent.Parent.Parent.Parent
 local targetNameValue = tool:FindFirstChild("TargetName")
 local targetName = targetNameValue and targetNameValue.Value or "Fast Fredbear"
-local minLevelValue = tool:FindFirstChild("MinAILevel")
-local maxLevelValue = tool:FindFirstChild("MaxAILevel")
-local dangerLevelValue = tool:FindFirstChild("DangerLevel")
+local updateIntervalValue = tool:FindFirstChild("UpdateInterval")
+local updateInterval = updateIntervalValue and updateIntervalValue.Value or 1
 local lowColorValue = tool:FindFirstChild("LowColor")
 local midColorValue = tool:FindFirstChild("MidColor")
 local highColorValue = tool:FindFirstChild("HighColor")
 local statusLight = tool:WaitForChild("Light")
 local toolHandle = tool:WaitForChild("Handle")
 local statusLabel = script.Parent.Parent:FindFirstChild("StatusText")
-local updateInterval = 1
 
-local minLevel = minLevelValue and minLevelValue.Value or 1
-local maxLevel = maxLevelValue and maxLevelValue.Value or 20
-local dangerLevel = dangerLevelValue and dangerLevelValue.Value or math.floor((minLevel + maxLevel) * 0.75)
+local minLevel = 1
+local maxLevel = 20
+
+local lastLevel = nil
 
 local function getColor(value)
 	local low = lowColorValue and lowColorValue.Value or Color3.fromRGB(80, 255, 90)
 	local mid = midColorValue and midColorValue.Value or Color3.fromRGB(255, 204, 51)
 	local high = highColorValue and highColorValue.Value or Color3.fromRGB(255, 80, 80)
 	local t = 0
-	if maxLevel > minLevel then
+	if maxLevel &gt; minLevel then
 		t = math.clamp((value - minLevel) / (maxLevel - minLevel), 0, 1)
 	end
-	if t < 0.5 then
+	if t &lt; 0.5 then
 		return low:Lerp(mid, t * 2)
 	end
 	return mid:Lerp(high, (t - 0.5) * 2)
 end
 
 local function getStatus(level)
-	if level <= 5 then
+	if level &lt;= 5 then
 		return "SLEEPWALK"
-	elseif level <= 10 then
+	elseif level &lt;= 10 then
 		return "STALK"
-	elseif level <= 15 then
+	elseif level &lt;= 15 then
 		return "HUNT"
 	end
 	return "RAMPAGE"
@@ -26792,6 +26788,10 @@ local function getAILevel(target)
 			end
 		end
 	end
+	local value = target:FindFirstChild("AILevel", true)
+	if value and value:IsA("NumberValue") or value and value:IsA("IntValue") then
+		return value.Value
+	end
 	return nil
 end
 
@@ -26825,12 +26825,15 @@ while task.wait(updateInterval) do
 	script.Parent.TextColor3 = color
 	statusLight.Color = color
 
-	toolHandle.Sound.Looped = false
-	toolHandle.Sound.PlaybackSpeed = 1.1
-	toolHandle.Sound:Stop()
-	toolHandle.Sound:Play()
+	if lastLevel == nil or lastLevel ~= level then
+		toolHandle.Sound.Looped = false
+		toolHandle.Sound.PlaybackSpeed = 1.1
+		toolHandle.Sound:Stop()
+		toolHandle.Sound:Play()
+	end
+	lastLevel = level
 end
-]]></ProtectedString>
+]]&gt;]]></ProtectedString>
 							<bool name="Disabled">true</bool>
 							<Content name="LinkedSource"><null /></Content>
 							<token name="RunContext">0</token>
