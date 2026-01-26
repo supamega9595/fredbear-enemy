@@ -25727,18 +25727,7 @@ end)]]]]></ProtectedString>
 
 local MaxDistance = script.Parent.Parent.Parent.Parent.MaxDistance.Value
 local Tool = script.Parent.Parent.Parent.Parent.Handle
-local function findTarget()
-	local deployedSystem = workspace:FindFirstChild("DeployedFredbearSystem")
-	if deployedSystem then
-		return deployedSystem:FindFirstChild("Fast Fredbear")
-			or deployedSystem:FindFirstChild("Fredbear")
-	end
-	return workspace:FindFirstChild("Fast Fredbear")
-		or workspace:FindFirstChild("FastFredbear")
-		or workspace:FindFirstChild("Fredbear")
-end
-
-local Target = findTarget() or workspace:WaitForChild("Fast Fredbear")
+local Target = workspace:WaitForChild("Fast Fredbear")
 
 while wait(1) do
 	local DisMagnitude = (Tool.Position - Target.Position).magnitude
