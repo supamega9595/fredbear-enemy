@@ -2960,11 +2960,17 @@ local CONFIG = {
 	PauseMinSeconds = 2.5,
 	PauseMaxSeconds = 4,
 	WaypointMoveTimeoutSeconds = 0.85,
+	MinProgressDistance = 1.5,
+	StuckBurstThreshold = 3,
+	UnstuckStepDistance = 6,
+	UnstuckStepTimeoutSeconds = 0.4,
 	WaypointSpacing = 10,
 	ArrivalDistance = 3,
 }
 
 local target = nil
+local lastDistanceToTarget = nil
+local stalledBursts = 0
 
 local function getWaypointParts()
 	local folder = workspace:FindFirstChild(CONFIG.WaypointFolderName)
@@ -3048,6 +3054,12 @@ local function getRandomRange(minValue, maxValue)
 	return minValue + (math.random() * (maxValue - minValue))
 end
 
+local function attemptUnstuck()
+	local angle = math.random() * math.pi * 2
+	local offset = Vector3.new(math.cos(angle), 0, math.sin(angle)) * CONFIG.UnstuckStepDistance
+	moveToWithTimeout(root.Position + offset, CONFIG.UnstuckStepTimeoutSeconds)
+end
+
 local function scurryLoop()
 	while npc.Parent do
 		local pool = getWaypointParts()
@@ -3062,6 +3074,8 @@ local function scurryLoop()
 		if target then
 			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
 				target = nil
+				lastDistanceToTarget = nil
+				stalledBursts = 0
 				humanoid.WalkSpeed = 0
 				task.wait(getRandomRange(CONFIG.PauseMinSeconds, CONFIG.PauseMaxSeconds))
 				continue
@@ -3074,8 +3088,22 @@ local function scurryLoop()
 			else
 				moveToWithTimeout(target.Position, burstDuration)
 			end
-			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
+			local distanceToTarget = (target.Position - root.Position).Magnitude
+			if distanceToTarget <= CONFIG.ArrivalDistance then
 				target = nil
+				lastDistanceToTarget = nil
+				stalledBursts = 0
+			else
+				if lastDistanceToTarget and (lastDistanceToTarget - distanceToTarget) < CONFIG.MinProgressDistance then
+					stalledBursts = stalledBursts + 1
+				else
+					stalledBursts = 0
+				end
+				lastDistanceToTarget = distanceToTarget
+				if stalledBursts >= CONFIG.StuckBurstThreshold then
+					attemptUnstuck()
+					stalledBursts = 0
+				end
 			end
 			humanoid.WalkSpeed = 0
 			task.wait(getRandomRange(CONFIG.PauseMinSeconds, CONFIG.PauseMaxSeconds))
