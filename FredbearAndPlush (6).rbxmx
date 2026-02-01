@@ -28738,10 +28738,10 @@ local CONFIG = {
 	CooldownMaxSeconds = 2.25,
 	MaxScurryTimeSeconds = 2.5,
 	WaypointSpacing = 10,
-	RecentWaypointMemory = 2,
+	ArrivalDistance = 3,
 }
 
-local recentWaypoints = {}
+local target = nil
 
 local function getWaypointParts()
 	local folder = workspace:FindFirstChild(CONFIG.WaypointFolderName)
@@ -28757,38 +28757,13 @@ local function getWaypointParts()
 	return parts
 end
 
-local function wasRecentlyUsed(part)
-	for _, recent in ipairs(recentWaypoints) do
-		if recent == part then
-			return true
-		end
-	end
-	return false
-end
-
-local function rememberWaypoint(part)
-	table.insert(recentWaypoints, 1, part)
-	while #recentWaypoints > CONFIG.RecentWaypointMemory do
-		table.remove(recentWaypoints)
-	end
-end
-
 local function pickNextWaypoint(currentPos, pool)
 	if #pool == 0 then
 		return nil
 	end
-	local candidates = {}
-	for _, part in ipairs(pool) do
-		if not wasRecentlyUsed(part) then
-			table.insert(candidates, part)
-		end
-	end
-	if #candidates == 0 then
-		candidates = pool
-	end
 	local farthest = nil
 	local farthestDistance = -math.huge
-	for _, part in ipairs(candidates) do
+	for _, part in ipairs(pool) do
 		local distance = (part.Position - currentPos).Magnitude
 		if distance > farthestDistance then
 			farthestDistance = distance
@@ -28851,8 +28826,14 @@ local function scurryLoop()
 			task.wait(1)
 			continue
 		end
-		local target = pickNextWaypoint(root.Position, pool)
+		if not target then
+			target = pickNextWaypoint(root.Position, pool)
+		end
 		if target then
+			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
+				target = nil
+				continue
+			end
 			humanoid.WalkSpeed = CONFIG.ScurrySpeed
 			local path = buildPath(target.Position)
 			if path then
@@ -28860,7 +28841,6 @@ local function scurryLoop()
 			else
 				moveToWithTimeout(target.Position, CONFIG.MaxScurryTimeSeconds)
 			end
-			rememberWaypoint(target)
 			task.wait(CONFIG.ScurryPauseSeconds)
 		end
 	end
