@@ -30220,87 +30220,120 @@ end
 		</Item>
 		<Item class="Script" referent="RBXC91DB478EBA74FA0A22492785AA96A6D">
 			<Properties>
-				<ProtectedString name="Source"><![CDATA[--[[
-	OUTLINE: 
-		Abilities Needed:
-			- Pathfinding
-			- Picking up Tools
-			- Straffing*
---]]
+				<ProtectedString name="Source"><![CDATA[local npc = script.Parent
+local humanoid = npc:WaitForChild("Humanoid")
+local root = npc:WaitForChild("HumanoidRootPart")
 
-----------------------
----define variables---
-----------------------
-local pathfinding=game:GetService("PathfindingService");--the service used to compute paths
-local AI=script.Parent;--the AI
-local humanoid=AI:WaitForChild("Humanoid");--the Humanoid object
-local Uppertorso=AI:WaitForChild("UpperTorso");--the Torso object
----- user inputs ----
-local maxWalkDistance=500;--the maximum walking distance
-local pickUpTools=true;--will pick up and equip tools that are touched
-local Messages = 
-{
-	"I found something.",
-	"Does anybody need a tool? I found it off of the ground.",
-	"I found a tool.",
-	"I'm keeping this.",
-	"This seems like this would be handy.",
-	
+local PathfindingService = game:GetService("PathfindingService")
+
+local CONFIG = {
+	WaypointFolderName = "FredbearWaypoints",
+	ScurrySpeed = 40,
+	ScurryPauseSeconds = 0.35,
+	CooldownMinSeconds = 1.25,
+	CooldownMaxSeconds = 2.25,
+	MaxScurryTimeSeconds = 2.5,
+	WaypointSpacing = 10,
 }
-----------------------
----define functions---
-----------------------
 
---Moves to specific point 'finish' if a path is possible to follow
-function MoveTo(finish,TD)
-	local path=pathfinding:ComputeRawPathAsync(Uppertorso.Position,finish,maxWalkDistance);
---if the path is followable/reachable
-	if path.Status.Value<3 then
-		for _,v in ipairs(path:GetPointCoordinates()) do
-			humanoid:MoveTo(v);
-			local distance=0;
-			repeat
-				distance=TD and (Vector2.new(v.x,v.z)-Vector2.new(Uppertorso.Position.x,Uppertorso.Position.z)).magnitude or (v-Uppertorso.Position).magnitude;
-				Wait();
-			until distance<2
+local function getWaypointParts()
+	local folder = workspace:FindFirstChild(CONFIG.WaypointFolderName)
+	if not folder then
+		return {}
+	end
+	local parts = {}
+	for _, child in ipairs(folder:GetChildren()) do
+		if child:IsA("BasePart") then
+			table.insert(parts, child)
+		end
+	end
+	return parts
+end
+
+local function pickNextWaypoint(currentPos, pool)
+	if #pool == 0 then
+		return nil
+	end
+	local farthest = nil
+	local farthestDistance = -math.huge
+	for _, part in ipairs(pool) do
+		local distance = (part.Position - currentPos).Magnitude
+		if distance > farthestDistance then
+			farthestDistance = distance
+			farthest = part
+		end
+	end
+	return farthest
+end
+
+local function buildPath(target)
+	local path = PathfindingService:CreatePath({
+		WaypointSpacing = CONFIG.WaypointSpacing,
+	})
+	path:ComputeAsync(root.Position, target)
+	if path.Status ~= Enum.PathStatus.Success then
+		return nil
+	end
+	return path
+end
+
+local function followPath(path)
+	local waypoints = path:GetWaypoints()
+	local startTime = os.clock()
+	for _, waypoint in ipairs(waypoints) do
+		if waypoint.Action == Enum.PathWaypointAction.Jump then
+			humanoid.Jump = true
+		end
+		humanoid:MoveTo(waypoint.Position)
+		local finished = humanoid.MoveToFinished:Wait()
+		if not finished then
+			break
+		end
+		if os.clock() - startTime > CONFIG.MaxScurryTimeSeconds then
+			break
 		end
 	end
 end
 
---returns all of the instances of a specific instance in a model
-function GetSpecificInstances(model,type)
-	local tab={};
-	for _,v in pairs(model:GetChildren()) do
-		if v:IsA(type) then
-			table.insert(tab,v);
-		end
+local function moveToWithTimeout(targetPosition, timeoutSeconds)
+	humanoid:MoveTo(targetPosition)
+	local finished = false
+	local connection
+	connection = humanoid.MoveToFinished:Connect(function(reached)
+		finished = reached
+	end)
+	local startTime = os.clock()
+	while not finished and os.clock() - startTime < timeoutSeconds do
+		task.wait(0.05)
 	end
-	return tab;
-end
-
---------------
----run code---
---------------
-
---equip tools
-if pickUpTools then
-	for _,v in pairs(GetSpecificInstances(AI,"Part")) do
-		v.Touched:connect(function(part)
-			if part.Name=="Handle" and part.Parent:IsA("Tool") then
-				if (#GetSpecificInstances(part.Parent.Parent,"Humanoid")==0 or part.Parent.Parent==workspace) and #GetSpecificInstances(AI,"Tool")==0 then
-					part.Parent.Parent=AI;
-					game:GetService("Chat"):Chat(script.Parent.Head, Messages[math.random(#Messages)], Enum.ChatColor.White)
-			end end
-		end
-		);
+	if connection then
+		connection:Disconnect()
 	end
 end
 
---while true do
-	--local point=Vector3.new(math.random(-256,256),torso.Position.y,math.random(-256,256));
-	--MoveTo(point,true);
-	--wait(math.random(3,5))
---end
+local function scurryLoop()
+	while npc.Parent do
+		task.wait(math.random() * (CONFIG.CooldownMaxSeconds - CONFIG.CooldownMinSeconds) + CONFIG.CooldownMinSeconds)
+		local pool = getWaypointParts()
+		if #pool == 0 then
+			task.wait(1)
+			continue
+		end
+		local target = pickNextWaypoint(root.Position, pool)
+		if target then
+			humanoid.WalkSpeed = CONFIG.ScurrySpeed
+			local path = buildPath(target.Position)
+			if path then
+				followPath(path)
+			else
+				moveToWithTimeout(target.Position, CONFIG.MaxScurryTimeSeconds)
+			end
+			task.wait(CONFIG.ScurryPauseSeconds)
+		end
+	end
+end
+
+task.spawn(scurryLoop)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
@@ -30309,7 +30342,7 @@ end
 				<BinaryString name="AttributesSerialize"></BinaryString>
 				<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 				<bool name="DefinesCapabilities">false</bool>
-				<string name="Name">AICode</string>
+				<string name="Name">PlushtrapScurry</string>
 				<int64 name="SourceAssetId">-1</int64>
 				<BinaryString name="Tags"></BinaryString>
 			</Properties>
@@ -30401,7 +30434,7 @@ while true do
 		script.Parent.Humanoid.WalkSpeed=16
 end
 end]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{0B213362-BC70-4563-BFDA-9334CD4B49DA}</string>
@@ -30552,7 +30585,7 @@ end
 
 
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+				<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{E33B8D6F-3DEA-4EF3-8378-B0A5FC8F52A8}</string>
