@@ -28825,15 +28825,16 @@ local function scurryLoop()
 			task.wait(1)
 			continue
 		end
-		if target and (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
-			target = nil
-			task.wait(CONFIG.ScurryPauseSeconds)
-		end
 		if not target then
 			task.wait(math.random() * (CONFIG.CooldownMaxSeconds - CONFIG.CooldownMinSeconds) + CONFIG.CooldownMinSeconds)
 			target = pickNextWaypoint(root.Position, pool)
 		end
 		if target then
+			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
+				target = nil
+				task.wait(CONFIG.ScurryPauseSeconds)
+				continue
+			end
 			humanoid.WalkSpeed = CONFIG.ScurrySpeed
 			local path = buildPath(target.Position)
 			if path then
@@ -28841,6 +28842,10 @@ local function scurryLoop()
 			else
 				moveToWithTimeout(target.Position, CONFIG.MaxScurryTimeSeconds)
 			end
+			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
+				target = nil
+			end
+			task.wait(CONFIG.ScurryPauseSeconds)
 		end
 	end
 end
