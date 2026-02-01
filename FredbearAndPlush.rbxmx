@@ -3853,25 +3853,30 @@ local ChatService = game:GetService("Chat")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
-local REMOTE_NAME = "FastbearAILevelChanged"
+	local REMOTE_NAME = "FastbearAILevelChanged"
+	local ALERT_EVENT_NAME = "PlushtrapAlert"
 
-local LEVEL_SETTINGS = {
-	DefaultLevel = 20,
-	MinLevel = 1,
-	MaxLevel = 20,
-	RampEnabled = true,
-	RampIntervalMinSeconds = 20,
-	RampIntervalMaxSeconds = 30,
-	RampChance = 0.35,
-	RampStepMin = 1,
-	RampStepMax = 4,
-	RampStepChances = {
-		[1] = 60,
-		[2] = 25,
-		[3] = 10,
-		[4] = 5,
-	},
-}
+	local LEVEL_SETTINGS = {
+		DefaultLevel = 20,
+		MinLevel = 1,
+		MaxLevel = 20,
+		RampEnabled = true,
+		RampIntervalMinSeconds = 20,
+		RampIntervalMaxSeconds = 30,
+		RampChance = 0.35,
+		RampStepMin = 1,
+		RampStepMax = 4,
+		RampStepChances = {
+			[1] = 60,
+			[2] = 25,
+			[3] = 10,
+			[4] = 5,
+		},
+	}
+
+	local ALERT_SETTINGS = {
+		LifetimeSeconds = 20,
+	}
 
 local LEVELS = {
 	[1] = { ChaseSpeed = 82, DetectionRange = 146, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
@@ -3914,6 +3919,16 @@ local function ensureRemote()
 	return remote
 end
 
+local function ensureAlertEvent()
+	local event = ReplicatedStorage:FindFirstChild(ALERT_EVENT_NAME)
+	if not event then
+		event = Instance.new("BindableEvent")
+		event.Name = ALERT_EVENT_NAME
+		event.Parent = ReplicatedStorage
+	end
+	return event
+end
+
 local function ensureAttribute(name, value)
 	if npc:GetAttribute(name) == nil then
 		npc:SetAttribute(name, value)
@@ -3953,12 +3968,14 @@ ensureAttribute("RampIntervalMaxSeconds", LEVEL_SETTINGS.RampIntervalMaxSeconds)
 ensureAttribute("RampChance", LEVEL_SETTINGS.RampChance)
 ensureAttribute("RampStepMin", LEVEL_SETTINGS.RampStepMin)
 ensureAttribute("RampStepMax", LEVEL_SETTINGS.RampStepMax)
+ensureAttribute("AlertLifetimeSeconds", ALERT_SETTINGS.LifetimeSeconds)
 for step = LEVEL_SETTINGS.RampStepMin, LEVEL_SETTINGS.RampStepMax do
 	local chanceDefault = LEVEL_SETTINGS.RampStepChances and LEVEL_SETTINGS.RampStepChances[step] or 0
 	ensureAttribute(("RampStepChance%d"):format(step), chanceDefault)
 end
 
 local remote = ensureRemote()
+local alertEvent = ensureAlertEvent()
 
 local function applyLevel(level)
 	level = tonumber(level) or LEVEL_SETTINGS.DefaultLevel
@@ -4037,6 +4054,7 @@ local function getConfig()
 		FovAngle = getNumberAttribute("FovAngle", DEFAULTS.FovAngle, 0),
 		MemoryTime = getNumberAttribute("MemoryTime", DEFAULTS.MemoryTime, 0),
 		StopDistance = getNumberAttribute("StopDistance", DEFAULTS.StopDistance, 0),
+		AlertLifetimeSeconds = getNumberAttribute("AlertLifetimeSeconds", ALERT_SETTINGS.LifetimeSeconds, 0),
 	}
 end
 
@@ -4056,15 +4074,46 @@ end)
 npc:GetAttributeChangedSignal("StopDistance"):Connect(function()
 	config = getConfig()
 end)
+npc:GetAttributeChangedSignal("AlertLifetimeSeconds"):Connect(function()
+	config = getConfig()
+end)
 
--- ===== INTERNAL =====
-local idleWalkSpeed = humanoid.WalkSpeed
-local lastSeenTime = 0
-local targetPlayer = nil
+	-- ===== INTERNAL =====
+	local idleWalkSpeed = humanoid.WalkSpeed
+	local lastSeenTime = 0
+	local targetPlayer = nil
+	local alertPosition = nil
+	local alertTimestamp = 0
+	local alertPending = false
 
-local function isChasing()
-	return targetPlayer and tick() - lastSeenTime <= config.MemoryTime
-end
+	local function isAlertValid()
+		if not alertPosition then
+			return false
+		end
+		if not config.AlertLifetimeSeconds or config.AlertLifetimeSeconds <= 0 then
+			return false
+		end
+		return os.clock() - alertTimestamp <= config.AlertLifetimeSeconds
+	end
+
+	local function isChasing()
+		return targetPlayer and tick() - lastSeenTime <= config.MemoryTime
+	end
+
+	alertEvent.Event:Connect(function(position, firedAt)
+		if typeof(position) ~= "Vector3" then
+			return
+		end
+		alertPosition = position
+		alertTimestamp = firedAt or os.clock()
+		alertPending = true
+
+		local current = getNumberAttribute("AILevel", LEVEL_SETTINGS.DefaultLevel, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+		local nextLevel = math.clamp(current + 1, LEVEL_SETTINGS.MinLevel, LEVEL_SETTINGS.MaxLevel)
+		if nextLevel ~= current then
+			npc:SetAttribute("AILevel", nextLevel)
+		end
+	end)
 
 -- Raycast params
 local rayParams = RaycastParams.new()
@@ -4184,6 +4233,9 @@ do
 					if isChasing() then
 						return false
 					end
+					if alertPending and not isChasing() then
+						return false
+					end
 					if waypoint.Action == Enum.PathWaypointAction.Jump then
 						humanoid.Jump = true
 					end
@@ -4192,13 +4244,16 @@ do
 					local startTime = tick()
 					local startPos = upperTorso.Position
 					local maxTime = math.max(2, (waypoint.Position - startPos).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
-					repeat
-						if isChasing() then
-							return false
-						end
-						if use2d then
-							distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
-						else
+						repeat
+							if isChasing() then
+								return false
+							end
+							if alertPending and not isChasing() then
+								return false
+							end
+							if use2d then
+								distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
+							else
 							distance = (waypoint.Position - upperTorso.Position).Magnitude
 						end
 						local traveled = (upperTorso.Position - startPos).Magnitude
@@ -4313,17 +4368,28 @@ do
 				return
 			end
 			local wasChasing = false
-			while true do
-				local chasing = isChasing()
-				if chasing then
-					wasChasing = true
-					task.wait(1)
-				else
-					if wasChasing then
-						refillWaypointPool()
-						lastRoamTarget = nil
-						wasChasing = false
-					end
+				while true do
+					local chasing = isChasing()
+					if chasing then
+						wasChasing = true
+						task.wait(1)
+					else
+						if alertPending and isAlertValid() and alertPosition then
+							humanoid.WalkSpeed = config.ChaseSpeed
+							if moveTo(alertPosition, true) then
+								alertPending = false
+							end
+							humanoid.WalkSpeed = idleWalkSpeed
+							task.wait(0.2)
+							continue
+						elseif alertPending and not isAlertValid() then
+							alertPending = false
+						end
+						if wasChasing then
+							refillWaypointPool()
+							lastRoamTarget = nil
+							wasChasing = false
+						end
 					local anchor = upperTorso or root
 					local waypoint = anchor and pickNextWaypoint(anchor.Position)
 					if waypoint then
@@ -4334,10 +4400,12 @@ do
 						local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
 						moveTo(point, true)
 					end
-					task.wait(math.random(3, 5))
+						if not alertPending then
+							task.wait(math.random(3, 5))
+						end
+					end
 				end
-			end
-		end)
+			end)
 end
 
 do
@@ -4658,7 +4726,7 @@ do
 		return hum and plr
 	end
 
-	local remote = ensureRemote()
+		local remote = ensureRemote()
 	ensureClientScript()
 	Players.PlayerAdded:Connect(function(player)
 		local template = getClientTemplate()
@@ -48451,6 +48519,307 @@ end
 					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
 					<bool name="DefinesCapabilities">false</bool>
 					<string name="Name">Part</string>
+					<int64 name="SourceAssetId">-1</int64>
+					<BinaryString name="Tags"></BinaryString>
+				</Properties>
+			</Item>
+			<Item class="Script" referent="RBX7C9C6A0D9D7A4E05B1A0C7E9E7E1B6F0">
+				<Properties>
+					<ProtectedString name="Source"><![CDATA[-- Plushtrap AI Spotter
+			local plushtrap = script.Parent
+			local Players = game:GetService("Players")
+			local PathfindingService = game:GetService("PathfindingService")
+			local ReplicatedStorage = game:GetService("ReplicatedStorage")
+			local RunService = game:GetService("RunService")
+
+			local ALERT_EVENT_NAME = "PlushtrapAlert"
+			local WAYPOINT_FOLDER_NAME = "FredbearWaypoints"
+
+			local DEFAULTS = {
+				ScreamRange = 40,
+				ScreamCooldownSeconds = 10,
+				FreezeDuration = 2,
+				ScurrySpeed = 60,
+				BurstDuration = 0.6,
+				PauseMin = 2,
+				PauseMax = 3.5,
+				ScreamSoundId = "rbxassetid://0",
+				FleeTopFraction = 0.35,
+				WaypointMinDistance = 30,
+			}
+
+			local function ensureAttribute(name, value)
+				if plushtrap:GetAttribute(name) == nil then
+					plushtrap:SetAttribute(name, value)
+				end
+			end
+
+			local function getNumberAttribute(name, fallback, minValue, maxValue)
+				local value = plushtrap:GetAttribute(name)
+				if type(value) ~= "number" then
+					return fallback
+				end
+				if minValue ~= nil then
+					value = math.max(minValue, value)
+				end
+				if maxValue ~= nil then
+					value = math.min(maxValue, value)
+				end
+				return value
+			end
+
+			local function getStringAttribute(name, fallback)
+				local value = plushtrap:GetAttribute(name)
+				if type(value) ~= "string" then
+					return fallback
+				end
+				return value
+			end
+
+			ensureAttribute("ScreamRange", DEFAULTS.ScreamRange)
+			ensureAttribute("ScreamCooldownSeconds", DEFAULTS.ScreamCooldownSeconds)
+			ensureAttribute("FreezeDuration", DEFAULTS.FreezeDuration)
+			ensureAttribute("ScurrySpeed", DEFAULTS.ScurrySpeed)
+			ensureAttribute("BurstDuration", DEFAULTS.BurstDuration)
+			ensureAttribute("PauseMin", DEFAULTS.PauseMin)
+			ensureAttribute("PauseMax", DEFAULTS.PauseMax)
+			ensureAttribute("ScreamSoundId", DEFAULTS.ScreamSoundId)
+			ensureAttribute("FleeTopFraction", DEFAULTS.FleeTopFraction)
+			ensureAttribute("WaypointMinDistance", DEFAULTS.WaypointMinDistance)
+
+			local rootPart = nil
+			for _, descendant in ipairs(plushtrap:GetDescendants()) do
+				if descendant:IsA("BasePart") then
+					rootPart = descendant
+					break
+				end
+			end
+
+			if not rootPart then
+				warn(("Plushtrap %s has no BasePart to move."):format(plushtrap.Name))
+				return
+			end
+
+			plushtrap.PrimaryPart = plushtrap.PrimaryPart or rootPart
+
+			local function ensureAlertEvent()
+				local event = ReplicatedStorage:FindFirstChild(ALERT_EVENT_NAME)
+				if not event then
+					event = Instance.new("BindableEvent")
+					event.Name = ALERT_EVENT_NAME
+					event.Parent = ReplicatedStorage
+				end
+				return event
+			end
+
+			local alertEvent = ensureAlertEvent()
+			local lastScreamTime = -math.huge
+			local pendingScreamPlayer = nil
+			local handlingScream = false
+
+			local function getWaypointParts()
+				local folder = workspace:FindFirstChild(WAYPOINT_FOLDER_NAME)
+				if not folder then
+					return {}
+				end
+				local parts = {}
+				for _, child in ipairs(folder:GetChildren()) do
+					if child:IsA("BasePart") then
+						table.insert(parts, child)
+					end
+				end
+				return parts
+			end
+
+			local function pickWaypointFarFrom(position)
+				local parts = getWaypointParts()
+				if #parts == 0 then
+					return nil
+				end
+				table.sort(parts, function(a, b)
+					return (a.Position - position).Magnitude > (b.Position - position).Magnitude
+				end)
+				local topFraction = getNumberAttribute("FleeTopFraction", DEFAULTS.FleeTopFraction, 0.1, 1)
+				local maxIndex = math.max(1, math.floor(#parts * topFraction))
+				return parts[math.random(1, maxIndex)]
+			end
+
+			local function pickNextWaypoint(currentPos)
+				local parts = getWaypointParts()
+				if #parts == 0 then
+					return nil
+				end
+				local minDistance = getNumberAttribute("WaypointMinDistance", DEFAULTS.WaypointMinDistance, 0)
+				local candidates = {}
+				for _, part in ipairs(parts) do
+					local distance = (part.Position - currentPos).Magnitude
+					if distance >= minDistance then
+						table.insert(candidates, part)
+					end
+				end
+				if #candidates == 0 then
+					candidates = parts
+				end
+				return candidates[math.random(1, #candidates)]
+			end
+
+			local function getClosestPlayer(range)
+				local closest = nil
+				local closestDistance = range
+				for _, player in ipairs(Players:GetPlayers()) do
+					local char = player.Character
+					local hrp = char and char:FindFirstChild("HumanoidRootPart")
+					local hum = char and char:FindFirstChildOfClass("Humanoid")
+					if hrp and hum and hum.Health > 0 then
+						local distance = (hrp.Position - plushtrap:GetPivot().Position).Magnitude
+						if distance <= closestDistance then
+							closestDistance = distance
+							closest = player
+						end
+					end
+				end
+				return closest
+			end
+
+			local function playScream()
+				local soundId = getStringAttribute("ScreamSoundId", DEFAULTS.ScreamSoundId)
+				if not soundId or soundId == "" then
+					return
+				end
+				local sound = Instance.new("Sound")
+				sound.SoundId = soundId
+				sound.Volume = 1
+				sound.RollOffMode = Enum.RollOffMode.Inverse
+				sound.RollOffMinDistance = 5
+				sound.RollOffMaxDistance = 40
+				sound.Parent = rootPart
+				sound:Play()
+				sound.Ended:Connect(function()
+					sound:Destroy()
+				end)
+			end
+
+			local function fireAlert(position)
+				alertEvent:Fire(position, os.clock())
+			end
+
+			local function scurryTo(targetPos)
+				local speed = getNumberAttribute("ScurrySpeed", DEFAULTS.ScurrySpeed, 1)
+				local burstDuration = getNumberAttribute("BurstDuration", DEFAULTS.BurstDuration, 0.1)
+				local pauseMin = getNumberAttribute("PauseMin", DEFAULTS.PauseMin, 0)
+				local pauseMax = getNumberAttribute("PauseMax", DEFAULTS.PauseMax, pauseMin)
+
+				while (plushtrap:GetPivot().Position - targetPos).Magnitude > 1 do
+					if pendingScreamPlayer and not handlingScream then
+						return false
+					end
+					local burstEnd = os.clock() + burstDuration
+					while os.clock() < burstEnd do
+						if pendingScreamPlayer and not handlingScream then
+							return false
+						end
+						local dt = RunService.Heartbeat:Wait()
+						local currentPos = plushtrap:GetPivot().Position
+						local delta = targetPos - currentPos
+						local distance = delta.Magnitude
+						if distance <= 0.5 then
+							break
+						end
+						local direction = delta.Unit
+						local step = math.min(speed * dt, distance)
+						local newPos = currentPos + direction * step
+						local pivot = plushtrap:GetPivot()
+						local look = pivot.LookVector
+						if look.Magnitude == 0 then
+							look = Vector3.new(0, 0, -1)
+						end
+						plushtrap:PivotTo(CFrame.new(newPos, newPos + look))
+					end
+
+					local pause = math.random() * (pauseMax - pauseMin) + pauseMin
+					local elapsed = 0
+					while elapsed < pause do
+						if pendingScreamPlayer and not handlingScream then
+							return false
+						end
+						elapsed += RunService.Heartbeat:Wait()
+					end
+				end
+				return true
+			end
+
+			local function scurryPathTo(targetPos)
+				local path = PathfindingService:CreatePath({
+					WaypointSpacing = 6,
+				})
+				path:ComputeAsync(plushtrap:GetPivot().Position, targetPos)
+				local waypoints = {}
+				if path.Status == Enum.PathStatus.Success then
+					waypoints = path:GetWaypoints()
+				else
+					waypoints = { { Position = targetPos } }
+				end
+				for _, waypoint in ipairs(waypoints) do
+					if not scurryTo(waypoint.Position) then
+						return false
+					end
+				end
+				return true
+			end
+
+			task.spawn(function()
+				while true do
+					if not handlingScream then
+						local cooldown = getNumberAttribute("ScreamCooldownSeconds", DEFAULTS.ScreamCooldownSeconds, 0)
+						if os.clock() - lastScreamTime >= cooldown then
+							local range = getNumberAttribute("ScreamRange", DEFAULTS.ScreamRange, 0)
+							local player = getClosestPlayer(range)
+							if player then
+								pendingScreamPlayer = player
+							end
+						end
+					end
+					task.wait(0.2)
+				end
+			end)
+
+			while true do
+				if pendingScreamPlayer and not handlingScream then
+					handlingScream = true
+					local player = pendingScreamPlayer
+					pendingScreamPlayer = nil
+					local char = player and player.Character
+					local hrp = char and char:FindFirstChild("HumanoidRootPart")
+					if hrp then
+						lastScreamTime = os.clock()
+						playScream()
+						fireAlert(hrp.Position)
+						local freezeDuration = getNumberAttribute("FreezeDuration", DEFAULTS.FreezeDuration, 0)
+						task.wait(freezeDuration)
+						local fleeWaypoint = pickWaypointFarFrom(hrp.Position)
+						if fleeWaypoint then
+							scurryPathTo(fleeWaypoint.Position)
+						end
+					end
+					handlingScream = false
+				else
+					local waypoint = pickNextWaypoint(plushtrap:GetPivot().Position)
+					if waypoint then
+						scurryPathTo(waypoint.Position)
+					else
+						task.wait(1)
+					end
+				end
+			end
+			]]></ProtectedString>
+					<bool name="Disabled">false</bool>
+					<Content name="LinkedSource"><null></null></Content>
+					<token name="RunContext">0</token>
+					<string name="ScriptGuid">{9C6F01A7-72D2-4E80-89E1-58C3D6E3B8E2}</string>
+					<BinaryString name="AttributesSerialize"></BinaryString>
+					<SecurityCapabilities name="Capabilities">0</SecurityCapabilities>
+					<bool name="DefinesCapabilities">false</bool>
+					<string name="Name">PlushtrapAI</string>
 					<int64 name="SourceAssetId">-1</int64>
 					<BinaryString name="Tags"></BinaryString>
 				</Properties>
