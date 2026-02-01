@@ -2959,7 +2959,7 @@ local CONFIG = {
 	ScurryBurstMaxSeconds = 2.5,
 	PauseMinSeconds = 2.5,
 	PauseMaxSeconds = 4,
-	WaypointMoveTimeoutSeconds = 0.85,
+	StepMoveSeconds = 0.5,
 	MinProgressDistance = 1.5,
 	StuckBurstThreshold = 3,
 	UnstuckStepDistance = 6,
@@ -3032,22 +3032,23 @@ end
 
 local function followPath(path, maxDurationSeconds)
 	local waypoints = path:GetWaypoints()
+	if #waypoints == 0 then
+		return false
+	end
 	local startTime = os.clock()
 	for _, waypoint in ipairs(waypoints) do
 		local elapsed = os.clock() - startTime
 		local remaining = maxDurationSeconds - elapsed
 		if remaining <= 0 then
-			break
+			return false
 		end
 		if waypoint.Action == Enum.PathWaypointAction.Jump then
 			humanoid.Jump = true
 		end
-		local moveTimeout = math.min(CONFIG.WaypointMoveTimeoutSeconds, remaining)
-		local reached = moveToWithTimeout(waypoint.Position, moveTimeout)
-		if not reached then
-			break
-		end
+		local stepTimeout = math.min(CONFIG.StepMoveSeconds, remaining)
+		moveToWithTimeout(waypoint.Position, stepTimeout)
 	end
+	return true
 end
 
 local function getRandomRange(minValue, maxValue)
@@ -3084,7 +3085,10 @@ local function scurryLoop()
 			local burstDuration = getRandomRange(CONFIG.ScurryBurstMinSeconds, CONFIG.ScurryBurstMaxSeconds)
 			local path = buildPath(target.Position)
 			if path then
-				followPath(path, burstDuration)
+				local completed = followPath(path, burstDuration)
+				if not completed then
+					moveToWithTimeout(target.Position, burstDuration)
+				end
 			else
 				moveToWithTimeout(target.Position, burstDuration)
 			end
