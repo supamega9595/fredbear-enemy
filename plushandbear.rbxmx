@@ -2954,11 +2954,12 @@ local PathfindingService = game:GetService("PathfindingService")
 
 local CONFIG = {
 	WaypointFolderName = "FredbearWaypoints",
-	ScurrySpeed = 40,
-	ScurryPauseSeconds = 0.35,
-	CooldownMinSeconds = 1.25,
-	CooldownMaxSeconds = 2.25,
-	MaxScurryTimeSeconds = 2.5,
+	ScurrySpeed = 48,
+	ScurryBurstMinSeconds = 1.25,
+	ScurryBurstMaxSeconds = 2.5,
+	PauseMinSeconds = 2.5,
+	PauseMaxSeconds = 4,
+	WaypointMoveTimeoutSeconds = 0.85,
 	WaypointSpacing = 10,
 	ArrivalDistance = 3,
 }
@@ -3006,24 +3007,6 @@ local function buildPath(target)
 	return path
 end
 
-local function followPath(path)
-	local waypoints = path:GetWaypoints()
-	local startTime = os.clock()
-	for _, waypoint in ipairs(waypoints) do
-		if waypoint.Action == Enum.PathWaypointAction.Jump then
-			humanoid.Jump = true
-		end
-		humanoid:MoveTo(waypoint.Position)
-		local finished = humanoid.MoveToFinished:Wait()
-		if not finished then
-			break
-		end
-		if os.clock() - startTime > CONFIG.MaxScurryTimeSeconds then
-			break
-		end
-	end
-end
-
 local function moveToWithTimeout(targetPosition, timeoutSeconds)
 	humanoid:MoveTo(targetPosition)
 	local finished = false
@@ -3038,6 +3021,31 @@ local function moveToWithTimeout(targetPosition, timeoutSeconds)
 	if connection then
 		connection:Disconnect()
 	end
+	return finished
+end
+
+local function followPath(path, maxDurationSeconds)
+	local waypoints = path:GetWaypoints()
+	local startTime = os.clock()
+	for _, waypoint in ipairs(waypoints) do
+		local elapsed = os.clock() - startTime
+		local remaining = maxDurationSeconds - elapsed
+		if remaining <= 0 then
+			break
+		end
+		if waypoint.Action == Enum.PathWaypointAction.Jump then
+			humanoid.Jump = true
+		end
+		local moveTimeout = math.min(CONFIG.WaypointMoveTimeoutSeconds, remaining)
+		local reached = moveToWithTimeout(waypoint.Position, moveTimeout)
+		if not reached then
+			break
+		end
+	end
+end
+
+local function getRandomRange(minValue, maxValue)
+	return minValue + (math.random() * (maxValue - minValue))
 end
 
 local function scurryLoop()
@@ -3048,26 +3056,29 @@ local function scurryLoop()
 			continue
 		end
 		if not target then
-			task.wait(math.random() * (CONFIG.CooldownMaxSeconds - CONFIG.CooldownMinSeconds) + CONFIG.CooldownMinSeconds)
+			task.wait(getRandomRange(CONFIG.PauseMinSeconds, CONFIG.PauseMaxSeconds))
 			target = pickNextWaypoint(root.Position, pool)
 		end
 		if target then
 			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
 				target = nil
-				task.wait(CONFIG.ScurryPauseSeconds)
+				humanoid.WalkSpeed = 0
+				task.wait(getRandomRange(CONFIG.PauseMinSeconds, CONFIG.PauseMaxSeconds))
 				continue
 			end
 			humanoid.WalkSpeed = CONFIG.ScurrySpeed
+			local burstDuration = getRandomRange(CONFIG.ScurryBurstMinSeconds, CONFIG.ScurryBurstMaxSeconds)
 			local path = buildPath(target.Position)
 			if path then
-				followPath(path)
+				followPath(path, burstDuration)
 			else
-				moveToWithTimeout(target.Position, CONFIG.MaxScurryTimeSeconds)
+				moveToWithTimeout(target.Position, burstDuration)
 			end
 			if (target.Position - root.Position).Magnitude <= CONFIG.ArrivalDistance then
 				target = nil
 			end
-			task.wait(CONFIG.ScurryPauseSeconds)
+			humanoid.WalkSpeed = 0
+			task.wait(getRandomRange(CONFIG.PauseMinSeconds, CONFIG.PauseMaxSeconds))
 		end
 	end
 end
