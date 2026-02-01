@@ -3844,6 +3844,9 @@ end
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[--// NPC FRONT LOS CHASE WITH MEMORY
 local npc = script.Parent
+if npc.Name == "Plushtrap" then
+	return
+end
 local humanoid = npc:WaitForChild("Humanoid")
 local root = npc:WaitForChild("HumanoidRootPart")
 local upperTorso = npc:FindFirstChild("UpperTorso") or npc:FindFirstChild("Torso") or root
