@@ -2970,7 +2970,7 @@ local CONFIG = {
 	ArrivalDistance = 3,
 	AlertRadiusStuds = 40,
 	AlertCooldownSeconds = 20,
-	AlertSoundId = "rbxassetid://0",
+	AlertSoundId = "rbxassetid://106467460491012",
 	AlertSoundEmitterSize = 8,
 	AlertSoundMaxDistance = 1000,
 	EscapeSpeed = 72,
@@ -3330,14 +3330,14 @@ local RunService = game:GetService("RunService")
 local TweenService = game:GetService("TweenService")
 
 local REMOTE_NAME = "PlushtrapScreamEffect"
-local FACE_IMAGE = "rbxassetid://276261895"
+local FACE_IMAGE = "rbxassetid://0"
 local FACE_LOCK_SECONDS = 1
 local FACE_LOCK_DISTANCE = 1.2
 local SHAKE_POWER = 0.35
 local SHAKE_FREQUENCY = 26
 local FACE_FLASH_SECONDS = 1
 local DESATURATION = -0.85
-local DARKEN = -0.15
+local DARKEN = -0.05
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild(REMOTE_NAME)
