@@ -2983,6 +2983,7 @@ local lastDistanceToTarget = nil
 local stalledBursts = 0
 local escapeTarget = nil
 local escapeUntil = 0
+local escapeRequested = false
 local lastAlertTime = -math.huge
 
 local ALERT_EVENT_NAME = "PlushtrapAlert"
@@ -3083,7 +3084,7 @@ local function buildPath(target)
 	return path
 end
 
-local function moveToWithTimeout(targetPosition, timeoutSeconds)
+local function moveToWithTimeout(targetPosition, timeoutSeconds, allowInterrupt)
 	humanoid:MoveTo(targetPosition)
 	local finished = false
 	local connection
@@ -3092,6 +3093,9 @@ local function moveToWithTimeout(targetPosition, timeoutSeconds)
 	end)
 	local startTime = os.clock()
 	while not finished and os.clock() - startTime < timeoutSeconds do
+		if allowInterrupt and escapeRequested then
+			break
+		end
 		task.wait(0.05)
 	end
 	if connection then
@@ -3100,7 +3104,7 @@ local function moveToWithTimeout(targetPosition, timeoutSeconds)
 	return finished
 end
 
-local function followPath(path, maxDurationSeconds)
+local function followPath(path, maxDurationSeconds, allowInterrupt)
 	local waypoints = path:GetWaypoints()
 	if #waypoints == 0 then
 		return false
@@ -3116,7 +3120,9 @@ local function followPath(path, maxDurationSeconds)
 			humanoid.Jump = true
 		end
 		local stepTimeout = math.min(CONFIG.StepMoveSeconds, remaining)
-		moveToWithTimeout(waypoint.Position, stepTimeout)
+		if not moveToWithTimeout(waypoint.Position, stepTimeout, allowInterrupt) and allowInterrupt and escapeRequested then
+			return false
+		end
 	end
 	return true
 end
@@ -3128,7 +3134,7 @@ end
 local function attemptUnstuck()
 	local angle = math.random() * math.pi * 2
 	local offset = Vector3.new(math.cos(angle), 0, math.sin(angle)) * CONFIG.UnstuckStepDistance
-	moveToWithTimeout(root.Position + offset, CONFIG.UnstuckStepTimeoutSeconds)
+	moveToWithTimeout(root.Position + offset, CONFIG.UnstuckStepTimeoutSeconds, true)
 end
 
 local function getNearestPlayer(maxDistance)
@@ -3183,6 +3189,7 @@ local function startEscapeFrom(player)
 	target = nil
 	lastDistanceToTarget = nil
 	stalledBursts = 0
+	escapeRequested = true
 end
 
 local function alertPlayersInRange(remote, radius)
@@ -3235,6 +3242,9 @@ local function scurryLoop()
 		end
 		local now = os.clock()
 		local escaping = escapeTarget and now < escapeUntil
+		if escaping and escapeRequested then
+			escapeRequested = false
+		end
 		if not escaping and not target then
 			task.wait(getRandomRange(CONFIG.PauseMinSeconds, CONFIG.PauseMaxSeconds))
 			target = pickNextWaypoint(root.Position, pool)
@@ -3270,12 +3280,12 @@ local function scurryLoop()
 
 			local path = buildPath(activeTargetPosition)
 			if path then
-				local completed = followPath(path, burstDuration)
+				local completed = followPath(path, burstDuration, not escaping)
 				if not completed then
-					moveToWithTimeout(activeTargetPosition, burstDuration)
+					moveToWithTimeout(activeTargetPosition, burstDuration, not escaping)
 				end
 			else
-				moveToWithTimeout(activeTargetPosition, burstDuration)
+				moveToWithTimeout(activeTargetPosition, burstDuration, not escaping)
 			end
 
 			local distanceToTarget = (activeTargetPosition - root.Position).Magnitude
