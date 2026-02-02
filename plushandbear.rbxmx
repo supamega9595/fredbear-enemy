@@ -3331,17 +3331,22 @@ local TweenService = game:GetService("TweenService")
 
 local REMOTE_NAME = "PlushtrapScreamEffect"
 local FACE_IMAGE = "rbxassetid://276261895"
-local SHAKE_DURATION = 3
-local SHAKE_POWER = 0.6
-local SHAKE_FREQUENCY = 28
+local FACE_LOCK_SECONDS = 1
+local FACE_LOCK_DISTANCE = 1.2
+local SHAKE_POWER = 0.35
+local SHAKE_FREQUENCY = 26
 local FACE_FLASH_SECONDS = 1
+local DESATURATION = -0.85
+local DARKEN = -0.15
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild(REMOTE_NAME)
+local Lighting = game:GetService("Lighting")
 
 local gui = nil
 local image = nil
 local effectId = 0
+local colorEffect = nil
 
 local function ensureGui()
 	if gui and gui.Parent then
@@ -3369,6 +3374,18 @@ local function ensureGui()
 	return gui, image
 end
 
+local function ensureColorEffect()
+	if colorEffect and colorEffect.Parent then
+		return colorEffect
+	end
+	colorEffect = Instance.new("ColorCorrectionEffect")
+	colorEffect.Name = "PlushtrapScreamColor"
+	colorEffect.Saturation = 0
+	colorEffect.Brightness = 0
+	colorEffect.Parent = Lighting
+	return colorEffect
+end
+
 local function flashFace()
 	local _, face = ensureGui()
 	face.ImageTransparency = 0.05
@@ -3378,46 +3395,77 @@ local function flashFace()
 	tween:Play()
 end
 
-local function playShake(localEffectId)
+local function getPlushtrapHead()
+	local model = workspace:FindFirstChild("plushtrap") or workspace:FindFirstChild("Plushtrap")
+	if not model then
+		return nil
+	end
+	return model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
+end
+
+local function playFaceLock(localEffectId, fallbackPosition)
 	local camera = workspace.CurrentCamera
 	if not camera then
 		return
 	end
 
+	local head = getPlushtrapHead()
+	local headPosition = head and head.Position or fallbackPosition
+	local headForward = head and head.CFrame.LookVector or camera.CFrame.LookVector
+	if not headPosition then
+		return
+	end
+
+	local originalType = camera.CameraType
+	local originalCFrame = camera.CFrame
+
+	camera.CameraType = Enum.CameraType.Scriptable
+
+	local correction = ensureColorEffect()
+	correction.Saturation = DESATURATION
+	correction.Brightness = DARKEN
+	local resetTween = TweenService:Create(correction, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Saturation = 0,
+		Brightness = 0,
+	})
+
 	local startTime = os.clock()
 	local lastOffset = Vector3.zero
 
-	while os.clock() - startTime < SHAKE_DURATION do
+	while os.clock() - startTime < FACE_LOCK_SECONDS do
 		if effectId ~= localEffectId then
 			break
 		end
 		local elapsed = os.clock() - startTime
-		local decay = 1 - math.clamp(elapsed / SHAKE_DURATION, 0, 1)
+		local decay = 1 - math.clamp(elapsed / FACE_LOCK_SECONDS, 0, 1)
 		local magnitude = SHAKE_POWER * (0.4 + 0.6 * decay)
 		local phase = elapsed * SHAKE_FREQUENCY
 		local offset = Vector3.new(math.sin(phase) * magnitude, math.cos(phase * 1.2) * magnitude, 0)
-		local base = camera.CFrame * CFrame.new(-lastOffset)
+		local facePos = headPosition + headForward * FACE_LOCK_DISTANCE
+		local base = CFrame.new(facePos, headPosition) * CFrame.new(-lastOffset)
 		camera.CFrame = base * CFrame.new(offset)
 		lastOffset = offset
 		RunService.RenderStepped:Wait()
 	end
 
 	if effectId == localEffectId and camera then
-		camera.CFrame = camera.CFrame * CFrame.new(-lastOffset)
+		camera.CFrame = originalCFrame
+		camera.CameraType = originalType
+		resetTween:Play()
 	end
 end
 
-local function playEffect()
+local function playEffect(position)
 	effectId += 1
 	local localEffectId = effectId
 	flashFace()
 	task.spawn(function()
-		playShake(localEffectId)
+		playFaceLock(localEffectId, position)
 	end)
 end
 
-remote.OnClientEvent:Connect(function()
-	playEffect()
+remote.OnClientEvent:Connect(function(position)
+	playEffect(position)
 end)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
