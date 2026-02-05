@@ -30792,6 +30792,12 @@ local DEFAULTS = {
 local ALERT_EVENT_NAME = "PlushtrapAlert"
 local ALERT_MAX_AGE_SECONDS = 30
 local ALERT_AI_STEP = 1
+local INVESTIGATE_CONFIG = {
+	SpeedMultiplier = 2,
+	RepathSeconds = 1.25,
+	TimeoutSeconds = 10,
+	WaypointSpacing = 12,
+}
 
 local function ensureRemote()
 	local remote = ReplicatedStorage:FindFirstChild(REMOTE_NAME)
@@ -31086,12 +31092,16 @@ do
 		"This seems like this would be handy.",
 	}
 
-		local function moveTo(finish, use2d)
+		local function moveTo(finish, use2d, speedOverride, waypointSpacing)
 			if not upperTorso then
 				return false
 			end
+			local originalSpeed = humanoid.WalkSpeed
+			if speedOverride then
+				humanoid.WalkSpeed = speedOverride
+			end
 			local path = PathfindingService:CreatePath({
-				WaypointSpacing = 15,
+				WaypointSpacing = waypointSpacing or 15,
 			})
 			path:ComputeAsync(upperTorso.Position, finish)
 			if path.Status == Enum.PathStatus.Success then
@@ -31140,7 +31150,29 @@ do
 						task.wait()
 					until distance < 4
 				end
+				if speedOverride then
+					humanoid.WalkSpeed = originalSpeed
+				end
 				return true
+			end
+			if speedOverride then
+				humanoid.WalkSpeed = originalSpeed
+			end
+			return false
+		end
+
+		local function investigateMoveTo(targetPosition)
+			local chaseSpeed = getNumberAttribute("ChaseSpeed", DEFAULTS.ChaseSpeed, 0)
+			local investigateSpeed = chaseSpeed * INVESTIGATE_CONFIG.SpeedMultiplier
+			local startTime = os.clock()
+			while os.clock() - startTime < INVESTIGATE_CONFIG.TimeoutSeconds do
+				if isChasing() then
+					return false
+				end
+				if moveTo(targetPosition, true, investigateSpeed, INVESTIGATE_CONFIG.WaypointSpacing) then
+					return true
+				end
+				task.wait(INVESTIGATE_CONFIG.RepathSeconds)
 			end
 			return false
 		end
@@ -31253,7 +31285,7 @@ do
 					end
 					local alertTarget = getAlertTarget()
 					if alertTarget then
-						if moveTo(alertTarget, true) then
+						if investigateMoveTo(alertTarget) then
 							lastAlertPosition = nil
 						end
 						task.wait(1)
