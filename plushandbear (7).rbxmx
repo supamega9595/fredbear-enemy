@@ -31092,7 +31092,7 @@ do
 		"This seems like this would be handy.",
 	}
 
-		local function moveTo(finish, use2d, speedOverride, waypointSpacing)
+		local function moveTo(finish, use2d, speedOverride, waypointSpacing, allowAlertInterrupt)
 			if not upperTorso then
 				return false
 			end
@@ -31117,26 +31117,38 @@ do
 				if #waypoints == 0 and rawWaypoints[1] then
 					waypoints = rawWaypoints
 				end
-				for _, waypoint in ipairs(waypoints) do
-					if isChasing() then
-						return false
-					end
-					if waypoint.Action == Enum.PathWaypointAction.Jump then
-						humanoid.Jump = true
-					end
-					humanoid:MoveTo(waypoint.Position)
-					local distance = 0
-					local startTime = tick()
-					local startPos = upperTorso.Position
-					local maxTime = math.max(2, (waypoint.Position - startPos).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
-					repeat
+					for _, waypoint in ipairs(waypoints) do
 						if isChasing() then
 							return false
 						end
-						if use2d then
-							distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
-						else
-							distance = (waypoint.Position - upperTorso.Position).Magnitude
+						if allowAlertInterrupt and getAlertTarget() then
+							if speedOverride then
+								humanoid.WalkSpeed = originalSpeed
+							end
+							return false
+						end
+						if waypoint.Action == Enum.PathWaypointAction.Jump then
+							humanoid.Jump = true
+						end
+						humanoid:MoveTo(waypoint.Position)
+						local distance = 0
+					local startTime = tick()
+					local startPos = upperTorso.Position
+					local maxTime = math.max(2, (waypoint.Position - startPos).Magnitude / math.max(humanoid.WalkSpeed, 1) + 1)
+						repeat
+							if isChasing() then
+								return false
+							end
+							if allowAlertInterrupt and getAlertTarget() then
+								if speedOverride then
+									humanoid.WalkSpeed = originalSpeed
+								end
+								return false
+							end
+							if use2d then
+								distance = (Vector2.new(waypoint.Position.X, waypoint.Position.Z) - Vector2.new(upperTorso.Position.X, upperTorso.Position.Z)).Magnitude
+							else
+								distance = (waypoint.Position - upperTorso.Position).Magnitude
 						end
 						local traveled = (upperTorso.Position - startPos).Magnitude
 						local expectedDistance = (waypoint.Position - startPos).Magnitude
@@ -31169,13 +31181,13 @@ do
 				if isChasing() then
 					return false
 				end
-				if moveTo(targetPosition, true, investigateSpeed, INVESTIGATE_CONFIG.WaypointSpacing) then
-					return true
+					if moveTo(targetPosition, true, investigateSpeed, INVESTIGATE_CONFIG.WaypointSpacing) then
+						return true
+					end
+					task.wait(INVESTIGATE_CONFIG.RepathSeconds)
 				end
-				task.wait(INVESTIGATE_CONFIG.RepathSeconds)
+				return false
 			end
-			return false
-		end
 
 	local function getSpecificInstances(model, typeName)
 		local tab = {}
@@ -31293,12 +31305,12 @@ do
 						local anchor = upperTorso or root
 						local waypoint = anchor and pickNextWaypoint(anchor.Position)
 						if waypoint then
-							if moveTo(waypoint.Position, true) then
+							if moveTo(waypoint.Position, true, nil, nil, true) then
 								lastRoamTarget = waypoint.Position
 							end
 						else
 							local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
-							moveTo(point, true)
+							moveTo(point, true, nil, nil, true)
 						end
 						task.wait(math.random(3, 5))
 					end
