@@ -2972,6 +2972,8 @@ local CONFIG = {
 	EffectRadiusStuds = 50,
 	AlertCooldownSeconds = 20,
 	AlertSoundId = "rbxassetid://2050522204",
+	AlertSoundEmitterSize = 8,
+	AlertSoundMaxDistance = 2000,
 	EscapeSpeed = 72,
 	EscapeBurstSeconds = 10,
 	EscapeDistanceMinStuds = 200,
@@ -3161,8 +3163,11 @@ local function playAlertSound()
 	local sound = Instance.new("Sound")
 	sound.Name = "PlushtrapAlertSound"
 	sound.SoundId = CONFIG.AlertSoundId
+	sound.RollOffMode = Enum.RollOffMode.Inverse
+	sound.EmitterSize = CONFIG.AlertSoundEmitterSize
+	sound.RollOffMaxDistance = CONFIG.AlertSoundMaxDistance
 	sound.Volume = 1
-	sound.Parent = game:GetService("SoundService")
+	sound.Parent = root
 	sound:Play()
 	sound.Ended:Connect(function()
 		sound:Destroy()
