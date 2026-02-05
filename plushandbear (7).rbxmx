@@ -3405,12 +3405,22 @@ local function flashFace()
 	tween:Play()
 end
 
-local function getPlushtrapHead()
-	local model = workspace:FindFirstChild("plushtrap") or workspace:FindFirstChild("Plushtrap")
-	if not model then
-		return nil
+local function getPlushtrapHead(model, cachedHead)
+	local activeModel = model
+	if activeModel and not activeModel.Parent then
+		activeModel = nil
 	end
-	return model:FindFirstChild("Head") or model:FindFirstChild("HumanoidRootPart")
+	if not activeModel then
+		activeModel = workspace:FindFirstChild("plushtrap") or workspace:FindFirstChild("Plushtrap")
+	end
+	if not activeModel then
+		return nil, nil
+	end
+	if cachedHead and cachedHead.Parent == activeModel then
+		return cachedHead, activeModel
+	end
+	local head = activeModel:FindFirstChild("Head") or activeModel:FindFirstChild("HumanoidRootPart")
+	return head, activeModel
 end
 
 local function playFaceLock(localEffectId, fallbackPosition)
@@ -3419,7 +3429,7 @@ local function playFaceLock(localEffectId, fallbackPosition)
 		return
 	end
 
-	local head = getPlushtrapHead()
+	local head, headModel = getPlushtrapHead()
 	local headPosition = head and head.Position or fallbackPosition
 	local headForward = head and head.CFrame.LookVector or camera.CFrame.LookVector
 	if not headPosition then
@@ -3441,18 +3451,31 @@ local function playFaceLock(localEffectId, fallbackPosition)
 
 	local startTime = os.clock()
 	local lastOffset = Vector3.zero
+	local lastKnownPosition = headPosition
+	local lastKnownForward = headForward
 
 	while os.clock() - startTime < FACE_LOCK_SECONDS do
 		if effectId ~= localEffectId then
 			break
 		end
+		local currentHead
+		currentHead, headModel = getPlushtrapHead(headModel, head)
+		head = currentHead
+		if currentHead then
+			lastKnownPosition = currentHead.Position
+			lastKnownForward = currentHead.CFrame.LookVector
+		elseif fallbackPosition then
+			lastKnownPosition = fallbackPosition
+			lastKnownForward = camera.CFrame.LookVector
+		end
+
 		local elapsed = os.clock() - startTime
 		local decay = 1 - math.clamp(elapsed / FACE_LOCK_SECONDS, 0, 1)
 		local magnitude = SHAKE_POWER * (0.4 + 0.6 * decay)
 		local phase = elapsed * SHAKE_FREQUENCY
 		local offset = Vector3.new(math.sin(phase) * magnitude, math.cos(phase * 1.2) * magnitude, 0)
-		local facePos = headPosition + headForward * FACE_LOCK_DISTANCE
-		local base = CFrame.new(facePos, headPosition) * CFrame.new(-lastOffset)
+		local facePos = lastKnownPosition + lastKnownForward * FACE_LOCK_DISTANCE
+		local base = CFrame.new(facePos, lastKnownPosition) * CFrame.new(-lastOffset)
 		camera.CFrame = base * CFrame.new(offset)
 		lastOffset = offset
 		RunService.RenderStepped:Wait()
