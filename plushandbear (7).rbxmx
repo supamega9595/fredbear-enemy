@@ -2968,11 +2968,10 @@ local CONFIG = {
 	UnstuckStepTimeoutSeconds = 0.4,
 	WaypointSpacing = 10,
 	ArrivalDistance = 3,
-	AlertRadiusStuds = 40,
+	TriggerRadiusStuds = 20,
+	EffectRadiusStuds = 50,
 	AlertCooldownSeconds = 20,
-	AlertSoundId = "rbxassetid://106467460491012",
-	AlertSoundEmitterSize = 8,
-	AlertSoundMaxDistance = 1000,
+	AlertSoundId = "rbxassetid://2050522204",
 	EscapeSpeed = 72,
 	EscapeBurstSeconds = 10,
 	EscapeDistanceMinStuds = 200,
@@ -3162,11 +3161,8 @@ local function playAlertSound()
 	local sound = Instance.new("Sound")
 	sound.Name = "PlushtrapAlertSound"
 	sound.SoundId = CONFIG.AlertSoundId
-	sound.RollOffMode = Enum.RollOffMode.Inverse
-	sound.EmitterSize = CONFIG.AlertSoundEmitterSize
-	sound.RollOffMaxDistance = CONFIG.AlertSoundMaxDistance
 	sound.Volume = 1
-	sound.Parent = root
+	sound.Parent = game:GetService("SoundService")
 	sound:Play()
 	sound.Ended:Connect(function()
 		sound:Destroy()
@@ -3222,11 +3218,11 @@ task.spawn(function()
 		if os.clock() - lastAlertTime < CONFIG.AlertCooldownSeconds then
 			continue
 		end
-		local player = getNearestPlayer(CONFIG.AlertRadiusStuds)
+		local player = getNearestPlayer(CONFIG.TriggerRadiusStuds)
 		if player then
 			lastAlertTime = os.clock()
 			playAlertSound()
-			alertPlayersInRange(screamRemote, CONFIG.AlertRadiusStuds)
+			alertPlayersInRange(screamRemote, CONFIG.EffectRadiusStuds)
 			alertEvent:Fire(root.Position, lastAlertTime)
 			startEscapeFrom(player)
 		end
@@ -3348,10 +3344,19 @@ local SHAKE_FREQUENCY = 26
 local FACE_FLASH_SECONDS = 1
 local DESATURATION = -0.85
 local DARKEN = -0.05
+local CONFUSION_SECONDS = 10
+local CONFUSION_BLUR_SIZE = 8
+local CONFUSION_TINT = Color3.fromRGB(210, 235, 255)
+local CONFUSION_SATURATION = -0.35
+local CONFUSION_BRIGHTNESS = -0.05
+local CONFUSION_CONTRAST = 0.1
+local CONFUSION_WOBBLE_DEGREES = 1.6
+local CONFUSION_WOBBLE_SPEED = 7
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild(REMOTE_NAME)
 local Lighting = game:GetService("Lighting")
+local SoundService = game:GetService("SoundService")
 
 local gui = nil
 local image = nil
@@ -3394,6 +3399,110 @@ local function ensureColorEffect()
 	colorEffect.Brightness = 0
 	colorEffect.Parent = Lighting
 	return colorEffect
+end
+
+local function ensureConfusionEffects()
+	local blur = Lighting:FindFirstChild("PlushtrapConfusionBlur")
+	if not blur then
+		blur = Instance.new("BlurEffect")
+		blur.Name = "PlushtrapConfusionBlur"
+		blur.Size = 0
+		blur.Parent = Lighting
+	end
+
+	local color = Lighting:FindFirstChild("PlushtrapConfusionColor")
+	if not color then
+		color = Instance.new("ColorCorrectionEffect")
+		color.Name = "PlushtrapConfusionColor"
+		color.Saturation = 0
+		color.Contrast = 0
+		color.Brightness = 0
+		color.TintColor = Color3.new(1, 1, 1)
+		color.Parent = Lighting
+	end
+
+	local eq = SoundService:FindFirstChild("PlushtrapConfusionEQ")
+	if not eq then
+		eq = Instance.new("EqualizerSoundEffect")
+		eq.Name = "PlushtrapConfusionEQ"
+		eq.LowGain = 0
+		eq.MidGain = -6
+		eq.HighGain = -14
+		eq.Parent = SoundService
+	end
+
+	return blur, color, eq
+end
+
+local function playConfusion(localEffectId)
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+
+	local blur, color, eq = ensureConfusionEffects()
+	local cleaningUp = false
+	local function endConfusion()
+		if cleaningUp then
+			return
+		end
+		cleaningUp = true
+		local blurOut = TweenService:Create(blur, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = 0,
+		})
+		local colorOut = TweenService:Create(color, TweenInfo.new(0.35, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Saturation = 0,
+			Contrast = 0,
+			Brightness = 0,
+			TintColor = Color3.new(1, 1, 1),
+		})
+		blurOut:Play()
+		colorOut:Play()
+		task.delay(0.4, function()
+			blur:Destroy()
+			color:Destroy()
+			eq:Destroy()
+		end)
+	end
+
+	local blurIn = TweenService:Create(blur, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = CONFUSION_BLUR_SIZE,
+	})
+	local colorIn = TweenService:Create(color, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Saturation = CONFUSION_SATURATION,
+		Contrast = CONFUSION_CONTRAST,
+		Brightness = CONFUSION_BRIGHTNESS,
+		TintColor = CONFUSION_TINT,
+	})
+
+	blurIn:Play()
+	colorIn:Play()
+
+	local startTime = os.clock()
+	local lastRoll = 0
+	local connection
+	connection = RunService.RenderStepped:Connect(function()
+		if effectId ~= localEffectId then
+			connection:Disconnect()
+			endConfusion()
+			return
+		end
+		local elapsed = os.clock() - startTime
+		if elapsed > CONFUSION_SECONDS then
+			connection:Disconnect()
+			endConfusion()
+			return
+		end
+		local wobble = math.rad(math.sin(elapsed * CONFUSION_WOBBLE_SPEED) * CONFUSION_WOBBLE_DEGREES)
+		camera.CFrame = camera.CFrame * CFrame.Angles(0, 0, wobble - lastRoll)
+		lastRoll = wobble
+	end)
+
+	task.delay(CONFUSION_SECONDS, function()
+		if effectId == localEffectId then
+			endConfusion()
+		end
+	end)
 end
 
 local function flashFace()
@@ -3485,6 +3594,7 @@ local function playFaceLock(localEffectId, fallbackPosition)
 		camera.CFrame = originalCFrame
 		camera.CameraType = originalType
 		resetTween:Play()
+		playConfusion(localEffectId)
 	end
 end
 
