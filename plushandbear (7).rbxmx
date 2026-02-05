@@ -30881,31 +30881,31 @@ local LEVEL_SETTINGS = {
 }
 
 local LEVELS = {
-	[1] = { ChaseSpeed = 82, DetectionRange = 146, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
-	[2] = { ChaseSpeed = 84, DetectionRange = 152, MemoryTime = 3.8, FovAngle = 62, StopDistance = 5 },
-	[3] = { ChaseSpeed = 86, DetectionRange = 158, MemoryTime = 3.95, FovAngle = 63, StopDistance = 5 },
-	[4] = { ChaseSpeed = 88, DetectionRange = 164, MemoryTime = 4.1, FovAngle = 64, StopDistance = 5 },
-	[5] = { ChaseSpeed = 90, DetectionRange = 170, MemoryTime = 4.25, FovAngle = 65, StopDistance = 5 },
-	[6] = { ChaseSpeed = 92, DetectionRange = 176, MemoryTime = 4.4, FovAngle = 66, StopDistance = 5 },
-	[7] = { ChaseSpeed = 94, DetectionRange = 182, MemoryTime = 4.55, FovAngle = 67, StopDistance = 5 },
-	[8] = { ChaseSpeed = 96, DetectionRange = 188, MemoryTime = 4.7, FovAngle = 68, StopDistance = 5 },
-	[9] = { ChaseSpeed = 98, DetectionRange = 194, MemoryTime = 4.85, FovAngle = 69, StopDistance = 5 },
-	[10] = { ChaseSpeed = 100, DetectionRange = 200, MemoryTime = 5.0, FovAngle = 70, StopDistance = 5 },
-	[11] = { ChaseSpeed = 102, DetectionRange = 206, MemoryTime = 5.15, FovAngle = 71, StopDistance = 5 },
-	[12] = { ChaseSpeed = 104, DetectionRange = 212, MemoryTime = 5.3, FovAngle = 72, StopDistance = 5 },
-	[13] = { ChaseSpeed = 106, DetectionRange = 218, MemoryTime = 5.45, FovAngle = 73, StopDistance = 5 },
-	[14] = { ChaseSpeed = 108, DetectionRange = 224, MemoryTime = 5.6, FovAngle = 74, StopDistance = 5 },
-	[15] = { ChaseSpeed = 110, DetectionRange = 230, MemoryTime = 5.75, FovAngle = 75, StopDistance = 5 },
-	[16] = { ChaseSpeed = 112, DetectionRange = 236, MemoryTime = 5.9, FovAngle = 76, StopDistance = 5 },
-	[17] = { ChaseSpeed = 114, DetectionRange = 242, MemoryTime = 6.05, FovAngle = 77, StopDistance = 5 },
-	[18] = { ChaseSpeed = 116, DetectionRange = 248, MemoryTime = 6.2, FovAngle = 78, StopDistance = 5 },
-	[19] = { ChaseSpeed = 118, DetectionRange = 254, MemoryTime = 6.35, FovAngle = 79, StopDistance = 5 },
-	[20] = { ChaseSpeed = 200, DetectionRange = 260, MemoryTime = 6.5, FovAngle = 80, StopDistance = 5 },
+	[1] = { ChaseSpeed = 25, DetectionRange = 44, MemoryTime = 3.65, FovAngle = 61, StopDistance = 5 },
+	[2] = { ChaseSpeed = 25, DetectionRange = 46, MemoryTime = 3.8, FovAngle = 62, StopDistance = 5 },
+	[3] = { ChaseSpeed = 26, DetectionRange = 47, MemoryTime = 3.95, FovAngle = 63, StopDistance = 5 },
+	[4] = { ChaseSpeed = 26, DetectionRange = 49, MemoryTime = 4.1, FovAngle = 64, StopDistance = 5 },
+	[5] = { ChaseSpeed = 27, DetectionRange = 51, MemoryTime = 4.25, FovAngle = 65, StopDistance = 5 },
+	[6] = { ChaseSpeed = 28, DetectionRange = 53, MemoryTime = 4.4, FovAngle = 66, StopDistance = 5 },
+	[7] = { ChaseSpeed = 28, DetectionRange = 55, MemoryTime = 4.55, FovAngle = 67, StopDistance = 5 },
+	[8] = { ChaseSpeed = 29, DetectionRange = 56, MemoryTime = 4.7, FovAngle = 68, StopDistance = 5 },
+	[9] = { ChaseSpeed = 29, DetectionRange = 58, MemoryTime = 4.85, FovAngle = 69, StopDistance = 5 },
+	[10] = { ChaseSpeed = 30, DetectionRange = 60, MemoryTime = 5.0, FovAngle = 70, StopDistance = 5 },
+	[11] = { ChaseSpeed = 31, DetectionRange = 62, MemoryTime = 5.15, FovAngle = 71, StopDistance = 5 },
+	[12] = { ChaseSpeed = 31, DetectionRange = 64, MemoryTime = 5.3, FovAngle = 72, StopDistance = 5 },
+	[13] = { ChaseSpeed = 32, DetectionRange = 65, MemoryTime = 5.45, FovAngle = 73, StopDistance = 5 },
+	[14] = { ChaseSpeed = 32, DetectionRange = 67, MemoryTime = 5.6, FovAngle = 74, StopDistance = 5 },
+	[15] = { ChaseSpeed = 33, DetectionRange = 69, MemoryTime = 5.75, FovAngle = 75, StopDistance = 5 },
+	[16] = { ChaseSpeed = 34, DetectionRange = 71, MemoryTime = 5.9, FovAngle = 76, StopDistance = 5 },
+	[17] = { ChaseSpeed = 34, DetectionRange = 73, MemoryTime = 6.05, FovAngle = 77, StopDistance = 5 },
+	[18] = { ChaseSpeed = 35, DetectionRange = 74, MemoryTime = 6.2, FovAngle = 78, StopDistance = 5 },
+	[19] = { ChaseSpeed = 35, DetectionRange = 76, MemoryTime = 6.35, FovAngle = 79, StopDistance = 5 },
+	[20] = { ChaseSpeed = 60, DetectionRange = 78, MemoryTime = 6.5, FovAngle = 80, StopDistance = 5 },
 }
 
 local DEFAULTS = {
-	ChaseSpeed = 100,
-	DetectionRange = 200,
+	ChaseSpeed = 30,
+	DetectionRange = 60,
 	FovAngle = 70, -- degrees (front vision cone)
 	MemoryTime = 5, -- seconds NPC keeps chasing after losing sight
 	StopDistance = 5,
@@ -31116,6 +31116,7 @@ end)
 local idleWalkSpeed = humanoid.WalkSpeed
 local lastSeenTime = 0
 local targetPlayer = nil
+local isInvestigating = false
 
 local function isChasing()
 	return targetPlayer and tick() - lastSeenTime <= config.MemoryTime
@@ -31183,6 +31184,13 @@ RunService.Heartbeat:Connect(function()
 		if targetPlayer then
 			local char = targetPlayer.Character
 			local hrp = char and char:FindFirstChild("HumanoidRootPart")
+			local hum = char and char:FindFirstChildOfClass("Humanoid")
+
+			if hum and hum.Health <= 0 then
+				targetPlayer = nil
+				humanoid:Move(Vector3.zero)
+				return
+			end
 
 			if hrp and tick() - lastSeenTime <= config.MemoryTime then
 				humanoid.WalkSpeed = config.ChaseSpeed
@@ -31295,21 +31303,32 @@ do
 			return false
 		end
 
-		local function investigateMoveTo(targetPosition)
-			local chaseSpeed = getNumberAttribute("ChaseSpeed", DEFAULTS.ChaseSpeed, 0)
-			local investigateSpeed = chaseSpeed * INVESTIGATE_CONFIG.SpeedMultiplier
-			local startTime = os.clock()
-			while os.clock() - startTime < INVESTIGATE_CONFIG.TimeoutSeconds do
-				if isChasing() then
+			local function investigateMoveTo(targetPosition)
+				if isInvestigating then
 					return false
 				end
-					if moveTo(targetPosition, true, investigateSpeed, INVESTIGATE_CONFIG.WaypointSpacing) then
-						return true
+				isInvestigating = true
+				local originalSpeed = humanoid.WalkSpeed
+				local chaseSpeed = getNumberAttribute("ChaseSpeed", DEFAULTS.ChaseSpeed, 0)
+				local investigateSpeed = chaseSpeed * INVESTIGATE_CONFIG.SpeedMultiplier
+				local startTime = os.clock()
+				while os.clock() - startTime < INVESTIGATE_CONFIG.TimeoutSeconds do
+					if isChasing() then
+						humanoid.WalkSpeed = originalSpeed
+						isInvestigating = false
+						return false
 					end
-					task.wait(INVESTIGATE_CONFIG.RepathSeconds)
+						if moveTo(targetPosition, true, investigateSpeed, INVESTIGATE_CONFIG.WaypointSpacing) then
+							humanoid.WalkSpeed = originalSpeed
+							isInvestigating = false
+							return true
+						end
+						task.wait(INVESTIGATE_CONFIG.RepathSeconds)
+					end
+					humanoid.WalkSpeed = originalSpeed
+					isInvestigating = false
+					return false
 				end
-				return false
-			end
 
 	local function getSpecificInstances(model, typeName)
 		local tab = {}
@@ -31509,15 +31528,19 @@ do
 		if not anchor then
 			return
 		end
-		while true do
-			if isChasing() then
-				task.wait(0.1)
-			else
-				local target = findNearestRoot(anchor.Position)
-				if target then
-					humanoid.WalkSpeed = 0
+			while true do
+				if isChasing() then
+					task.wait(0.1)
 				else
-					humanoid.WalkSpeed = idleWalkSpeed
+					if isInvestigating then
+						task.wait(0.1)
+						continue
+					end
+					local target = findNearestRoot(anchor.Position)
+					if target then
+						humanoid.WalkSpeed = 0
+					else
+						humanoid.WalkSpeed = idleWalkSpeed
 				end
 				task.wait(0.1)
 			end
