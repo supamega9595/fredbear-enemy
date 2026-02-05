@@ -3537,18 +3537,19 @@ local function getPlushtrapHead(model, cachedHead)
 	return head, activeModel
 end
 
-local function playFaceLock(localEffectId, fallbackPosition)
-	local camera = workspace.CurrentCamera
-	if not camera then
-		return
-	end
+	local function playFaceLock(localEffectId, fallbackPosition)
+		local camera = workspace.CurrentCamera
+		if not camera then
+			return
+		end
 
-	local head, headModel = getPlushtrapHead()
-	local headPosition = head and head.Position or fallbackPosition
-	local headForward = head and head.CFrame.LookVector or camera.CFrame.LookVector
-	if not headPosition then
-		return
-	end
+		local head, headModel = getPlushtrapHead()
+		local headPosition = head and head.Position or fallbackPosition
+		local headForward = head and head.CFrame.LookVector or camera.CFrame.LookVector
+		local headCFrame = head and head.CFrame or nil
+		if not headPosition then
+			return
+		end
 
 	local originalType = camera.CameraType
 	local originalCFrame = camera.CFrame
@@ -3565,8 +3566,9 @@ local function playFaceLock(localEffectId, fallbackPosition)
 
 	local startTime = os.clock()
 	local lastOffset = Vector3.zero
-	local lastKnownPosition = headPosition
-	local lastKnownForward = headForward
+		local lastKnownPosition = headPosition
+		local lastKnownForward = headForward
+		local lastKnownCFrame = headCFrame
 
 	while os.clock() - startTime < FACE_LOCK_SECONDS do
 		if effectId ~= localEffectId then
@@ -3575,21 +3577,26 @@ local function playFaceLock(localEffectId, fallbackPosition)
 		local currentHead
 		currentHead, headModel = getPlushtrapHead(headModel, head)
 		head = currentHead
-		if currentHead then
-			lastKnownPosition = currentHead.Position
-			lastKnownForward = currentHead.CFrame.LookVector
-		elseif fallbackPosition then
-			lastKnownPosition = fallbackPosition
-			lastKnownForward = camera.CFrame.LookVector
-		end
+			if currentHead then
+				lastKnownPosition = currentHead.Position
+				lastKnownForward = currentHead.CFrame.LookVector
+				lastKnownCFrame = currentHead.CFrame
+			elseif fallbackPosition then
+				lastKnownPosition = fallbackPosition
+				lastKnownForward = camera.CFrame.LookVector
+				lastKnownCFrame = nil
+			end
 
 		local elapsed = os.clock() - startTime
 		local decay = 1 - math.clamp(elapsed / FACE_LOCK_SECONDS, 0, 1)
 		local magnitude = SHAKE_POWER * (0.4 + 0.6 * decay)
 		local phase = elapsed * SHAKE_FREQUENCY
 		local offset = Vector3.new(math.sin(phase) * magnitude, math.cos(phase * 1.2) * magnitude, 0)
-		local facePos = lastKnownPosition + lastKnownForward * FACE_LOCK_DISTANCE
-		local base = CFrame.new(facePos, lastKnownPosition) * CFrame.new(-lastOffset)
+			local facePos = lastKnownPosition + lastKnownForward * FACE_LOCK_DISTANCE
+			if lastKnownCFrame then
+				facePos = lastKnownCFrame:PointToWorldSpace(Vector3.new(0, 0, -FACE_LOCK_DISTANCE))
+			end
+			local base = CFrame.new(facePos, lastKnownPosition) * CFrame.new(-lastOffset)
 		camera.CFrame = base * CFrame.new(offset)
 		lastOffset = offset
 		RunService.RenderStepped:Wait()
@@ -31350,6 +31357,17 @@ do
 		return parts
 	end
 
+	local function waitForAlertOrTimeout(seconds)
+		local startTime = os.clock()
+		while os.clock() - startTime < seconds do
+			if isChasing() or getAlertTarget() then
+				return true
+			end
+			task.wait(0.2)
+		end
+		return false
+	end
+
 	local function refillWaypointPool()
 		waypointPool = getWaypointParts()
 	end
@@ -31411,27 +31429,27 @@ do
 						wasChasing = false
 					end
 					local alertTarget = getAlertTarget()
-					if alertTarget then
-						if investigateMoveTo(alertTarget) then
-							lastAlertPosition = nil
-						end
-						task.wait(1)
-					else
-						local anchor = upperTorso or root
-						local waypoint = anchor and pickNextWaypoint(anchor.Position)
-						if waypoint then
-							if moveTo(waypoint.Position, true, nil, nil, true) then
-								lastRoamTarget = waypoint.Position
+						if alertTarget then
+							if investigateMoveTo(alertTarget) then
+								lastAlertPosition = nil
 							end
+							waitForAlertOrTimeout(1)
 						else
-							local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
-							moveTo(point, true, nil, nil, true)
+							local anchor = upperTorso or root
+							local waypoint = anchor and pickNextWaypoint(anchor.Position)
+							if waypoint then
+								if moveTo(waypoint.Position, true, nil, nil, true) then
+									lastRoamTarget = waypoint.Position
+								end
+							else
+								local point = Vector3.new(math.random(-256, 256), upperTorso.Position.Y, math.random(-256, 256))
+								moveTo(point, true, nil, nil, true)
+							end
+							waitForAlertOrTimeout(math.random(3, 5))
 						end
-						task.wait(math.random(3, 5))
 					end
 				end
-			end
-		end)
+			end)
 end
 
 do
