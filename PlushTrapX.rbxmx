@@ -30912,6 +30912,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
 local REMOTE_NAME = "FastbearAILevelChanged"
+local CHASE_EFFECT_REMOTE_NAME = "FredbearChaseEffect"
 
 local LEVEL_SETTINGS = {
 	DefaultLevel = 20,
@@ -30982,6 +30983,16 @@ local function ensureRemote()
 	return remote
 end
 
+local function ensureChaseEffectRemote()
+	local remote = ReplicatedStorage:FindFirstChild(CHASE_EFFECT_REMOTE_NAME)
+	if not remote then
+		remote = Instance.new("RemoteEvent")
+		remote.Name = CHASE_EFFECT_REMOTE_NAME
+		remote.Parent = ReplicatedStorage
+	end
+	return remote
+end
+
 local function ensureAlertEvent()
 	local event = ReplicatedStorage:FindFirstChild(ALERT_EVENT_NAME)
 	if not event then
@@ -31038,8 +31049,25 @@ for step = LEVEL_SETTINGS.RampStepMin, LEVEL_SETTINGS.RampStepMax do
 	local chanceDefault = LEVEL_SETTINGS.RampStepChances and LEVEL_SETTINGS.RampStepChances[step] or 0
 	ensureAttribute(("RampStepChance%d"):format(step), chanceDefault)
 end
+ensureAttribute("SpottingFreezeSeconds", 1.5)
+ensureAttribute("SpottingPullSeconds", 1)
+ensureAttribute("SpottingHoldSeconds", 0.5)
+ensureAttribute("ChaseEffectFredbearRadius", 60)
+ensureAttribute("ChaseEffectTargetRadius", 25)
+ensureAttribute("ChaseEffectUpdateSeconds", 0.25)
+ensureAttribute("ChaseEffectSoundId", "rbxassetid://110267433431704")
+ensureAttribute("ChaseEffectSoundVolume", 1)
+ensureAttribute("ChaseEffectSoundMinDistance", 12)
+ensureAttribute("ChaseEffectSoundMaxDistance", 80)
+ensureAttribute("ChaseEffectFadeSeconds", 0.9)
+ensureAttribute("ChaseEffectVignetteTransparency", 0.35)
+ensureAttribute("ChaseEffectSaturation", -0.25)
+ensureAttribute("ChaseEffectContrast", 0.1)
+ensureAttribute("ChaseEffectBrightness", -0.05)
+ensureAttribute("ChaseEffectBlurSize", 3)
 
 local remote = ensureRemote()
+local chaseEffectRemote = ensureChaseEffectRemote()
 local alertEvent = ensureAlertEvent()
 
 alertEvent.Event:Connect(function(position, timestamp)
@@ -31168,6 +31196,10 @@ local idleWalkSpeed = humanoid.WalkSpeed
 local lastSeenTime = 0
 local targetPlayer = nil
 local isInvestigating = false
+local spottingActive = false
+local spottingEndsAt = 0
+local effectsEnabled = false
+local effectPlayers = {}
 
 local function isChasing()
 	return targetPlayer and tick() - lastSeenTime <= config.MemoryTime
@@ -31223,13 +31255,142 @@ local function getVisiblePlayer()
 	return nil
 end
 
+local function getEffectConfig()
+	return {
+		SoundId = npc:GetAttribute("ChaseEffectSoundId"),
+		Volume = npc:GetAttribute("ChaseEffectSoundVolume"),
+		MinDistance = npc:GetAttribute("ChaseEffectSoundMinDistance"),
+		MaxDistance = npc:GetAttribute("ChaseEffectSoundMaxDistance"),
+		FadeSeconds = npc:GetAttribute("ChaseEffectFadeSeconds"),
+		VignetteTransparency = npc:GetAttribute("ChaseEffectVignetteTransparency"),
+		Saturation = npc:GetAttribute("ChaseEffectSaturation"),
+		Contrast = npc:GetAttribute("ChaseEffectContrast"),
+		Brightness = npc:GetAttribute("ChaseEffectBrightness"),
+		BlurSize = npc:GetAttribute("ChaseEffectBlurSize"),
+	}
+end
+
+local function getEffectPlayers(currentTarget)
+	local fredbearRadius = getNumberAttribute("ChaseEffectFredbearRadius", 0, 0)
+	local targetRadius = getNumberAttribute("ChaseEffectTargetRadius", 0, 0)
+	local list = {}
+	for _, player in ipairs(Players:GetPlayers()) do
+		local char = player.Character
+		local hrp = char and char:FindFirstChild("HumanoidRootPart")
+		local hum = char and char:FindFirstChildOfClass("Humanoid")
+		if hrp and hum and hum.Health > 0 then
+			local fredbearDistance = (hrp.Position - root.Position).Magnitude
+			local inFredbearRange = fredbearDistance <= fredbearRadius
+			local inTargetRange = false
+			if currentTarget then
+				local targetChar = currentTarget.Character
+				local targetRoot = targetChar and targetChar:FindFirstChild("HumanoidRootPart")
+				if targetRoot then
+					inTargetRange = (hrp.Position - targetRoot.Position).Magnitude <= targetRadius
+				end
+			end
+			if inFredbearRange or inTargetRange or player == currentTarget then
+				list[player] = true
+			end
+		end
+	end
+	return list
+end
+
+local function clearEffectPlayers()
+	for player in pairs(effectPlayers) do
+		chaseEffectRemote:FireClient(player, "EffectOff")
+	end
+	effectPlayers = {}
+end
+
+local function setTargetPlayer(player)
+	if targetPlayer == player then
+		return
+	end
+	if targetPlayer then
+		chaseEffectRemote:FireClient(targetPlayer, "TargetOff")
+	end
+	targetPlayer = player
+	if targetPlayer then
+		chaseEffectRemote:FireClient(targetPlayer, "TargetOn")
+	end
+end
+
+local function beginSpotting(player)
+	if spottingActive then
+		return
+	end
+	local freezeSeconds = getNumberAttribute("SpottingFreezeSeconds", 1.5, 0)
+	local pullSeconds = getNumberAttribute("SpottingPullSeconds", 1, 0)
+	local holdSeconds = getNumberAttribute("SpottingHoldSeconds", 0.5, 0)
+	spottingActive = true
+	spottingEndsAt = tick() + freezeSeconds
+	effectsEnabled = true
+	setTargetPlayer(player)
+	lastSeenTime = tick()
+	local effectConfig = getEffectConfig()
+	local playersToNotify = getEffectPlayers(player)
+	for target in pairs(playersToNotify) do
+		chaseEffectRemote:FireClient(target, "Spotting", npc, pullSeconds, holdSeconds, effectConfig)
+	end
+	effectPlayers = playersToNotify
+end
+
+task.spawn(function()
+	while npc.Parent do
+		local updateSeconds = getNumberAttribute("ChaseEffectUpdateSeconds", 0.25, 0.05)
+		task.wait(updateSeconds)
+		if not effectsEnabled then
+			if next(effectPlayers) then
+				clearEffectPlayers()
+			end
+			continue
+		end
+
+		local updatedPlayers = getEffectPlayers(targetPlayer)
+		local effectConfig = getEffectConfig()
+
+		for player in pairs(updatedPlayers) do
+			if not effectPlayers[player] then
+				chaseEffectRemote:FireClient(player, "EffectOn", npc, effectConfig)
+			end
+		end
+
+		for player in pairs(effectPlayers) do
+			if not updatedPlayers[player] then
+				chaseEffectRemote:FireClient(player, "EffectOff")
+			end
+		end
+
+		effectPlayers = updatedPlayers
+	end
+end)
+
 -- ===== MAIN LOOP =====
 RunService.Heartbeat:Connect(function()
 	local visiblePlayer = getVisiblePlayer()
 
 	if visiblePlayer then
-		targetPlayer = visiblePlayer
-		lastSeenTime = tick()
+		if isChasing() then
+			if targetPlayer ~= visiblePlayer then
+				setTargetPlayer(visiblePlayer)
+			end
+			lastSeenTime = tick()
+		elseif not spottingActive then
+			beginSpotting(visiblePlayer)
+		end
+	end
+
+	if spottingActive then
+		if tick() >= spottingEndsAt then
+			spottingActive = false
+		else
+			humanoid.WalkSpeed = 0
+			humanoid:Move(Vector3.zero)
+			npc:SetAttribute("IsChasing", isChasing())
+			return
+		end
 	end
 
 		if targetPlayer then
@@ -31238,8 +31399,10 @@ RunService.Heartbeat:Connect(function()
 			local hum = char and char:FindFirstChildOfClass("Humanoid")
 
 			if hum and hum.Health <= 0 then
-				targetPlayer = nil
+				setTargetPlayer(nil)
 				humanoid:Move(Vector3.zero)
+				effectsEnabled = false
+				clearEffectPlayers()
 				return
 			end
 
@@ -31254,8 +31417,10 @@ RunService.Heartbeat:Connect(function()
 				end
 			else
 				-- Memory expired
-				targetPlayer = nil
+				setTargetPlayer(nil)
 				humanoid:Move(Vector3.zero)
+				effectsEnabled = false
+				clearEffectPlayers()
 			end
 		end
 		npc:SetAttribute("IsChasing", isChasing())
@@ -32126,14 +32291,34 @@ end
 				<ProtectedString name="Source"><![CDATA[local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local SoundService = game:GetService("SoundService")
+local RunService = game:GetService("RunService")
+local TweenService = game:GetService("TweenService")
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 local soundRemote = ReplicatedStorage:WaitForChild("FredbearJumpscareSound")
+local chaseRemote = ReplicatedStorage:WaitForChild("FredbearChaseEffect")
 local REVERB_ENABLED = true
 local currentSound = nil
 local JUMPSCARE_FLAG_NAME = "JumpscareCameraActive"
 local jumpscareActive = false
+local chaseEffectsActive = false
+local chaseTargeted = false
+local chaseSound = nil
+local chaseFredbear = nil
+local chaseUpdateConn = nil
+local chaseConfig = {
+	SoundId = "rbxassetid://110267433431704",
+	Volume = 1,
+	MinDistance = 12,
+	MaxDistance = 80,
+	FadeSeconds = 0.9,
+	VignetteTransparency = 0.35,
+	Saturation = -0.25,
+	Contrast = 0.1,
+	Brightness = -0.05,
+	BlurSize = 3,
+}
 
 local function setBodyViewOverride(active)
 	_G.BodyViewSuspend = active
@@ -32149,6 +32334,20 @@ local function setBodyViewOverride(active)
 	end
 	if flag:IsA("BoolValue") then
 		flag.Value = active
+	end
+end
+
+local function beginBodyViewCameraLock()
+	_G.BodyViewCameraLockCount = (_G.BodyViewCameraLockCount or 0) + 1
+	return true
+end
+
+local function endBodyViewCameraLock()
+	local current = _G.BodyViewCameraLockCount or 0
+	if current > 0 then
+		_G.BodyViewCameraLockCount = current - 1
+	else
+		_G.BodyViewCameraLockCount = 0
 	end
 end
 
@@ -32187,6 +32386,223 @@ local scares = {
 		swayBob = 0.1,
 	},
 }
+
+local function getPlayerRoot()
+	local char = player.Character
+	return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function getModelRoot(model)
+	if not model or not model:IsA("Model") then
+		return nil
+	end
+	return model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model:FindFirstChild("Torso") or model:FindFirstChild("Head")
+end
+
+local function applyChaseConfig(config)
+	if type(config) ~= "table" then
+		return
+	end
+	for key, value in pairs(config) do
+		if chaseConfig[key] ~= nil then
+			chaseConfig[key] = value
+		end
+	end
+end
+
+local function stopChaseUpdate()
+	if chaseUpdateConn then
+		chaseUpdateConn:Disconnect()
+		chaseUpdateConn = nil
+	end
+end
+
+local function updateChaseVolume()
+	if not chaseSound then
+		return
+	end
+	local playerRoot = getPlayerRoot()
+	local fredbearRoot = getModelRoot(chaseFredbear)
+	if not playerRoot or not fredbearRoot then
+		chaseSound.Volume = 0
+		return
+	end
+	local distance = (playerRoot.Position - fredbearRoot.Position).Magnitude
+	local minDistance = math.max(1, chaseConfig.MinDistance or 1)
+	local maxDistance = math.max(minDistance + 1, chaseConfig.MaxDistance or minDistance + 1)
+	local t = 1 - math.clamp((distance - minDistance) / (maxDistance - minDistance), 0, 1)
+	chaseSound.Volume = (chaseConfig.Volume or 1) * t
+end
+
+local function ensureChaseEffects()
+	local lighting = game:GetService("Lighting")
+	local color = lighting:FindFirstChild("FredbearChaseColor")
+	if not color then
+		color = Instance.new("ColorCorrectionEffect")
+		color.Name = "FredbearChaseColor"
+		color.Parent = lighting
+	end
+	local blur = lighting:FindFirstChild("FredbearChaseBlur")
+	if not blur then
+		blur = Instance.new("BlurEffect")
+		blur.Name = "FredbearChaseBlur"
+		blur.Parent = lighting
+	end
+	local vignetteGui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("FredbearChaseGui")
+	if not vignetteGui then
+		vignetteGui = Instance.new("ScreenGui")
+		vignetteGui.Name = "FredbearChaseGui"
+		vignetteGui.IgnoreGuiInset = true
+		vignetteGui.ResetOnSpawn = false
+		vignetteGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+		vignetteGui.Parent = player:WaitForChild("PlayerGui")
+		local vignette = Instance.new("Frame")
+		vignette.Name = "Vignette"
+		vignette.BackgroundColor3 = Color3.new(0, 0, 0)
+		vignette.BackgroundTransparency = 1
+		vignette.Size = UDim2.fromScale(1, 1)
+		vignette.Parent = vignetteGui
+	end
+	local vignette = vignetteGui:FindFirstChild("Vignette")
+	return color, blur, vignette
+end
+
+local function startChaseEffects(fredbear)
+	chaseFredbear = fredbear
+	chaseEffectsActive = true
+	local color, blur, vignette = ensureChaseEffects()
+	local fadeSeconds = chaseConfig.FadeSeconds or 0.9
+
+	color.Saturation = 0
+	color.Contrast = 0
+	color.Brightness = 0
+	blur.Size = 0
+	if vignette then
+		vignette.BackgroundTransparency = 1
+	end
+
+	TweenService:Create(color, TweenInfo.new(fadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Saturation = chaseConfig.Saturation or -0.25,
+		Contrast = chaseConfig.Contrast or 0.1,
+		Brightness = chaseConfig.Brightness or -0.05,
+	}):Play()
+	TweenService:Create(blur, TweenInfo.new(fadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+		Size = chaseConfig.BlurSize or 3,
+	}):Play()
+	if vignette then
+		TweenService:Create(vignette, TweenInfo.new(fadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = chaseConfig.VignetteTransparency or 0.35,
+		}):Play()
+	end
+
+	if chaseSound then
+		chaseSound:Stop()
+		chaseSound:Destroy()
+		chaseSound = nil
+	end
+	chaseSound = Instance.new("Sound")
+	chaseSound.Name = "FredbearChaseSound"
+	chaseSound.SoundId = chaseConfig.SoundId or "rbxassetid://110267433431704"
+	chaseSound.Looped = true
+	chaseSound.RollOffMode = Enum.RollOffMode.Linear
+	chaseSound.Parent = SoundService
+	chaseSound:Play()
+
+	stopChaseUpdate()
+	chaseUpdateConn = RunService.RenderStepped:Connect(updateChaseVolume)
+	updateChaseVolume()
+end
+
+local function stopChaseEffects()
+	if not chaseEffectsActive then
+		return
+	end
+	chaseEffectsActive = false
+	local lighting = game:GetService("Lighting")
+	local color = lighting:FindFirstChild("FredbearChaseColor")
+	local blur = lighting:FindFirstChild("FredbearChaseBlur")
+	local vignetteGui = player:FindFirstChild("PlayerGui") and player.PlayerGui:FindFirstChild("FredbearChaseGui")
+	local vignette = vignetteGui and vignetteGui:FindFirstChild("Vignette")
+	local fadeSeconds = chaseConfig.FadeSeconds or 0.9
+
+	if color then
+		TweenService:Create(color, TweenInfo.new(fadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Saturation = 0,
+			Contrast = 0,
+			Brightness = 0,
+		}):Play()
+	end
+	if blur then
+		TweenService:Create(blur, TweenInfo.new(fadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			Size = 0,
+		}):Play()
+	end
+	if vignette then
+		TweenService:Create(vignette, TweenInfo.new(fadeSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+			BackgroundTransparency = 1,
+		}):Play()
+	end
+
+	task.delay(fadeSeconds, function()
+		if color then
+			color:Destroy()
+		end
+		if blur then
+			blur:Destroy()
+		end
+		if vignetteGui then
+			vignetteGui:Destroy()
+		end
+	end)
+
+	if chaseSound then
+		chaseSound:Stop()
+		chaseSound:Destroy()
+		chaseSound = nil
+	end
+	stopChaseUpdate()
+end
+
+local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
+	if jumpscareActive then
+		return
+	end
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
+	local fredbearRoot = getModelRoot(fredbear)
+	if not fredbearRoot then
+		return
+	end
+	local lockActive = beginBodyViewCameraLock()
+	local originalType = camera.CameraType
+	camera.CameraType = Enum.CameraType.Scriptable
+
+	local startTime = os.clock()
+	local endPull = startTime + (pullSeconds or 1)
+	local endHold = endPull + (holdSeconds or 0.5)
+	local startCFrame = camera.CFrame
+	local function targetCFrame()
+		return CFrame.new(camera.CFrame.Position, fredbearRoot.Position)
+	end
+
+	local connection
+	connection = RunService.RenderStepped:Connect(function()
+		local now = os.clock()
+		if now >= endHold then
+			connection:Disconnect()
+			camera.CameraType = originalType
+			if lockActive then
+				endBodyViewCameraLock()
+			end
+			return
+		end
+		local alpha = math.clamp((now - startTime) / math.max(pullSeconds or 1, 0.01), 0, 1)
+		local target = targetCFrame()
+		camera.CFrame = startCFrame:Lerp(target, alpha)
+	end)
+end
 
 local function applyReverb(sound)
 	if not REVERB_ENABLED then
@@ -32378,10 +32794,43 @@ soundRemote.OnClientEvent:Connect(function(target)
 	playSound("rbxassetid://2182262070", targetRoot, false)
 end)
 
+chaseRemote.OnClientEvent:Connect(function(action, fredbear, pullSeconds, holdSeconds, config)
+	if action == "EffectOn" then
+		applyChaseConfig(config)
+		startChaseEffects(fredbear)
+		return
+	end
+	if action == "EffectOff" then
+		if chaseTargeted then
+			return
+		end
+		stopChaseEffects()
+		return
+	end
+	if action == "TargetOn" then
+		chaseTargeted = true
+		return
+	end
+	if action == "TargetOff" then
+		chaseTargeted = false
+		if not chaseEffectsActive then
+			stopChaseEffects()
+		end
+		return
+	end
+	if action == "Spotting" then
+		applyChaseConfig(config)
+		startChaseEffects(fredbear)
+		runSpottingPull(fredbear, pullSeconds, holdSeconds)
+	end
+end)
+
 player.CharacterRemoving:Connect(function()
 	if jumpscareActive then
 		return
 	end
+	chaseTargeted = false
+	stopChaseEffects()
 	local camera = workspace.CurrentCamera
 	if camera then
 		camera.CameraType = Enum.CameraType.Custom
