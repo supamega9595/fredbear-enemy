@@ -31864,13 +31864,16 @@ do
 		end
 	end)
 
-	for _, part in ipairs(npc:GetDescendants()) do
-		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
-			part.CanTouch = true
-			part.Touched:Connect(function(hit)
-				if not isPlayer(hit) then
-					return
-				end
+		for _, part in ipairs(npc:GetDescendants()) do
+			if part:IsA("BasePart") then
+				part.CanTouch = true
+				part.Touched:Connect(function(hit)
+					if hit:IsDescendantOf(npc) then
+						return
+					end
+					if not isPlayer(hit) then
+						return
+					end
 
 				local char = hit:FindFirstAncestorOfClass("Model")
 				local hum = char:FindFirstChild("Humanoid")
