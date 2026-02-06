@@ -31728,6 +31728,16 @@ do
 		return remote
 	end
 
+	local function ensureSoundRemote()
+		local remote = ReplicatedStorage:FindFirstChild("FredbearJumpscareSound")
+		if not remote then
+			remote = Instance.new("RemoteEvent")
+			remote.Name = "FredbearJumpscareSound"
+			remote.Parent = ReplicatedStorage
+		end
+		return remote
+	end
+
 	local function getClientTemplate()
 		local template = npc:FindFirstChild(CLIENT_SCRIPT_NAME, true)
 		if not template or not template:IsA("LocalScript") then
@@ -31793,31 +31803,7 @@ do
 	end
 
 		local remote = ensureRemote()
-		local function playGlobalJumpscareSound()
-			local soundParent = npc:FindFirstChild("Head") or npc:FindFirstChild("HumanoidRootPart") or npc
-			if not soundParent then
-				return
-			end
-			local sound = Instance.new("Sound")
-			sound.Name = "FredbearJumpscareSound"
-			sound.SoundId = "rbxassetid://2182262070"
-			sound.Volume = 1
-			sound.RollOffMode = Enum.RollOffMode.Inverse
-			sound.EmitterSize = 8
-			sound.RollOffMaxDistance = 2000
-			local reverb = Instance.new("ReverbSoundEffect")
-			reverb.DecayTime = 2.4
-			reverb.Density = 0.75
-			reverb.Diffusion = 0.9
-			reverb.WetLevel = -6
-			reverb.DryLevel = 0
-			reverb.Parent = sound
-			sound.Parent = soundParent
-			sound:Play()
-			sound.Ended:Connect(function()
-				sound:Destroy()
-			end)
-		end
+		local soundRemote = ensureSoundRemote()
 		ensureClientScript()
 	Players.PlayerAdded:Connect(function(player)
 		local template = getClientTemplate()
@@ -31843,7 +31829,11 @@ do
 
 				local chosen = getWeightedRandomConfig()
 				remote:FireClient(player, chosen.name, npc)
-				playGlobalJumpscareSound()
+				for _, other in ipairs(Players:GetPlayers()) do
+					if other ~= player then
+						soundRemote:FireClient(other, npc)
+					end
+				end
 				if hum.Health > 0 then
 					local targetHum = hum
 					task.delay(0.2, function()
@@ -32078,6 +32068,8 @@ local SoundService = game:GetService("SoundService")
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
+local soundRemote = ReplicatedStorage:WaitForChild("FredbearJumpscareSound")
+local REVERB_ENABLED = true
 
 local scares = {
 	HardLockLunge = {
@@ -32115,16 +32107,10 @@ local scares = {
 	},
 }
 
-local function playSound(soundId, soundParent)
-	if not soundId or soundId == "" then
+local function applyReverb(sound)
+	if not REVERB_ENABLED then
 		return
 	end
-	local sound = Instance.new("Sound")
-	sound.SoundId = soundId
-	sound.Volume = 1
-	sound.RollOffMode = Enum.RollOffMode.Inverse
-	sound.EmitterSize = 8
-	sound.RollOffMaxDistance = 2000
 	local reverb = Instance.new("ReverbSoundEffect")
 	reverb.DecayTime = 2.4
 	reverb.Density = 0.75
@@ -32132,7 +32118,24 @@ local function playSound(soundId, soundParent)
 	reverb.WetLevel = -6
 	reverb.DryLevel = 0
 	reverb.Parent = sound
-	sound.Parent = soundParent or SoundService
+end
+
+local function playSound(soundId, soundParent, nonDirectional)
+	if not soundId or soundId == "" then
+		return
+	end
+	local sound = Instance.new("Sound")
+	sound.SoundId = soundId
+	sound.Volume = 1
+	if nonDirectional then
+		sound.Parent = SoundService
+	else
+		sound.RollOffMode = Enum.RollOffMode.Inverse
+		sound.EmitterSize = 8
+		sound.RollOffMaxDistance = 2000
+		sound.Parent = soundParent or SoundService
+	end
+	applyReverb(sound)
 	sound:Play()
 	sound.Ended:Connect(function()
 		sound:Destroy()
@@ -32182,7 +32185,7 @@ local function playCameraJumpscare(config, target)
 	local originalCFrame = camera.CFrame
 
 	camera.CameraType = Enum.CameraType.Scriptable
-	playSound(config.soundId, root)
+	playSound(config.soundId, root, true)
 
 	local startTime = os.clock()
 	local duration = config.duration or 0.6
@@ -32263,6 +32266,14 @@ local function runJumpscare(name, target)
 end
 
 remote.OnClientEvent:Connect(runJumpscare)
+
+soundRemote.OnClientEvent:Connect(function(target)
+	local targetRoot = getRoot(target)
+	if not targetRoot then
+		return
+	end
+	playSound("rbxassetid://2182262070", targetRoot, false)
+end)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
 				<Content name="LinkedSource"><null></null></Content>
