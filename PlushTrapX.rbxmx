@@ -31065,6 +31065,20 @@ ensureAttribute("ChaseEffectSaturation", -0.25)
 ensureAttribute("ChaseEffectContrast", 0.1)
 ensureAttribute("ChaseEffectBrightness", -0.05)
 ensureAttribute("ChaseEffectBlurSize", 3)
+ensureAttribute("SpottingSoundId", "rbxassetid://134012502674306")
+ensureAttribute("SpottingSoundVolume", 1)
+ensureAttribute("SpottingSoundMinDistance", 12)
+ensureAttribute("SpottingSoundMaxDistance", 80)
+ensureAttribute("SpottingSoundCutoff", false)
+ensureAttribute("SpottingShakeMin", 0.02)
+ensureAttribute("SpottingShakeMax", 0.18)
+ensureAttribute("SpottingShakeDistanceMin", 12)
+ensureAttribute("SpottingShakeDistanceMax", 80)
+ensureAttribute("SpottingShakeSensitivity", 1.4)
+ensureAttribute("SpottingShakeFrequency", 18)
+ensureAttribute("SpottingFovStart", 90)
+ensureAttribute("SpottingFovEnd", 65)
+ensureAttribute("SpottingFovSnapSeconds", 0.2)
 
 local remote = ensureRemote()
 local chaseEffectRemote = ensureChaseEffectRemote()
@@ -31267,6 +31281,20 @@ local function getEffectConfig()
 		Contrast = npc:GetAttribute("ChaseEffectContrast"),
 		Brightness = npc:GetAttribute("ChaseEffectBrightness"),
 		BlurSize = npc:GetAttribute("ChaseEffectBlurSize"),
+		SpottingSoundId = npc:GetAttribute("SpottingSoundId"),
+		SpottingSoundVolume = npc:GetAttribute("SpottingSoundVolume"),
+		SpottingSoundMinDistance = npc:GetAttribute("SpottingSoundMinDistance"),
+		SpottingSoundMaxDistance = npc:GetAttribute("SpottingSoundMaxDistance"),
+		SpottingSoundCutoff = npc:GetAttribute("SpottingSoundCutoff"),
+		SpottingShakeMin = npc:GetAttribute("SpottingShakeMin"),
+		SpottingShakeMax = npc:GetAttribute("SpottingShakeMax"),
+		SpottingShakeDistanceMin = npc:GetAttribute("SpottingShakeDistanceMin"),
+		SpottingShakeDistanceMax = npc:GetAttribute("SpottingShakeDistanceMax"),
+		SpottingShakeSensitivity = npc:GetAttribute("SpottingShakeSensitivity"),
+		SpottingShakeFrequency = npc:GetAttribute("SpottingShakeFrequency"),
+		SpottingFovStart = npc:GetAttribute("SpottingFovStart"),
+		SpottingFovEnd = npc:GetAttribute("SpottingFovEnd"),
+		SpottingFovSnapSeconds = npc:GetAttribute("SpottingFovSnapSeconds"),
 	}
 end
 
@@ -32318,6 +32346,20 @@ local chaseConfig = {
 	Contrast = 0.1,
 	Brightness = -0.05,
 	BlurSize = 3,
+	SpottingSoundId = "rbxassetid://134012502674306",
+	SpottingSoundVolume = 1,
+	SpottingSoundMinDistance = 12,
+	SpottingSoundMaxDistance = 80,
+	SpottingSoundCutoff = false,
+	SpottingShakeMin = 0.02,
+	SpottingShakeMax = 0.18,
+	SpottingShakeDistanceMin = 12,
+	SpottingShakeDistanceMax = 80,
+	SpottingShakeSensitivity = 1.4,
+	SpottingShakeFrequency = 18,
+	SpottingFovStart = 90,
+	SpottingFovEnd = 65,
+	SpottingFovSnapSeconds = 0.2,
 }
 
 local function setBodyViewOverride(active)
@@ -32390,6 +32432,11 @@ local scares = {
 local function getPlayerRoot()
 	local char = player.Character
 	return char and char:FindFirstChild("HumanoidRootPart")
+end
+
+local function getPlayerHead()
+	local char = player.Character
+	return char and (char:FindFirstChild("Head") or char:FindFirstChild("HumanoidRootPart"))
 end
 
 local function getModelRoot(model)
@@ -32577,14 +32624,35 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 	end
 	local lockActive = beginBodyViewCameraLock()
 	local originalType = camera.CameraType
+	local originalFov = camera.FieldOfView
 	camera.CameraType = Enum.CameraType.Scriptable
 
 	local startTime = os.clock()
 	local endPull = startTime + (pullSeconds or 1)
 	local endHold = endPull + (holdSeconds or 0.5)
-	local startCFrame = camera.CFrame
-	local function targetCFrame()
-		return CFrame.new(camera.CFrame.Position, fredbearRoot.Position)
+	local totalDuration = math.max((pullSeconds or 1) + (holdSeconds or 0.5), 0.01)
+	local fovStart = chaseConfig.SpottingFovStart or originalFov
+	local fovEnd = chaseConfig.SpottingFovEnd or originalFov
+	local fovSnapSeconds = chaseConfig.SpottingFovSnapSeconds or 0.2
+	local shakeMin = chaseConfig.SpottingShakeMin or 0
+	local shakeMax = chaseConfig.SpottingShakeMax or shakeMin
+	local shakeMinDist = math.max(1, chaseConfig.SpottingShakeDistanceMin or 1)
+	local shakeMaxDist = math.max(shakeMinDist + 1, chaseConfig.SpottingShakeDistanceMax or shakeMinDist + 1)
+	local shakeSensitivity = chaseConfig.SpottingShakeSensitivity or 1
+	local shakeFrequency = chaseConfig.SpottingShakeFrequency or 18
+	local spottingSound = nil
+
+	local soundId = chaseConfig.SpottingSoundId
+	if soundId and soundId ~= "" then
+		spottingSound = Instance.new("Sound")
+		spottingSound.Name = "FredbearSpottingSound"
+		spottingSound.SoundId = soundId
+		spottingSound.Volume = chaseConfig.SpottingSoundVolume or 1
+		spottingSound.RollOffMode = Enum.RollOffMode.Inverse
+		spottingSound.RollOffMinDistance = chaseConfig.SpottingSoundMinDistance or 12
+		spottingSound.RollOffMaxDistance = chaseConfig.SpottingSoundMaxDistance or 80
+		spottingSound.Parent = fredbearRoot
+		spottingSound:Play()
 	end
 
 	local connection
@@ -32593,14 +32661,42 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 		if now >= endHold then
 			connection:Disconnect()
 			camera.CameraType = originalType
+			TweenService:Create(camera, TweenInfo.new(fovSnapSeconds, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
+				FieldOfView = originalFov,
+			}):Play()
 			if lockActive then
 				endBodyViewCameraLock()
 			end
+			if spottingSound then
+				if chaseConfig.SpottingSoundCutoff then
+					spottingSound:Stop()
+				end
+				spottingSound:Destroy()
+			end
 			return
 		end
+		local head = getPlayerHead()
+		local root = getPlayerRoot()
+		if not head or not root then
+			return
+		end
+		local fredbearPosition = fredbearRoot.Position
+		local playerPosition = head.Position
+
+		local yawTarget = Vector3.new(fredbearPosition.X, root.Position.Y, fredbearPosition.Z)
+		root.CFrame = CFrame.new(root.Position, yawTarget)
+
+		local distance = (root.Position - fredbearPosition).Magnitude
+		local distanceT = 1 - math.clamp((distance - shakeMinDist) / (shakeMaxDist - shakeMinDist), 0, 1)
+		local intensity = shakeMin + (shakeMax - shakeMin) * math.pow(distanceT, shakeSensitivity)
+		local phase = now * shakeFrequency
+		local shakeOffset = Vector3.new(math.sin(phase), math.cos(phase * 1.3), 0) * intensity
+
 		local alpha = math.clamp((now - startTime) / math.max(pullSeconds or 1, 0.01), 0, 1)
-		local target = targetCFrame()
-		camera.CFrame = startCFrame:Lerp(target, alpha)
+		local targetCFrame = CFrame.new(playerPosition + shakeOffset, fredbearPosition)
+		camera.CFrame = targetCFrame
+		local fovAlpha = math.clamp((now - startTime) / totalDuration, 0, 1)
+		camera.FieldOfView = fovStart + (fovEnd - fovStart) * fovAlpha
 	end)
 end
 
