@@ -31891,12 +31891,7 @@ do
 						end
 					end
 					if hum.Health > 0 then
-						local targetHum = hum
-						task.delay(0.2, function()
-							if targetHum and targetHum.Health > 0 then
-								targetHum.Health = 0
-							end
-						end)
+						hum.Health = 0
 					end
 					task.delay(1, function()
 						activeJumpscares[hum] = nil
@@ -53156,6 +53151,10 @@ local function isExternalCameraOverride()
 	if _G.BodyViewSuspend then
 		return true
 	end
+	local lockCount = _G.BodyViewCameraLockCount or 0
+	if lockCount > 0 then
+		return true
+	end
 	if cam and cam:GetAttribute("BodyViewSuspend") then
 		return true
 	end
@@ -53342,7 +53341,9 @@ local function bindCharacter(char)
 	diedConn = humanoid.Died:Connect(function()
 		isDead = true
 		running = false
-		resetToDefaultCamera()
+		if not isExternalCameraOverride() then
+			resetToDefaultCamera()
+		end
 	end)
 end
 
