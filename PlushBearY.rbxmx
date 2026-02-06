@@ -4226,6 +4226,24 @@ local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 local soundRemote = ReplicatedStorage:WaitForChild("FredbearJumpscareSound")
 local REVERB_ENABLED = true
 local currentSound = nil
+local JUMPSCARE_FLAG_NAME = "JumpscareCameraActive"
+
+local function setBodyViewOverride(active)
+	_G.BodyViewSuspend = active
+	local camera = workspace.CurrentCamera
+	if camera then
+		camera:SetAttribute("BodyViewSuspend", active)
+	end
+	local flag = ReplicatedStorage:FindFirstChild(JUMPSCARE_FLAG_NAME)
+	if not flag then
+		flag = Instance.new("BoolValue")
+		flag.Name = JUMPSCARE_FLAG_NAME
+		flag.Parent = ReplicatedStorage
+	end
+	if flag:IsA("BoolValue") then
+		flag.Value = active
+	end
+end
 
 local scares = {
 	HardLockLunge = {
@@ -4357,8 +4375,10 @@ local function playCameraJumpscare(config, target)
 		restored = true
 		camera.CameraType = originalType
 		camera.CFrame = originalCFrame
+		setBodyViewOverride(false)
 	end
 
+	setBodyViewOverride(true)
 	camera.CameraType = Enum.CameraType.Scriptable
 	playSound(config.soundId, root, true)
 
@@ -4454,6 +4474,7 @@ player.CharacterRemoving:Connect(function()
 	if camera then
 		camera.CameraType = Enum.CameraType.Custom
 	end
+	setBodyViewOverride(false)
 	if currentSound then
 		currentSound:Stop()
 		currentSound:Destroy()
@@ -26182,6 +26203,7 @@ char.Humanoid.Died:connect(RagdollV3)]]></ProtectedString>
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local UIS = game:GetService("UserInputService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
 
 local player = Players.LocalPlayer
 repeat task.wait() until player and player.Character
@@ -26242,6 +26264,17 @@ local function clamp(v, minv, maxv)
 	if v < minv then return minv end
 	if v > maxv then return maxv end
 	return v
+end
+
+local function isExternalCameraOverride()
+	if _G.BodyViewSuspend then
+		return true
+	end
+	if cam and cam:GetAttribute("BodyViewSuspend") then
+		return true
+	end
+	local flag = ReplicatedStorage:FindFirstChild("JumpscareCameraActive")
+	return flag and flag:IsA("BoolValue") and flag.Value or false
 end
 
 local HEAD_ATTACHMENT_NAMES = {
@@ -26514,6 +26547,10 @@ RunService.RenderStepped:Connect(function()
 
 	-- Always keep head + head accessories hidden
 	hardHideHeadStuff()
+
+	if isExternalCameraOverride() then
+		return
+	end
 
 	-- Smooth angles even if menu open (keeps camera stable; doesn’t jump)
 	AngleX = AngleX + (TargetAngleX - AngleX) * 0.35
