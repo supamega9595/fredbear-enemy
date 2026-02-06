@@ -863,7 +863,7 @@ while Character.Parent ~= nil do
 end
 
 ]]></ProtectedString>
-				<bool name="Disabled">false</bool>
+								<bool name="Disabled">true</bool>
 				<Content name="LinkedSource"><null></null></Content>
 				<token name="RunContext">0</token>
 				<string name="ScriptGuid">{F78F141B-381A-4EAA-9FBB-ECF8F71833F8}</string>
@@ -32065,34 +32065,36 @@ local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 local scares = {
 	HardLockLunge = {
 		soundId = "rbxassetid://6982454389",
-		duration = 0.6,
-		distance = 2.2,
-		shakePower = 0.35,
-		shakeFrequency = 22,
-		pullInSpeed = 12,
-		mode = "closeShake",
+		duration = 0.75,
+		distance = 2.1,
+		shakePower = 0.05,
+		shakeFrequency = 10,
+		pullInSpeed = 10,
+		mode = "terrorLock",
+		swayAngle = 1.2,
+		swayBob = 0.08,
 	},
 	SnapZoom = {
 		soundId = "rbxassetid://6982454389",
-		duration = 0.45,
-		distance = 2.4,
-		shakePower = 0.45,
-		shakeFrequency = 28,
-		pullInSpeed = 22,
-		mode = "flashSwap",
-		swapInterval = 0.08,
-		bodyDistance = 4,
+		duration = 0.7,
+		distance = 2.2,
+		shakePower = 0.05,
+		shakeFrequency = 10,
+		pullInSpeed = 10,
+		mode = "terrorLock",
+		swayAngle = 1.1,
+		swayBob = 0.06,
 	},
 	GlitchLock = {
 		soundId = "rbxassetid://6982454389",
-		duration = 0.5,
-		distance = 1.8,
-		shakePower = 0.4,
-		shakeFrequency = 30,
-		pullInSpeed = 16,
-		glitchFrames = 3,
-		mode = "glitchSnap",
-		snapIntensity = 0.4,
+		duration = 0.8,
+		distance = 1.9,
+		shakePower = 0.04,
+		shakeFrequency = 9,
+		pullInSpeed = 9,
+		mode = "terrorLock",
+		swayAngle = 1.4,
+		swayBob = 0.1,
 	},
 }
 
@@ -32169,9 +32171,16 @@ local function playCameraJumpscare(config, target)
 	while os.clock() - startTime < duration do
 		local elapsed = os.clock() - startTime
 		local progress = math.clamp(elapsed * pullInSpeed / duration, 0, 1)
-		local currentDistance = distance * (1 - progress * 0.6)
+		local eased = 1 - math.pow(1 - progress, 3)
+		local currentDistance = distance * (1 - eased * 0.6)
 		local baseCFrame
-		if config.mode == "flashSwap" then
+		if config.mode == "terrorLock" then
+			local swayAngle = config.swayAngle or 1
+			local swayBob = config.swayBob or 0.06
+			local roll = math.rad(math.sin(elapsed * 7) * swayAngle)
+			local bob = math.sin(elapsed * 9) * swayBob
+			baseCFrame = getLookCFrame(head, currentDistance, tiltDegrees) * CFrame.Angles(0, 0, roll) * CFrame.new(0, bob, 0)
+		elseif config.mode == "flashSwap" then
 			local swap = math.floor(elapsed / (config.swapInterval or 0.1)) % 2 == 0
 			local targetPart = swap and head or root
 			local targetDistance = swap and currentDistance or (config.bodyDistance or currentDistance + 2)
@@ -32193,7 +32202,7 @@ local function playCameraJumpscare(config, target)
 		end
 
 		local shake = Vector3.zero
-		if shakePower > 0 then
+		if config.mode ~= "terrorLock" and shakePower > 0 then
 			local shakeTime = elapsed * shakeFrequency
 			if shakeTime - math.floor(shakeTime) < 0.5 then
 				shake = getShakeOffset(shakePower)
@@ -54952,7 +54961,7 @@ end]]></ProtectedString>
 	end
 end
 ]]></ProtectedString>
-								<bool name="Disabled">false</bool>
+								<bool name="Disabled">true</bool>
 								<Content name="LinkedSource"><null></null></Content>
 								<token name="RunContext">0</token>
 								<string name="ScriptGuid">{21342DC5-0D9D-4E45-A396-A3D812C45446}</string>
@@ -56157,6 +56166,7 @@ local TweenService = game:GetService("TweenService")
 local tool = script.Parent.Parent.Parent.Parent
 local display = script.Parent
 local light = tool:FindFirstChild("Light")
+local handle = tool:FindFirstChild("Handle")
 local fredbear = workspace:FindFirstChild("Fast Fredbear")
 
 local themes = {
@@ -56165,6 +56175,21 @@ local themes = {
 	{ label = "DANGEROUS", min = 11, max = 15, color = Color3.fromRGB(255, 140, 90), glow = Color3.fromRGB(190, 70, 30), pulse = 0.9 },
 	{ label = "LETHAL", min = 16, max = 20, color = Color3.fromRGB(255, 64, 64), glow = Color3.fromRGB(160, 10, 10), pulse = 0.7 },
 }
+
+local function ensurePingSound()
+	if not handle then
+		return nil
+	end
+	local sound = handle:FindFirstChild("AILevelPing")
+	if not sound then
+		sound = Instance.new("Sound")
+		sound.Name = "AILevelPing"
+		sound.SoundId = "rbxassetid://9023991019"
+		sound.Volume = 0.8
+		sound.Parent = handle
+	end
+	return sound
+end
 
 local function getTheme(level)
 	for _, theme in ipairs(themes) do
@@ -56193,6 +56218,9 @@ local function applyTheme(theme, level)
 	}):Play()
 end
 
+local lastLevel = nil
+local ping = ensurePingSound()
+
 local function update()
 	if not fredbear then
 		fredbear = workspace:FindFirstChild("Fast Fredbear")
@@ -56201,13 +56229,17 @@ local function update()
 	level = math.clamp(tonumber(level) or 1, 1, 20)
 	local theme = getTheme(level)
 	applyTheme(theme, level)
+	if lastLevel and level ~= lastLevel and ping then
+		ping:Play()
+	end
+	lastLevel = level
 end
 
 while true do
 	update()
 	wait(0.5)
 end]]></ProtectedString>
-							<bool name="Disabled">false</bool>
+							<bool name="Disabled">true</bool>
 							<Content name="LinkedSource"><null></null></Content>
 							<token name="RunContext">0</token>
 							<string name="ScriptGuid">{9C6FA306-396D-490C-B0C7-44F1918A75A6}</string>
@@ -56217,8 +56249,8 @@ end]]></ProtectedString>
 							<string name="Name">Main</string>
 							<int64 name="SourceAssetId">-1</int64>
 							<BinaryString name="Tags"></BinaryString>
-						</Properties>
-						<Item class="Script" referent="RBXCE77D34E821941F5A78491A8EFB133E5">
+							</Properties>
+							<Item class="Script" referent="RBXCE77D34E821941F5A78491A8EFB133E5">
 							<Properties>
 								<ProtectedString name="Source"><![CDATA[while true do
 	wait(0.01)
@@ -56230,7 +56262,7 @@ end]]></ProtectedString>
 	end
 end
 ]]></ProtectedString>
-								<bool name="Disabled">false</bool>
+								<bool name="Disabled">true</bool>
 								<Content name="LinkedSource"><null></null></Content>
 								<token name="RunContext">0</token>
 								<string name="ScriptGuid">{21342DC5-0D9D-4E45-A396-A3D812C45446}</string>
