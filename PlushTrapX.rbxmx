@@ -32126,6 +32126,7 @@ local soundRemote = ReplicatedStorage:WaitForChild("FredbearJumpscareSound")
 local REVERB_ENABLED = true
 local currentSound = nil
 local JUMPSCARE_FLAG_NAME = "JumpscareCameraActive"
+local jumpscareActive = false
 
 local function setBodyViewOverride(active)
 	_G.BodyViewSuspend = active
@@ -32275,8 +32276,10 @@ local function playCameraJumpscare(config, target)
 		camera.CameraType = originalType
 		camera.CFrame = originalCFrame
 		setBodyViewOverride(false)
+		jumpscareActive = false
 	end
 
+	jumpscareActive = true
 	setBodyViewOverride(true)
 	camera.CameraType = Enum.CameraType.Scriptable
 	playSound(config.soundId, root, true)
@@ -32369,6 +32372,9 @@ soundRemote.OnClientEvent:Connect(function(target)
 end)
 
 player.CharacterRemoving:Connect(function()
+	if jumpscareActive then
+		return
+	end
 	local camera = workspace.CurrentCamera
 	if camera then
 		camera.CameraType = Enum.CameraType.Custom
