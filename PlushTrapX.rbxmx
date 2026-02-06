@@ -31069,6 +31069,8 @@ ensureAttribute("SpottingSoundId", "rbxassetid://134012502674306")
 ensureAttribute("SpottingSoundVolume", 1)
 ensureAttribute("SpottingSoundMinDistance", 12)
 ensureAttribute("SpottingSoundMaxDistance", 80)
+ensureAttribute("SpottingSoundGlobalMinDistance", 60)
+ensureAttribute("SpottingSoundGlobalMaxDistance", 600)
 ensureAttribute("SpottingSoundCutoff", false)
 ensureAttribute("SpottingShakeMin", 0.02)
 ensureAttribute("SpottingShakeMax", 0.18)
@@ -31285,6 +31287,8 @@ local function getEffectConfig()
 		SpottingSoundVolume = npc:GetAttribute("SpottingSoundVolume"),
 		SpottingSoundMinDistance = npc:GetAttribute("SpottingSoundMinDistance"),
 		SpottingSoundMaxDistance = npc:GetAttribute("SpottingSoundMaxDistance"),
+		SpottingSoundGlobalMinDistance = npc:GetAttribute("SpottingSoundGlobalMinDistance"),
+		SpottingSoundGlobalMaxDistance = npc:GetAttribute("SpottingSoundGlobalMaxDistance"),
 		SpottingSoundCutoff = npc:GetAttribute("SpottingSoundCutoff"),
 		SpottingShakeMin = npc:GetAttribute("SpottingShakeMin"),
 		SpottingShakeMax = npc:GetAttribute("SpottingShakeMax"),
@@ -31352,6 +31356,7 @@ local function beginSpotting(player)
 	local freezeSeconds = getNumberAttribute("SpottingFreezeSeconds", 1.5, 0)
 	local pullSeconds = getNumberAttribute("SpottingPullSeconds", 1, 0)
 	local holdSeconds = getNumberAttribute("SpottingHoldSeconds", 0.5, 0)
+	local totalSeconds = pullSeconds + holdSeconds
 	spottingActive = true
 	spottingEndsAt = tick() + freezeSeconds
 	effectsEnabled = true
@@ -31361,6 +31366,9 @@ local function beginSpotting(player)
 	local playersToNotify = getEffectPlayers(player)
 	for target in pairs(playersToNotify) do
 		chaseEffectRemote:FireClient(target, "Spotting", npc, pullSeconds, holdSeconds, effectConfig)
+	end
+	for _, other in ipairs(Players:GetPlayers()) do
+		chaseEffectRemote:FireClient(other, "SpottingAudio", npc, totalSeconds, effectConfig)
 	end
 	effectPlayers = playersToNotify
 end
@@ -32350,6 +32358,8 @@ local chaseConfig = {
 	SpottingSoundVolume = 1,
 	SpottingSoundMinDistance = 12,
 	SpottingSoundMaxDistance = 80,
+	SpottingSoundGlobalMinDistance = 60,
+	SpottingSoundGlobalMaxDistance = 600,
 	SpottingSoundCutoff = false,
 	SpottingShakeMin = 0.02,
 	SpottingShakeMax = 0.18,
@@ -32610,6 +32620,44 @@ local function stopChaseEffects()
 	stopChaseUpdate()
 end
 
+local function playSpottingAudio(fredbear, durationSeconds)
+	local fredbearRoot = getModelRoot(fredbear)
+	if not fredbearRoot then
+		return
+	end
+	local soundId = chaseConfig.SpottingSoundId
+	if not soundId or soundId == "" then
+		return
+	end
+	local sound = Instance.new("Sound")
+	sound.Name = "FredbearSpottingSound"
+	sound.SoundId = soundId
+	sound.Volume = chaseConfig.SpottingSoundVolume or 1
+	sound.RollOffMode = Enum.RollOffMode.Linear
+	sound.RollOffMinDistance = chaseConfig.SpottingSoundGlobalMinDistance or 60
+	sound.RollOffMaxDistance = chaseConfig.SpottingSoundGlobalMaxDistance or 600
+	sound.Parent = fredbearRoot
+	sound:Play()
+
+	local cleanup = function()
+		if sound then
+			sound:Destroy()
+			sound = nil
+		end
+	end
+
+	if chaseConfig.SpottingSoundCutoff and durationSeconds then
+		task.delay(durationSeconds, function()
+			if sound then
+				sound:Stop()
+				cleanup()
+			end
+		end)
+	end
+
+	sound.Ended:Connect(cleanup)
+end
+
 local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 	if jumpscareActive then
 		return
@@ -32640,20 +32688,6 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 	local shakeMaxDist = math.max(shakeMinDist + 1, chaseConfig.SpottingShakeDistanceMax or shakeMinDist + 1)
 	local shakeSensitivity = chaseConfig.SpottingShakeSensitivity or 1
 	local shakeFrequency = chaseConfig.SpottingShakeFrequency or 18
-	local spottingSound = nil
-
-	local soundId = chaseConfig.SpottingSoundId
-	if soundId and soundId ~= "" then
-		spottingSound = Instance.new("Sound")
-		spottingSound.Name = "FredbearSpottingSound"
-		spottingSound.SoundId = soundId
-		spottingSound.Volume = chaseConfig.SpottingSoundVolume or 1
-		spottingSound.RollOffMode = Enum.RollOffMode.Inverse
-		spottingSound.RollOffMinDistance = chaseConfig.SpottingSoundMinDistance or 12
-		spottingSound.RollOffMaxDistance = chaseConfig.SpottingSoundMaxDistance or 80
-		spottingSound.Parent = fredbearRoot
-		spottingSound:Play()
-	end
 
 	local connection
 	connection = RunService.RenderStepped:Connect(function()
@@ -32666,12 +32700,6 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 			}):Play()
 			if lockActive then
 				endBodyViewCameraLock()
-			end
-			if spottingSound then
-				if chaseConfig.SpottingSoundCutoff then
-					spottingSound:Stop()
-				end
-				spottingSound:Destroy()
 			end
 			return
 		end
@@ -32692,7 +32720,6 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 		local phase = now * shakeFrequency
 		local shakeOffset = Vector3.new(math.sin(phase), math.cos(phase * 1.3), 0) * intensity
 
-		local alpha = math.clamp((now - startTime) / math.max(pullSeconds or 1, 0.01), 0, 1)
 		local targetCFrame = CFrame.new(playerPosition + shakeOffset, fredbearPosition)
 		camera.CFrame = targetCFrame
 		local fovAlpha = math.clamp((now - startTime) / totalDuration, 0, 1)
@@ -32918,6 +32945,11 @@ chaseRemote.OnClientEvent:Connect(function(action, fredbear, pullSeconds, holdSe
 		applyChaseConfig(config)
 		startChaseEffects(fredbear)
 		runSpottingPull(fredbear, pullSeconds, holdSeconds)
+		return
+	end
+	if action == "SpottingAudio" then
+		applyChaseConfig(config)
+		playSpottingAudio(fredbear, pullSeconds)
 	end
 end)
 
