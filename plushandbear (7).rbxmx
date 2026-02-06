@@ -31792,8 +31792,33 @@ do
 		return hum and plr
 	end
 
-	local remote = ensureRemote()
-	ensureClientScript()
+		local remote = ensureRemote()
+		local function playGlobalJumpscareSound()
+			local soundParent = npc:FindFirstChild("Head") or npc:FindFirstChild("HumanoidRootPart") or npc
+			if not soundParent then
+				return
+			end
+			local sound = Instance.new("Sound")
+			sound.Name = "FredbearJumpscareSound"
+			sound.SoundId = "rbxassetid://2182262070"
+			sound.Volume = 1
+			sound.RollOffMode = Enum.RollOffMode.Inverse
+			sound.EmitterSize = 8
+			sound.RollOffMaxDistance = 2000
+			local reverb = Instance.new("ReverbSoundEffect")
+			reverb.DecayTime = 2.4
+			reverb.Density = 0.75
+			reverb.Diffusion = 0.9
+			reverb.WetLevel = -6
+			reverb.DryLevel = 0
+			reverb.Parent = sound
+			sound.Parent = soundParent
+			sound:Play()
+			sound.Ended:Connect(function()
+				sound:Destroy()
+			end)
+		end
+		ensureClientScript()
 	Players.PlayerAdded:Connect(function(player)
 		local template = getClientTemplate()
 		if template then
@@ -31816,11 +31841,12 @@ do
 					return
 				end
 
+				local chosen = getWeightedRandomConfig()
+				remote:FireClient(player, chosen.name, npc)
+				playGlobalJumpscareSound()
 				if hum.Health > 0 then
-					local chosen = getWeightedRandomConfig()
-					remote:FireClient(player, chosen.name, npc)
 					local targetHum = hum
-					task.delay(0.1, function()
+					task.delay(0.2, function()
 						if targetHum and targetHum.Health > 0 then
 							targetHum.Health = 0
 						end
@@ -32055,9 +32081,9 @@ local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 
 local scares = {
 	HardLockLunge = {
-		soundId = "rbxassetid://6982454389",
+		soundId = "rbxassetid://2182262070",
 		duration = 0.75,
-		distance = 2.1,
+		distance = 2.8,
 		shakePower = 0.05,
 		shakeFrequency = 10,
 		pullInSpeed = 10,
@@ -32066,9 +32092,9 @@ local scares = {
 		swayBob = 0.08,
 	},
 	SnapZoom = {
-		soundId = "rbxassetid://6982454389",
+		soundId = "rbxassetid://2182262070",
 		duration = 0.7,
-		distance = 2.2,
+		distance = 3.0,
 		shakePower = 0.05,
 		shakeFrequency = 10,
 		pullInSpeed = 10,
@@ -32077,9 +32103,9 @@ local scares = {
 		swayBob = 0.06,
 	},
 	GlitchLock = {
-		soundId = "rbxassetid://6982454389",
+		soundId = "rbxassetid://2182262070",
 		duration = 0.8,
-		distance = 1.9,
+		distance = 2.6,
 		shakePower = 0.04,
 		shakeFrequency = 9,
 		pullInSpeed = 9,
@@ -32089,14 +32115,24 @@ local scares = {
 	},
 }
 
-local function playSound(soundId)
+local function playSound(soundId, soundParent)
 	if not soundId or soundId == "" then
 		return
 	end
 	local sound = Instance.new("Sound")
 	sound.SoundId = soundId
 	sound.Volume = 1
-	sound.Parent = SoundService
+	sound.RollOffMode = Enum.RollOffMode.Inverse
+	sound.EmitterSize = 8
+	sound.RollOffMaxDistance = 2000
+	local reverb = Instance.new("ReverbSoundEffect")
+	reverb.DecayTime = 2.4
+	reverb.Density = 0.75
+	reverb.Diffusion = 0.9
+	reverb.WetLevel = -6
+	reverb.DryLevel = 0
+	reverb.Parent = sound
+	sound.Parent = soundParent or SoundService
 	sound:Play()
 	sound.Ended:Connect(function()
 		sound:Destroy()
@@ -32146,7 +32182,7 @@ local function playCameraJumpscare(config, target)
 	local originalCFrame = camera.CFrame
 
 	camera.CameraType = Enum.CameraType.Scriptable
-	playSound(config.soundId)
+	playSound(config.soundId, root)
 
 	local startTime = os.clock()
 	local duration = config.duration or 0.6
