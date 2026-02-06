@@ -3357,6 +3357,7 @@ local CONFUSION_BRIGHTNESS = -0.05
 local CONFUSION_CONTRAST = 0.1
 local CONFUSION_WOBBLE_DEGREES = 1.6
 local CONFUSION_WOBBLE_SPEED = 7
+local CONFUSION_SOUND_ID = "rbxassetid://1841155088"
 
 local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild(REMOTE_NAME)
@@ -3446,6 +3447,7 @@ local function playConfusion(localEffectId)
 	end
 
 	local blur, color, eq = ensureConfusionEffects()
+	local confusionSound = nil
 	local cleaningUp = false
 	local function endConfusion()
 		if cleaningUp then
@@ -3468,6 +3470,11 @@ local function playConfusion(localEffectId)
 			color:Destroy()
 			eq:Destroy()
 		end)
+		if confusionSound then
+			confusionSound:Stop()
+			confusionSound:Destroy()
+			confusionSound = nil
+		end
 	end
 
 	local blurIn = TweenService:Create(blur, TweenInfo.new(0.2, Enum.EasingStyle.Quad, Enum.EasingDirection.Out), {
@@ -3482,6 +3489,16 @@ local function playConfusion(localEffectId)
 
 	blurIn:Play()
 	colorIn:Play()
+
+	if CONFUSION_SOUND_ID and CONFUSION_SOUND_ID ~= "" then
+		confusionSound = Instance.new("Sound")
+		confusionSound.Name = "PlushtrapConfusionSound"
+		confusionSound.SoundId = CONFUSION_SOUND_ID
+		confusionSound.Volume = 1
+		confusionSound.Looped = true
+		confusionSound.Parent = SoundService
+		confusionSound:Play()
+	end
 
 	local startTime = os.clock()
 	local lastRoll = 0
@@ -31672,6 +31689,7 @@ end
 do
 	local REMOTE_NAME = "FredbearJumpscare"
 	local CLIENT_SCRIPT_NAME = "FredbearJumpscareClient"
+	local COOLDOWN_SECONDS = 2.5
 
 	local jumpscareConfigs = {
 		{
@@ -31815,6 +31833,7 @@ do
 		local remote = ensureRemote()
 		local soundRemote = ensureSoundRemote()
 		local activeJumpscares = {}
+		local jumpscareCooldowns = {}
 		ensureClientScript()
 	Players.PlayerAdded:Connect(function(player)
 		local template = getClientTemplate()
@@ -31838,10 +31857,15 @@ do
 					return
 				end
 
+					local lastJumpscareTime = jumpscareCooldowns[player.UserId]
+					if lastJumpscareTime and (os.clock() - lastJumpscareTime) < COOLDOWN_SECONDS then
+						return
+					end
 					if activeJumpscares[hum] then
 						return
 					end
 					activeJumpscares[hum] = true
+					jumpscareCooldowns[player.UserId] = os.clock()
 					local chosen = getWeightedRandomConfig()
 					remote:FireClient(player, chosen.name, npc)
 					for _, other in ipairs(Players:GetPlayers()) do
@@ -31857,7 +31881,7 @@ do
 							end
 						end)
 					end
-					task.delay(1, function()
+					task.delay(COOLDOWN_SECONDS, function()
 						activeJumpscares[hum] = nil
 					end)
 				end)
@@ -32089,11 +32113,13 @@ local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 local soundRemote = ReplicatedStorage:WaitForChild("FredbearJumpscareSound")
 local REVERB_ENABLED = true
 local currentSound = nil
+local jumpscareToken = 0
+local cancelJumpscare = false
 
 local scares = {
 	HardLockLunge = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2.5,
+		duration = 2,
 		distance = 2.8,
 		shakePower = 0.05,
 		shakeFrequency = 10,
@@ -32104,7 +32130,7 @@ local scares = {
 	},
 	SnapZoom = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2.5,
+		duration = 2,
 		distance = 3.0,
 		shakePower = 0.05,
 		shakeFrequency = 10,
@@ -32115,7 +32141,7 @@ local scares = {
 	},
 	GlitchLock = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2.5,
+		duration = 2,
 		distance = 2.6,
 		shakePower = 0.04,
 		shakeFrequency = 9,
@@ -32201,7 +32227,7 @@ local function getLookCFrame(head, distance, tiltDegrees)
 	return base
 end
 
-local function playCameraJumpscare(config, target)
+local function playCameraJumpscare(config, target, token)
 	local head = getHead(target)
 	if not head then
 		return
@@ -32222,6 +32248,14 @@ local function playCameraJumpscare(config, target)
 		camera.CFrame = originalCFrame
 	end
 
+	local function restoreCameraSkipCFrame()
+		if restored then
+			return
+		end
+		restored = true
+		camera.CameraType = originalType
+	end
+
 	camera.CameraType = Enum.CameraType.Scriptable
 	playSound(config.soundId, root, true)
 
@@ -32237,6 +32271,13 @@ local function playCameraJumpscare(config, target)
 	local glitchCounter = 0
 
 	while os.clock() - startTime < duration do
+		if token ~= jumpscareToken then
+			return
+		end
+		if cancelJumpscare then
+			restoreCameraSkipCFrame()
+			return
+		end
 		local elapsed = os.clock() - startTime
 		local progress = math.clamp(elapsed * pullInSpeed / duration, 0, 1)
 		local eased = 1 - math.pow(1 - progress, 3)
@@ -32299,7 +32340,9 @@ local function runJumpscare(name, target)
 	if not config then
 		return
 	end
-	playCameraJumpscare(config, target)
+	jumpscareToken += 1
+	cancelJumpscare = false
+	playCameraJumpscare(config, target, jumpscareToken)
 end
 
 remote.OnClientEvent:Connect(runJumpscare)
@@ -32313,6 +32356,8 @@ soundRemote.OnClientEvent:Connect(function(target)
 end)
 
 player.CharacterRemoving:Connect(function()
+	cancelJumpscare = true
+	jumpscareToken += 1
 	local camera = workspace.CurrentCamera
 	if camera then
 		camera.CameraType = Enum.CameraType.Custom
