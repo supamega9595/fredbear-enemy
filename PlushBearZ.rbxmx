@@ -31720,7 +31720,7 @@ do
 			name = "HardLockLunge",
 			weight = 4,
 			soundId = "rbxassetid://6982454389",
-			duration = 0.6,
+			duration = 1.5,
 			distance = 2.2,
 			shakePower = 0.35,
 			shakeFrequency = 22,
@@ -31730,7 +31730,7 @@ do
 			name = "SnapZoom",
 			weight = 3,
 			soundId = "rbxassetid://6982454389",
-			duration = 0.45,
+			duration = 1.5,
 			distance = 1.6,
 			shakePower = 0.45,
 			shakeFrequency = 28,
@@ -31740,7 +31740,7 @@ do
 			name = "WhiplashTilt",
 			weight = 3,
 			soundId = "rbxassetid://6982454389",
-			duration = 0.55,
+			duration = 1.5,
 			distance = 2,
 			shakePower = 0.3,
 			shakeFrequency = 18,
@@ -31751,7 +31751,7 @@ do
 			name = "GlitchLock",
 			weight = 2,
 			soundId = "rbxassetid://6982454389",
-			duration = 0.5,
+			duration = 1.5,
 			distance = 1.8,
 			shakePower = 0.4,
 			shakeFrequency = 30,
@@ -31762,7 +31762,7 @@ do
 			name = "BassDropStare",
 			weight = 2,
 			soundId = "rbxassetid://6982454389",
-			duration = 0.7,
+			duration = 1.5,
 			distance = 2.6,
 			shakePower = 0.25,
 			shakeFrequency = 16,
@@ -31899,7 +31899,8 @@ do
 					end
 					if hum.Health > 0 then
 						local targetHum = hum
-						task.delay(0.2, function()
+						local killDelay = math.max(chosen.duration or 1.5, 0.2)
+						task.delay(killDelay, function()
 							if targetHum and targetHum.Health > 0 then
 								targetHum.Health = 0
 							end
@@ -32157,7 +32158,7 @@ end
 local scares = {
 	HardLockLunge = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2,
+		duration = 1.5,
 		distance = 2.8,
 		shakePower = 0.05,
 		shakeFrequency = 10,
@@ -32168,7 +32169,7 @@ local scares = {
 	},
 	SnapZoom = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2,
+		duration = 1.5,
 		distance = 3.0,
 		shakePower = 0.05,
 		shakeFrequency = 10,
@@ -32179,7 +32180,7 @@ local scares = {
 	},
 	GlitchLock = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2,
+		duration = 1.5,
 		distance = 2.6,
 		shakePower = 0.04,
 		shakeFrequency = 9,
