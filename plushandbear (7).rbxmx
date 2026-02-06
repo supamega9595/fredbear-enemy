@@ -31662,7 +31662,6 @@ end
 do
 	local REMOTE_NAME = "FredbearJumpscare"
 	local CLIENT_SCRIPT_NAME = "FredbearJumpscareClient"
-	local COOLDOWN_SECONDS = 2
 
 	local jumpscareConfigs = {
 		{
@@ -31802,8 +31801,6 @@ do
 		end
 	end)
 
-	local lastKillTime = {}
-
 	for _, part in ipairs(npc:GetDescendants()) do
 		if part:IsA("BasePart") and part.Name ~= "HumanoidRootPart" then
 			part.CanTouch = true
@@ -31819,17 +31816,11 @@ do
 					return
 				end
 
-				local now = os.clock()
-				if lastKillTime[player] and now - lastKillTime[player] < COOLDOWN_SECONDS then
-					return
-				end
-
 				if hum.Health > 0 then
-					lastKillTime[player] = now
 					local chosen = getWeightedRandomConfig()
 					remote:FireClient(player, chosen.name, npc)
 					local targetHum = hum
-					task.delay(0.05, function()
+					task.delay(0.1, function()
 						if targetHum and targetHum.Health > 0 then
 							targetHum.Health = 0
 						end
