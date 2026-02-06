@@ -32456,6 +32456,13 @@ local function getModelRoot(model)
 	return model:FindFirstChild("HumanoidRootPart") or model:FindFirstChild("UpperTorso") or model:FindFirstChild("Torso") or model:FindFirstChild("Head")
 end
 
+local function getModelHead(model)
+	if not model or not model:IsA("Model") then
+		return nil
+	end
+	return model:FindFirstChild("Head") or getModelRoot(model)
+end
+
 local function applyChaseConfig(config)
 	if type(config) ~= "table" then
 		return
@@ -32667,7 +32674,8 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 		return
 	end
 	local fredbearRoot = getModelRoot(fredbear)
-	if not fredbearRoot then
+	local fredbearHead = getModelHead(fredbear)
+	if not fredbearRoot or not fredbearHead then
 		return
 	end
 	local lockActive = beginBodyViewCameraLock()
@@ -32708,7 +32716,7 @@ local function runSpottingPull(fredbear, pullSeconds, holdSeconds)
 		if not head or not root then
 			return
 		end
-		local fredbearPosition = fredbearRoot.Position
+		local fredbearPosition = fredbearHead.Position
 		local playerPosition = head.Position
 
 		local yawTarget = Vector3.new(fredbearPosition.X, root.Position.Y, fredbearPosition.Z)
