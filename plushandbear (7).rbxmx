@@ -3537,11 +3537,11 @@ local function getPlushtrapHead(model, cachedHead)
 	return head, activeModel
 end
 
-	local function playFaceLock(localEffectId, fallbackPosition)
-		local camera = workspace.CurrentCamera
-		if not camera then
-			return
-		end
+local function playFaceLock(localEffectId, fallbackPosition)
+	local camera = workspace.CurrentCamera
+	if not camera then
+		return
+	end
 
 		local head, headModel = getPlushtrapHead()
 		local headPosition = head and head.Position or fallbackPosition
@@ -3570,6 +3570,14 @@ end
 		local lastKnownForward = headForward
 		local lastKnownCFrame = headCFrame
 
+	local bindingName = ("PlushtrapFaceLock_%s"):format(localEffectId)
+	local lockedCFrame = nil
+	RunService:BindToRenderStep(bindingName, Enum.RenderPriority.Camera.Value + 1, function()
+		if lockedCFrame and camera then
+			camera.CFrame = lockedCFrame
+		end
+	end)
+
 	while os.clock() - startTime < FACE_LOCK_SECONDS do
 		if effectId ~= localEffectId then
 			break
@@ -3597,10 +3605,12 @@ end
 				facePos = lastKnownCFrame:PointToWorldSpace(Vector3.new(0, 0, -FACE_LOCK_DISTANCE))
 			end
 			local base = CFrame.new(facePos, lastKnownPosition) * CFrame.new(-lastOffset)
-		camera.CFrame = base * CFrame.new(offset)
+		lockedCFrame = base * CFrame.new(offset)
+		camera.CFrame = lockedCFrame
 		lastOffset = offset
 		RunService.RenderStepped:Wait()
 	end
+	RunService:UnbindFromRenderStep(bindingName)
 
 	if effectId == localEffectId and camera then
 		camera.CFrame = originalCFrame
@@ -31804,6 +31814,7 @@ do
 
 		local remote = ensureRemote()
 		local soundRemote = ensureSoundRemote()
+		local activeJumpscares = {}
 		ensureClientScript()
 	Players.PlayerAdded:Connect(function(player)
 		local template = getClientTemplate()
@@ -31827,24 +31838,31 @@ do
 					return
 				end
 
-				local chosen = getWeightedRandomConfig()
-				remote:FireClient(player, chosen.name, npc)
-				for _, other in ipairs(Players:GetPlayers()) do
-					if other ~= player then
-						soundRemote:FireClient(other, npc)
+					if activeJumpscares[hum] then
+						return
 					end
-				end
-				if hum.Health > 0 then
-					local targetHum = hum
-					task.delay(0.2, function()
-						if targetHum and targetHum.Health > 0 then
-							targetHum.Health = 0
+					activeJumpscares[hum] = true
+					local chosen = getWeightedRandomConfig()
+					remote:FireClient(player, chosen.name, npc)
+					for _, other in ipairs(Players:GetPlayers()) do
+						if other ~= player then
+							soundRemote:FireClient(other, npc)
 						end
+					end
+					if hum.Health > 0 then
+						local targetHum = hum
+						task.delay(0.2, function()
+							if targetHum and targetHum.Health > 0 then
+								targetHum.Health = 0
+							end
+						end)
+					end
+					task.delay(1, function()
+						activeJumpscares[hum] = nil
 					end)
-				end
-			end)
+				end)
+			end
 		end
-	end
 end
 
 do
@@ -32070,6 +32088,7 @@ local player = Players.LocalPlayer
 local remote = ReplicatedStorage:WaitForChild("FredbearJumpscare")
 local soundRemote = ReplicatedStorage:WaitForChild("FredbearJumpscareSound")
 local REVERB_ENABLED = true
+local currentSound = nil
 
 local scares = {
 	HardLockLunge = {
@@ -32124,6 +32143,11 @@ local function playSound(soundId, soundParent, nonDirectional)
 	if not soundId or soundId == "" then
 		return
 	end
+	if currentSound then
+		currentSound:Stop()
+		currentSound:Destroy()
+		currentSound = nil
+	end
 	local sound = Instance.new("Sound")
 	sound.SoundId = soundId
 	sound.Volume = 1
@@ -32136,8 +32160,12 @@ local function playSound(soundId, soundParent, nonDirectional)
 		sound.Parent = soundParent or SoundService
 	end
 	applyReverb(sound)
+	currentSound = sound
 	sound:Play()
 	sound.Ended:Connect(function()
+		if currentSound == sound then
+			currentSound = nil
+		end
 		sound:Destroy()
 	end)
 end
@@ -32183,6 +32211,16 @@ local function playCameraJumpscare(config, target)
 	local camera = workspace.CurrentCamera
 	local originalType = camera.CameraType
 	local originalCFrame = camera.CFrame
+	local restored = false
+
+	local function restoreCamera()
+		if restored then
+			return
+		end
+		restored = true
+		camera.CameraType = originalType
+		camera.CFrame = originalCFrame
+	end
 
 	camera.CameraType = Enum.CameraType.Scriptable
 	playSound(config.soundId, root, true)
@@ -32253,8 +32291,7 @@ local function playCameraJumpscare(config, target)
 		task.wait()
 	end
 
-	camera.CameraType = originalType
-	camera.CFrame = originalCFrame
+	restoreCamera()
 end
 
 local function runJumpscare(name, target)
@@ -32273,6 +32310,18 @@ soundRemote.OnClientEvent:Connect(function(target)
 		return
 	end
 	playSound("rbxassetid://2182262070", targetRoot, false)
+end)
+
+player.CharacterRemoving:Connect(function()
+	local camera = workspace.CurrentCamera
+	if camera then
+		camera.CameraType = Enum.CameraType.Custom
+	end
+	if currentSound then
+		currentSound:Stop()
+		currentSound:Destroy()
+		currentSound = nil
+	end
 end)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
