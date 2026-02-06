@@ -31898,13 +31898,7 @@ do
 						end
 					end
 					if hum.Health > 0 then
-						local targetHum = hum
-						local killDelay = math.max(chosen.duration or 1.5, 0.2)
-						task.delay(killDelay, function()
-							if targetHum and targetHum.Health > 0 then
-								targetHum.Health = 0
-							end
-						end)
+						hum.Health = 0
 					end
 					task.delay(COOLDOWN_SECONDS, function()
 						activeJumpscares[hum] = nil
@@ -32131,6 +32125,7 @@ end
 			<Properties>
 				<ProtectedString name="Source"><![CDATA[local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
+local RunService = game:GetService("RunService")
 local SoundService = game:GetService("SoundService")
 
 local player = Players.LocalPlayer
@@ -32140,6 +32135,7 @@ local REVERB_ENABLED = true
 local currentSound = nil
 local jumpscareToken = 0
 local cancelJumpscare = false
+local jumpscareActiveUntil = 0
 
 local function beginBodyViewCameraLock()
 	_G.BodyViewCameraLockCount = (_G.BodyViewCameraLockCount or 0) + 1
@@ -32239,7 +32235,15 @@ local function getHead(target)
 	if not target or not target:IsA("Model") then
 		return nil
 	end
-	return target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
+	local head = target:FindFirstChild("Head")
+	if head then
+		return head
+	end
+	local root = target:FindFirstChild("HumanoidRootPart")
+	if root then
+		return root
+	end
+	return target:FindFirstChildWhichIsA("BasePart")
 end
 
 local function getRoot(target)
@@ -32257,8 +32261,7 @@ end
 
 local function getLookCFrame(head, distance, tiltDegrees)
 	local targetPos = head.Position
-	local forward = head.CFrame.LookVector
-	local focusPos = targetPos + forward * distance
+	local focusPos = head.CFrame:PointToWorldSpace(Vector3.new(0, 0, -distance))
 	local base = CFrame.new(focusPos, targetPos)
 	if tiltDegrees and tiltDegrees ~= 0 then
 		base *= CFrame.Angles(0, 0, math.rad(tiltDegrees))
@@ -32268,6 +32271,12 @@ end
 
 local function playCameraJumpscare(config, target, token)
 	local head = getHead(target)
+	if not head and target then
+		head = target:FindFirstChild("Head") or target:FindFirstChild("HumanoidRootPart")
+		if not head then
+			head = target:WaitForChild("Head", 1) or target:WaitForChild("HumanoidRootPart", 1)
+		end
+	end
 	if not head then
 		return
 	end
@@ -32310,6 +32319,7 @@ local function playCameraJumpscare(config, target, token)
 
 	local startTime = os.clock()
 	local duration = config.duration or 0.6
+	jumpscareActiveUntil = startTime + duration
 	local distance = config.distance or 2
 	local pullInSpeed = config.pullInSpeed or 10
 	local shakePower = config.shakePower or 0.2
@@ -32379,7 +32389,7 @@ local function playCameraJumpscare(config, target, token)
 		end
 
 		camera.CFrame = baseCFrame + shake
-		task.wait()
+		RunService.RenderStepped:Wait()
 	end
 
 	restoreCamera()
@@ -32406,6 +32416,9 @@ soundRemote.OnClientEvent:Connect(function(target)
 end)
 
 player.CharacterRemoving:Connect(function()
+	if os.clock() < (jumpscareActiveUntil or 0) then
+		return
+	end
 	cancelJumpscare = true
 	jumpscareToken += 1
 	local camera = workspace.CurrentCamera
@@ -54213,6 +54226,11 @@ local function bindCharacter(char)
 	diedConn = humanoid.Died:Connect(function()
 		isDead = true
 		running = false
+		if isExternalCameraLocked() then
+			repeat
+				RunService.RenderStepped:Wait()
+			until not isExternalCameraLocked()
+		end
 		resetToDefaultCamera()
 	end)
 end
