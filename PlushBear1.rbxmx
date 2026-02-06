@@ -31690,6 +31690,9 @@ do
 	local REMOTE_NAME = "FredbearJumpscare"
 	local CLIENT_SCRIPT_NAME = "FredbearJumpscareClient"
 	local COOLDOWN_SECONDS = 2.5
+	local PICKUP_HOLD_SECONDS = 0.2
+	local THROW_SPEED = 120
+	local THROW_UPWARD_BIAS = 0.6
 
 	local jumpscareConfigs = {
 		{
@@ -31819,16 +31822,36 @@ do
 		return jumpscareConfigs[1]
 	end
 
-	local function isPlayer(hit)
-		local char = hit:FindFirstAncestorOfClass("Model")
-		if not char then
-			return false
-		end
+		local function isPlayer(hit)
+			local char = hit:FindFirstAncestorOfClass("Model")
+			if not char then
+				return false
+			end
 
 		local hum = char:FindFirstChild("Humanoid")
 		local plr = Players:GetPlayerFromCharacter(char)
-		return hum and plr
-	end
+			return hum and plr
+		end
+
+		local function findRightArm(model)
+			return model:FindFirstChild("RightHand")
+				or model:FindFirstChild("Right Arm")
+				or model:FindFirstChild("RightLowerArm")
+				or model:FindFirstChild("RightUpperArm")
+				or model:FindFirstChild("RightLowerArm")
+		end
+
+		local function throwPlayer(character)
+			local hrp = character and (character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("UpperTorso") or character:FindFirstChild("Torso"))
+			if not hrp then
+				return
+			end
+			local randomDir = Vector3.new(math.random() - 0.5, THROW_UPWARD_BIAS, math.random() - 0.5)
+			if randomDir.Magnitude <= 0 then
+				randomDir = Vector3.new(0, 1, 0)
+			end
+			hrp.AssemblyLinearVelocity = randomDir.Unit * THROW_SPEED
+		end
 
 		local remote = ensureRemote()
 		local soundRemote = ensureSoundRemote()
@@ -31875,9 +31898,28 @@ do
 					end
 					if hum.Health > 0 then
 						local targetHum = hum
-						task.delay(0.2, function()
+						local targetChar = char
+						local rightArm = findRightArm(npc)
+						local anchorPart = rightArm or root
+						local weld = nil
+						if anchorPart and targetChar then
+							local targetRoot = targetChar:FindFirstChild("HumanoidRootPart")
+								or targetChar:FindFirstChild("UpperTorso")
+								or targetChar:FindFirstChild("Torso")
+							if targetRoot then
+								weld = Instance.new("WeldConstraint")
+								weld.Part0 = anchorPart
+								weld.Part1 = targetRoot
+								weld.Parent = anchorPart
+							end
+						end
+						task.delay(PICKUP_HOLD_SECONDS, function()
 							if targetHum and targetHum.Health > 0 then
+								throwPlayer(targetChar)
 								targetHum.Health = 0
+							end
+							if weld then
+								weld:Destroy()
 							end
 						end)
 					end
@@ -32119,7 +32161,7 @@ local cancelJumpscare = false
 local scares = {
 	HardLockLunge = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2,
+		duration = 1.5,
 		distance = 2.8,
 		shakePower = 0.05,
 		shakeFrequency = 10,
@@ -32130,7 +32172,7 @@ local scares = {
 	},
 	SnapZoom = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2,
+		duration = 1.5,
 		distance = 3.0,
 		shakePower = 0.05,
 		shakeFrequency = 10,
@@ -32141,7 +32183,7 @@ local scares = {
 	},
 	GlitchLock = {
 		soundId = "rbxassetid://2182262070",
-		duration = 2,
+		duration = 1.5,
 		distance = 2.6,
 		shakePower = 0.04,
 		shakeFrequency = 9,
