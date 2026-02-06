@@ -31990,6 +31990,10 @@ do
 		return remote
 	end
 
+	if npc:GetAttribute("JumpscareCooldownSeconds") == nil then
+		npc:SetAttribute("JumpscareCooldownSeconds", 3)
+	end
+
 	local function getClientTemplate()
 		local template = npc:FindFirstChild(CLIENT_SCRIPT_NAME, true)
 		if not template or not template:IsA("LocalScript") then
@@ -32057,6 +32061,7 @@ do
 		local remote = ensureRemote()
 		local soundRemote = ensureSoundRemote()
 		local activeJumpscares = {}
+		local lastJumpscareTime = {}
 		ensureClientScript()
 	Players.PlayerAdded:Connect(function(player)
 		local template = getClientTemplate()
@@ -32076,17 +32081,24 @@ do
 						return
 					end
 
-				local char = hit:FindFirstAncestorOfClass("Model")
-				local hum = char:FindFirstChild("Humanoid")
-				local player = Players:GetPlayerFromCharacter(char)
-				if not hum or not player then
-					return
-				end
+					local char = hit:FindFirstAncestorOfClass("Model")
+					local hum = char:FindFirstChild("Humanoid")
+					local player = Players:GetPlayerFromCharacter(char)
+					if not hum or not player then
+						return
+					end
+
+						local cooldownSeconds = npc:GetAttribute("JumpscareCooldownSeconds") or 0
+						local lastTime = lastJumpscareTime[player.UserId] or 0
+						if cooldownSeconds > 0 and os.clock() - lastTime < cooldownSeconds then
+							return
+						end
 
 						if activeJumpscares[hum] then
 							return
 						end
 						activeJumpscares[hum] = true
+						lastJumpscareTime[player.UserId] = os.clock()
 						local chosen = getWeightedRandomConfig()
 						remote:FireClient(player, chosen.name, npc)
 						for _, other in ipairs(Players:GetPlayers()) do
@@ -32386,6 +32398,20 @@ local function setBodyViewOverride(active)
 	end
 	if flag:IsA("BoolValue") then
 		flag.Value = active
+	end
+end
+
+local function resetJumpscareState()
+	jumpscareActive = false
+	setBodyViewOverride(false)
+	local camera = workspace.CurrentCamera
+	if camera then
+		camera.CameraType = Enum.CameraType.Custom
+	end
+	if currentSound then
+		currentSound:Stop()
+		currentSound:Destroy()
+		currentSound = nil
 	end
 end
 
@@ -32962,21 +32988,13 @@ chaseRemote.OnClientEvent:Connect(function(action, fredbear, pullSeconds, holdSe
 end)
 
 player.CharacterRemoving:Connect(function()
-	if jumpscareActive then
-		return
-	end
 	chaseTargeted = false
 	stopChaseEffects()
-	local camera = workspace.CurrentCamera
-	if camera then
-		camera.CameraType = Enum.CameraType.Custom
-	end
-	setBodyViewOverride(false)
-	if currentSound then
-		currentSound:Stop()
-		currentSound:Destroy()
-		currentSound = nil
-	end
+	resetJumpscareState()
+end)
+
+player.CharacterAdded:Connect(function()
+	resetJumpscareState()
 end)
 ]]></ProtectedString>
 				<bool name="Disabled">false</bool>
